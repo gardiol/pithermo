@@ -1,0 +1,7 @@
+{ "pellet" :
+	{"command": "on",
+	 "status": "on" },
+  "gas" :
+	{"command": "off",
+	 "status": "off" }
+}
