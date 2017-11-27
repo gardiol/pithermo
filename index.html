@@ -17,8 +17,8 @@
 	<div id="pellet-status">
 		<span>Stufa a pellet:</span>
 		<img id="pellet-status-led" src="images/pellet-off.png"/>
-		<button id="pellet-on-btn">Accendi</button>	
-		<button id="pellet-off-btn">Spegni</button>	
+		<button id="pellet-on-btn"></button>	
+		<button id="pellet-off-btn"></button>	
 		<button id="pellet-auto-btn">Auto</button>	
 	</div>
 	<div id="gas-status">
@@ -1071,22 +1071,87 @@
 
 <script>
 var system_status;
+var pelletButtonOn;
+var pelletButtonOff;
+var pelletButtonAuto;
 
 require(["dijit/form/Button", 
+	 "dojo/request",
 	 "dojo/dom", 
-	 "dojo/domReady!"], function(Button, dom){
-    var pelletButtonOn = new Button({
-        label: "Accendi",
-        onClick: function(){
-		if ( system_status ) {
+	 "dijit/registry",
+	 "dijit/ConfirmDialog",
+	 "dojo/on",
+	 "dojo/domReady!"], 
+function(Button, request, dom, registry, ConfirmDialog, on)
+{
+	pelletButtonAuto = new Button(
+	{
+		label: "Auto",
+		onClick: function()
+			{
+				if ( system_status ) 
+				{
+				}
+				else
+					alert("Sistema non caricato");
+			}
+	}, "pellet-auto-btn");
+	pelletButtonAuto.startup();
+	pelletButtonOn = new Button(
+	{
+		label: "Accendi",
+		onClick: function()
+			{
+				if ( system_status ) 
+				{
+				}
+				else
+					alert("Sistema non caricato");
+			}
+	}, "pellet-on-btn")
+	pelletButtonOn.startup();
+	pelletButtonOff = new Button(
+	{
+		label: "Spegni",
+		onClick: function()
+			{
+				if ( system_status ) 
+				{
+					var dialog = new ConfirmDialog({
+        					title: "ATTENZIONE!",
+        					content: "Spegno il PELLET?"});
+					dialog.set("buttonOk", "Spegni!");
+					dialog.set("buttonCancel", "Annulla");
+					dialog.on("execute", function(){alert("spenta")});
+					dialog.show();
+				}
+				else
+					alert("Sistema non caricato");
+			}
+	}, "pellet-off-btn")
+	pelletButtonOff.startup();
 
-		}
-		else
-			alert("Sistema non caricato");
-        }
-    }, "pellet-on-btn").startup();
+       	request("status" , {handleAs :"json"}).then(
+		function(result)
+		{
+			system_status = result;
+			if ( system_status.pellet.command == "on" )
+			{
+				pelletButtonOn.set("disabled", true );
+				pelletButtonOff.set("disabled", false );
+			}
+			else
+			{
+				pelletButtonOn.set("disabled", false );
+				pelletButtonOff.set("disabled", true );
+			}
+		}, 
+		function(err)
+		{
+			alert("Impossibile caricare lo stato del sistema");
+		})
 });
-</script>
 
+</script>
 </body>
 </html>
