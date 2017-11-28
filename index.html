@@ -39,6 +39,8 @@ var pelletOnBtn;
 var pelletOffBtn;
 var gasOnBtn;
 var gasOffBtn;
+// For auto:
+var highlightCells;
 
 require(["dijit/form/Button", 
 	 "dojo/request",
@@ -123,9 +125,30 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 		dialog.show();
 	}
 	function programRefresh(){
+		if ( dom.byId( "auto-table" ) ) {
+		var nd = system_status.now.d;
+		var nh = system_status.now.h;
+		var nf = system_status.now.f;
+		if ( highlightCells )
+			highlightCells.forEach( function(i,x){
+					dclass.remove( i, "auto_now_h auto_now_c");
+				});
+		highlightCells = [];
 		for ( var d = 0; d < 7; d++ ){
+			if ( d == nd ){
+				dclass.add( "auto-day-"+nd, "auto_now_h" );
+				highlightCells.push( "auto-day-"+nd );
+			}
 			for ( var h = 0; h < 24; h++ ){
+				if ( d == nd && h == nh ){
+					dclass.add( "auto-header-"+(nh<10?"0":"")+nh, "auto_now_h" );
+					highlightCells.push( "auto-header-"+(nh<10?"0":"")+nh );
+				}
 				for ( var f = 0; f < 2; f++ ){
+					if ( d == nd && h == nh && f == nf ){
+						dclass.add( "auto-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30"), "auto_now_h" );
+						highlightCells.push( "auto-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
+					}
 					var i = "auto-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30");
 					var c = system_status.program[d][h*2+f];
 					var s = c==''?"":'<img src="images/';
@@ -133,9 +156,20 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 					if ( c == 'g' ) s+='gas.png"/>';
 					if ( c == 'x' ) s+='pellet-gas.png"/>';
 					var n = dom.byId(i);
-					if (n) html.set(n,s);
+					html.set(n,s);
+					if ( (d == nd) && (h!=nh || f!=nf)  ){
+						dclass.add(n, "auto_now_c" );
+						highlightCells.push( n );
+					}else if ( (d != nd) && (h==nh && f == nf) ){
+						dclass.add( n, "auto_now_c" );
+						highlightCells.push( n );
+					}else if ( d == nd && h == nh && f == nf ){
+						dclass.add( "auto-cell-"+nd+"-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30"), "auto_now_h" );
+						highlightCells.push( "auto-cell-"+nd+"-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
+					}
 				}
 			}
+		}
 		}
 	}
 
