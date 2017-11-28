@@ -6,6 +6,18 @@
 	text-align: justify;
 }
 
+div.modselected {
+	border-left: 1px solid black;
+	border-right: 1px solid black;
+	border-top: 1px solid black;
+	background: white;
+}
+
+div.modunselected {
+	border-bottom: 1px solid black;
+	background: lightgray;
+}
+
 #modsel > div {
 	width: 32%;
 	height: 100%;
@@ -13,13 +25,6 @@
 	text-align: center;
 }
 
-div.modselected {
-	border-left: 1px solid black;
-	border-right: 1px solid black;
-	border-top: 1px solid black;
-	border-bottom: none;
-	background: lightgreen;
-}
 
 div.clear {
 	clear: both;
@@ -28,6 +33,12 @@ div.clear {
 #mode-stack {
 	height: 100%;
 	width: 100%;
+}
+
+#history-pane {
+	background: beige;
+	padding-bottom: 3em;
+	padding-top: 3em;
 }
 
 #history {

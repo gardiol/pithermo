@@ -9,16 +9,18 @@
 </head>
 <body style="width: 100%; height: 100%;" class="claro">
 
-<div id="history"></div>
+<div id="history-pane">
+	<div id="history"></div>
+</div>
 
 <div id="modsel">
-	<div id="modsel-manual">
+	<div id="modsel-manual" class="modunselected">
 		<button id="modsel-manual-btn"></button>
 	</div>
-	<div id="modsel-auto">
+	<div id="modsel-auto" class="modselected">
 		<button id="modsel-auto-btn"></button>
 	</div>
-	<div id="modsel-program">
+	<div id="modsel-program" class="modselected">
 		<button id="modsel-program-btn"></button>
 	</div>
 </div>
@@ -188,13 +190,20 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 				system_status = result;
 				if ( system_status.mode == "auto" ){
 					dclass.add( "modsel-auto", "modselected" );
-					dclass.remove( "modsel-manual", "modselected" );
-					dclass.remove( "modsel-program", "modselected" );
+					dclass.remove( "modsel-auto", "modunselected" );
+					dclass.remove("modsel-manual", "modselected" );
+					dclass.remove("modsel-program", "modselected" );
+					dclass.add( "modsel-manual", "modunselected" );
+					dclass.add( "modsel-program", "modunselected" );
 					modeStack.selectChild( autoPane );
 					programRefresh();
 				}else if ( system_status.mode == "manual" ) {
 					dclass.add( "modsel-manual", "modselected" );
+					dclass.remove( "modsel-manual", "modunselected" );
 					dclass.remove( "modsel-auto", "modselected" );
+					dclass.remove( "modsel-program", "modselected" );
+					dclass.add( "modsel-auto", "modunselected" );
+					dclass.add( "modsel-program", "modunselected" );
 					modeStack.selectChild( manualPane );
 					if ( system_status.pellet.command == "on" ){
 						attr.set("pellet-status-led", "src", "images/pellet-on.png");
@@ -216,8 +225,11 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 					}
 				}else if ( system_status.mode == "program" ){
 					dclass.add( "modsel-program", "modselected" );
-					dclass.remove( "modsel-manual", "modselected" );
+					dclass.remove( "modsel-program", "modunselected" );
 					dclass.remove( "modsel-auto", "modselected" );
+					dclass.remove( "modsel-manual", "modselected" );
+					dclass.add( "modsel-auto", "modunselected" );
+					dclass.add( "modsel-manual", "modunselected" );
 					modeStack.selectChild( programPane );
 				}
 				window.setTimeout( function(){ updateStatus(); }, 5000 );

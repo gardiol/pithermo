@@ -1,0 +1,30 @@
+
+#program-table {
+	border-collapse: collapse;
+	text-align: center;
+}
+
+#program-table th, td {
+	border-left: 1px solid black;
+	border-right: 1px solid black;
+	height: 2em;
+	width: 2em;
+}
+
+#program-table tbody tr {
+	border-bottom: 1px solid black;
+	border-top: 1px solid black;
+}
+
+#program-table td img {
+	width: 1em;
+	height: 1em;
+}
+
+.program_now_h {
+	background: green;
+	color: yellow;
+}
+.program_now_c {
+	background: lightgreen;
+}
