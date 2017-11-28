@@ -1,4 +1,6 @@
-{ "pellet" :
+{ 
+  "mode": "manual",
+  "pellet" :
 	{"command": "on",
 	 "status": "on" },
   "gas" :

@@ -1,0 +1,19 @@
+
+#quick-heat {
+	padding: 1em;
+	background: pink;
+	text-align: center;
+}
+
+#pellet-status {
+	padding: 1em;
+	background: peru;
+	text-align: center;
+}
+
+#gas-status {
+	padding: 1em;
+	background: palegreen;
+	text-align: center;
+}
+
