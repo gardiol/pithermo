@@ -9,6 +9,8 @@
 </head>
 <body style="width: 100%; height: 100%;" class="claro">
 
+<div id="history"></div>
+
 <div id="modsel">
 	<div id="modsel-manual">
 		Manual Mode
@@ -24,6 +26,8 @@
 
 <script>
 var system_status;
+// History:
+var historyGraph;
 
 var modeStack;
 var autoPane;
@@ -42,13 +46,17 @@ require(["dijit/form/Button",
 	 "dojo/dom-attr",
 	 "dojo/dom-class",
 	 "dojo/dom-style",
+	 "dojo/html",
 	 "dijit/registry",
 	 "dijit/ConfirmDialog",
 	 "dijit/layout/ContentPane",
 	 "dijit/layout/StackContainer",
+	 "dojox/charting/Chart",
+	 "dojox/charting/axis2d/Default", 
+	 "dojox/charting/plot2d/Lines",
 	 "dojo/on",
 	 "dojo/domReady!"], 
-function(Button, request, dom, attr, dclass, style, registry, ConfirmDialog, ContentPane, StackContainer, on)
+function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialog, ContentPane, StackContainer, Chart, Default, Lines, on)
 {
 	function executeCommand(cmd) {
        		request.put("/cgi-bin/command", {data:cmd}).then(
@@ -61,74 +69,112 @@ function(Button, request, dom, attr, dclass, style, registry, ConfirmDialog, Con
 	}
 
 	function pelletOn() {
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "Accendo il PELLET?"});
+		dialog.set("buttonOk", "Accendi!");
+		dialog.set("buttonCancel", "Annulla");
+		dialog.on("execute", function(){executeCommand("pellet_on");});
+		dialog.show();
 	}
 	function pelletOff() {
-		if ( system_status ) 
-		{
-			var dialog = new ConfirmDialog({
-        			title: "ATTENZIONE!",
-        			content: "Spegno il PELLET?"});
-			dialog.set("buttonOk", "Spegni!");
-			dialog.set("buttonCancel", "Annulla");
-			dialog.on("execute", function(){executeCommand("pellet_off");});
-			dialog.show();
-		}
-		else
-			alert("Sistema non caricato");
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "Spegno il PELLET?"});
+		dialog.set("buttonOk", "Spegni!");
+		dialog.set("buttonCancel", "Annulla");
+		dialog.on("execute", function(){executeCommand("pellet_off");});
+		dialog.show();
 	}
 	function gasOn() {
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "Accendo il GAS?"});
+		dialog.set("buttonOk", "Accendi!");
+		dialog.set("buttonCancel", "Annulla");
+		dialog.on("execute", function(){executeCommand("gas_on");});
+		dialog.show();
 	}
 	function gasOff() {
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "Spegno il GAS?"});
+		dialog.set("buttonOk", "Spegni!");
+		dialog.set("buttonCancel", "Annulla");
+		dialog.on("execute", function(){executeCommand("gas_off");});
+		dialog.show();
 	}
 	function setAutoMode(warn) {
-		function setMode() {
-			dclass.add( "modsel-auto", "modselected" );
-			dclass.remove( "modsel-manual", "modselected" );
-			modeStack.selectChild( autoPane );
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "Pssare in automatico?"});
+		dialog.set("buttonOk", "Passa in auto");
+		dialog.set("buttonCancel", "Annulla");
+		dialog.on("execute", function(){executeCommand("auto");});
+		dialog.show();
+	}
+	function setManualMode(warn) {
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "Pssare in manuale?"});
+		dialog.set("buttonOk", "Passa in manuale");
+		dialog.set("buttonCancel", "Annulla");
+		dialog.on("execute", function(){executeCommand("manual");});
+		dialog.show();
+	}
+	function programRefresh(){
+		for ( var d = 0; d < 7; d++ ){
+			for ( var h = 0; h < 24; h++ ){
+				for ( var f = 0; f < 2; f++ ){
+					var i = "auto-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30");
+					var c = system_status.program[d][h*2+f];
+					var s = c==''?"":'<img src="images/';
+					if ( c == 'p' ) s+='pellet.png"/>';
+					if ( c == 'g' ) s+='gas.png"/>';
+					if ( c == 'x' ) s+='pellet-gas.png"/>';
+					var n = dom.byId(i);
+					if (n) html.set(n,s);
+				}
+			}
 		}
-		if ( system_status.mode != "auto" ) {
-			setMode();
-		}
-		else
-			setMode();
 	}
 
-	function setManualMode(warn) {
-		function setMode() {
-			dclass.add( "modsel-manual", "modselected" );
-			dclass.remove( "modsel-auto", "modselected" );
-			modeStack.selectChild( manualPane );
-		}
-		if ( system_status.mode != "manual" ) {
-			setMode();
-		}
-		else
-			setMode();
-	}
 
 	function updateStatus()
 	{
-       		request("status" , {handleAs :"json"}).then(
+       		request("cgi-bin/status" , {handleAs :"json"}).then(
 			function(result)
 			{
 				system_status = result;
-				if ( system_status.mode == "auto" )
-					setAutoMode(false);
-				else
-					setManualMode(false);
-	
-				if ( system_status.pellet.command == "on" )
-				{
-					attr.set("pellet-status-led", "src", "images/pellet-on.png");
-					pelletOnBtn.set("disabled", true );
-					pelletOffBtn.set("disabled", false );
+				if ( system_status.mode == "auto" ){
+					dclass.add( "modsel-auto", "modselected" );
+					dclass.remove( "modsel-manual", "modselected" );
+					modeStack.selectChild( autoPane );
+					programRefresh();
+				}else{
+					dclass.add( "modsel-manual", "modselected" );
+					dclass.remove( "modsel-auto", "modselected" );
+					modeStack.selectChild( manualPane );
+					if ( system_status.pellet.command == "on" ){
+						attr.set("pellet-status-led", "src", "images/pellet-on.png");
+						pelletOnBtn.set("disabled", true );
+						pelletOffBtn.set("disabled", false );
+					}else{
+						attr.set("pellet-status-led", "src", "images/pellet-off.png");
+						pelletOnBtn.set("disabled", false );
+						pelletOffBtn.set("disabled", true );
+					}
+					if ( system_status.gas.command == "on" ){
+						attr.set("gas-status-led", "src", "images/gas-on.png");
+						gasOnBtn.set("disabled", true );
+						gasOffBtn.set("disabled", false );
+					}else{
+						attr.set("gas-status-led", "src", "images/gas-off.png");
+						gasOnBtn.set("disabled", false );
+						gasOffBtn.set("disabled", true );
+					}
 				}
-				else
-				{
-					attr.set("pellet-status-led", "src", "images/pellet-off.png");
-					pelletOnBtn.set("disabled", false );
-					pelletOffBtn.set("disabled", true );
-				}
+				window.setTimeout( function(){ updateStatus(); }, 5000 );
 			}, 
 			function(err)
 			{
@@ -137,6 +183,18 @@ function(Button, request, dom, attr, dclass, style, registry, ConfirmDialog, Con
 
 	}
 
+	function updateHistory()
+	{
+       		request("cgi-bin/history" , {handleAs :"json"}).then(
+			function(result){
+				historyGraph.updateSeries("Temp", result );
+				historyGraph.render();
+				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
+			},
+			function(err){
+				alert("Impossibile caricare la storia: "+err);
+			});
+	}
 
 
 
@@ -148,6 +206,9 @@ function(Button, request, dom, attr, dclass, style, registry, ConfirmDialog, Con
 		"mode-stack");
 	autoPane = new ContentPane({
 		href: "auto.html",
+		onLoad: function() {
+				programRefresh();
+			}
 		}, "auto-pane" );
 	autoPane.startup();
 	manualPane = new ContentPane({
@@ -165,6 +226,18 @@ function(Button, request, dom, attr, dclass, style, registry, ConfirmDialog, Con
 					onClick: pelletOff
 				}, "pellet-off-btn");
 				pelletOffBtn.startup();
+				gasOnBtn = new Button({
+					label: "Accendi",
+					disabled: true,
+					onClick: gasOn
+				}, "gas-on-btn");
+				gasOnBtn.startup();
+				gasOffBtn = new Button({
+					label: "Spegni",
+					disabled: true,
+					onClick: gasOff
+				}, "gas-off-btn");
+				gasOffBtn.startup();
 			}
 		}, "manual-pane" );
 	manualPane.startup();
@@ -184,7 +257,14 @@ function(Button, request, dom, attr, dclass, style, registry, ConfirmDialog, Con
 		}, "modsel-auto-btn");
 	autoBtn.startup();
 
+	historyGraph = new Chart("history");
+	historyGraph.addPlot("default", {type: Lines});
+	historyGraph.addAxis("x");
+	historyGraph.addAxis("y", {vertical: true});
+	historyGraph.addSeries("Temp", [], {stroke: {color: "red", width: 2}} );
+	historyGraph.render();
 
+	updateHistory();
 	updateStatus();
 });
 

@@ -1,0 +1,4 @@
+#!/bin/bash
+echo "Content-type: application/json"
+echo ""
+cat _history

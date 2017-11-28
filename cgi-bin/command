@@ -1,3 +1,31 @@
 #!/bin/bash
 echo "Content-type: text/html"
 echo ""
+read COMMAND
+if [ "$COMMAND" = "pellet_off" ]
+then
+	echo '"pellet" :
+	{"command": "off",
+	 "status": "off" }' > _pellet_status
+elif [ "$COMMAND" = "pellet_on" ]
+then
+	echo '"pellet" :
+	{"command": "on",
+	 "status": "on" }' > _pellet_status
+elif [ "$COMMAND" = "gas_off" ]
+then
+	echo '"gas" :
+	{"command": "off",
+	 "status": "off" }' > _gas_status
+elif [ "$COMMAND" = "gas_on" ]
+then
+	echo '"gas" :
+	{"command": "on",
+	 "status": "on" }' > _gas_status
+elif [ "$COMMAND" = "manual" ]
+then
+	echo '"mode":"manual"' > _mode
+elif [ "$COMMAND" = "auto" ]
+then
+	echo '"mode":"auto"' > _mode
+fi
