@@ -28,4 +28,7 @@ then
 elif [ "$COMMAND" = "auto" ]
 then
 	echo '"mode":"auto"' > _mode
+elif [ "$COMMAND" = "program" ]
+then
+	echo '"mode":"program"' > _mode
 fi

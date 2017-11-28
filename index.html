@@ -13,12 +13,13 @@
 
 <div id="modsel">
 	<div id="modsel-manual">
-		Manual Mode
 		<button id="modsel-manual-btn"></button>
 	</div>
 	<div id="modsel-auto">
-		Auto Mode
 		<button id="modsel-auto-btn"></button>
+	</div>
+	<div id="modsel-program">
+		<button id="modsel-program-btn"></button>
 	</div>
 </div>
 
@@ -32,8 +33,10 @@ var historyGraph;
 var modeStack;
 var autoPane;
 var manualPane;
+var programPane;
 var autoBtn;
 var manualBtn;
+var programBtn;
 // For manual
 var pelletOnBtn;
 var pelletOffBtn;
@@ -124,6 +127,9 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 		dialog.on("execute", function(){executeCommand("manual");});
 		dialog.show();
 	}
+	function setProgramMode(warn){
+		executeCommand("program");
+	}
 	function programRefresh(){
 		if ( dom.byId( "auto-table" ) ) {
 		var nd = system_status.now.d;
@@ -183,9 +189,10 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 				if ( system_status.mode == "auto" ){
 					dclass.add( "modsel-auto", "modselected" );
 					dclass.remove( "modsel-manual", "modselected" );
+					dclass.remove( "modsel-program", "modselected" );
 					modeStack.selectChild( autoPane );
 					programRefresh();
-				}else{
+				}else if ( system_status.mode == "manual" ) {
 					dclass.add( "modsel-manual", "modselected" );
 					dclass.remove( "modsel-auto", "modselected" );
 					modeStack.selectChild( manualPane );
@@ -207,6 +214,11 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 						gasOnBtn.set("disabled", false );
 						gasOffBtn.set("disabled", true );
 					}
+				}else if ( system_status.mode == "program" ){
+					dclass.add( "modsel-program", "modselected" );
+					dclass.remove( "modsel-manual", "modselected" );
+					dclass.remove( "modsel-auto", "modselected" );
+					modeStack.selectChild( programPane );
 				}
 				window.setTimeout( function(){ updateStatus(); }, 5000 );
 			}, 
@@ -275,8 +287,13 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 			}
 		}, "manual-pane" );
 	manualPane.startup();
+	programPane = new ContentPane({
+		href: "program.html",
+		}, "program_pane" );
+	programPane.startup();
 	modeStack.addChild( autoPane );
 	modeStack.addChild( manualPane );
+	modeStack.addChild( programPane );
 	modeStack.selectChild( manualPane );
 	modeStack.startup();
 
@@ -290,6 +307,12 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 		onClick: setAutoMode,
 		}, "modsel-auto-btn");
 	autoBtn.startup();
+	programBtn = new Button({
+		label: "Programma",
+		onClick: setProgramMode,
+		}, "modsel-program-btn");
+	programBtn.startup();
+	
 
 	historyGraph = new Chart("history");
 	historyGraph.addPlot("default", {type: Lines});
