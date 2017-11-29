@@ -1,0 +1,6 @@
+#!/bin/bash
+echo "Content-type: text/html"
+echo ""
+read PROGRAM
+echo '"program":' $PROGRAM > _program
+echo ',"now":{"d":3,"h":14,"f":0}' >> _program

@@ -1,0 +1,21 @@
+
+#status {
+	width: 100%;
+	height: 14em;
+}
+
+#status > div {
+	padding: 1em;
+	background: peru;
+	text-align: center;
+	float:left;
+	width: 30%;
+	height: 100%;
+	border-right: 1px dashed black;
+}
+
+#status > div > p {
+	font-style: bold;
+	font-size: 140%;
+	border-bottom: 1px dotted black;
+}

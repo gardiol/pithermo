@@ -28,3 +28,29 @@
 .program_now_c {
 	background: lightgreen;
 }
+
+#program-selector {
+	text-align: center;
+}
+
+#program-selector > div {
+	display: inline-block;
+	vertical-align: middle;
+	border: 2px solid black;
+	margin: 1em;
+	padding: 0.2em;
+}
+#program-selector > div > div {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+#program-selector > div > div > img {
+	height: 3em;
+}
+
+.program-selected {
+	background: lightgreen;
+	border: 1px solid black;
+}
+

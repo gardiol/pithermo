@@ -37,13 +37,11 @@ div.clear {
 
 #history-pane {
 	background: beige;
-	padding-bottom: 3em;
-	padding-top: 3em;
-}
-
-#history {
+	height: 10em;
 	margin-bottom: 2em;
-	width: 100%;
-	height: 5em;
 }
 
+#history-graph {
+	height: 100%;
+	width: 100%;
+}

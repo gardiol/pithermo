@@ -10,7 +10,7 @@
 <body style="width: 100%; height: 100%;" class="claro">
 
 <div id="history-pane">
-	<div id="history"></div>
+	<div id="history-graph"></div>
 </div>
 
 <div id="modsel">
@@ -39,13 +39,28 @@ var programPane;
 var autoBtn;
 var manualBtn;
 var programBtn;
-// For manual
+// For status
 var pelletOnBtn;
 var pelletOffBtn;
 var gasOnBtn;
 var gasOffBtn;
+var manualBtn;
+var autoBtn;
+var modeLabel;
 // For auto:
 var highlightCells;
+// For program:
+var prgResetBtn;
+var prgApplyBtn;
+var selectOff;
+var selectGas;
+var selectPellet;
+var selectPelletGas;
+var program_status;
+var selected_type;
+var program_linked;
+var prev_mode;
+
 
 require(["dijit/form/Button", 
 	 "dojo/request",
@@ -54,6 +69,8 @@ require(["dijit/form/Button",
 	 "dojo/dom-class",
 	 "dojo/dom-style",
 	 "dojo/html",
+	 "dojo/query",
+	 "dojo/json",
 	 "dijit/registry",
 	 "dijit/ConfirmDialog",
 	 "dijit/layout/ContentPane",
@@ -63,7 +80,7 @@ require(["dijit/form/Button",
 	 "dojox/charting/plot2d/Lines",
 	 "dojo/on",
 	 "dojo/domReady!"], 
-function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialog, ContentPane, StackContainer, Chart, Default, Lines, on)
+function(Button, request, dom, attr, dclass, style, html, query, json, registry, ConfirmDialog, ContentPane, StackContainer, Chart, Default, Lines, on)
 {
 	function executeCommand(cmd) {
        		request.put("/cgi-bin/command", {data:cmd}).then(
@@ -111,7 +128,7 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 		dialog.on("execute", function(){executeCommand("gas_off");});
 		dialog.show();
 	}
-	function setAutoMode(warn) {
+	function setAutoMode() {
 		var dialog = new ConfirmDialog({
         		title: "ATTENZIONE!",
         		content: "Pssare in automatico?"});
@@ -120,7 +137,7 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 		dialog.on("execute", function(){executeCommand("auto");});
 		dialog.show();
 	}
-	function setManualMode(warn) {
+	function setManualMode() {
 		var dialog = new ConfirmDialog({
         		title: "ATTENZIONE!",
         		content: "Pssare in manuale?"});
@@ -129,10 +146,7 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 		dialog.on("execute", function(){executeCommand("manual");});
 		dialog.show();
 	}
-	function setProgramMode(warn){
-		executeCommand("program");
-	}
-	function programRefresh(){
+	function autoRefresh(){
 		if ( dom.byId( "auto-table" ) ) {
 		var nd = system_status.now.d;
 		var nh = system_status.now.h;
@@ -180,7 +194,113 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 		}
 		}
 	}
+	function selectType(t){
+		selected_type = t;
+		dclass.remove(selectOff, "program-selected");
+		dclass.remove(selectGas, "program-selected");
+		dclass.remove(selectPelletGas, "program-selected");
+		dclass.remove(selectPellet, "program-selected");
+		if ( t == '' ){
+			dclass.add(selectOff, "program-selected");
+		}else if ( t == 'g' ) {
+			dclass.add(selectGas, "program-selected");
+		}else if ( t == 'x' ) {
+			dclass.add(selectPelletGas, "program-selected");
+		}else if ( t == 'p' ) {
+			dclass.add(selectPellet, "program-selected");
+		}
+	}
+	function programReset() {
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "Annullare le modifiche?"});
+		dialog.set("buttonOk", "Si, annulla");
+		dialog.set("buttonCancel", "No, continua");
+		dialog.on("execute", function() {
+						program_status = system_status.program;
+						programRefresh();
+					});
+		dialog.show();
+	}
+	function programApply() {
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "Salvare le modifiche?"});
+		dialog.set("buttonOk", "Salva");
+		dialog.set("buttonCancel", "Continua a modificare");
+		dialog.on("execute", 
+			function() {
+				var ps = json.stringify(program_status);
+       				request.post("/cgi-bin/program",{data:ps}).then(
+					function(result){
+						switchMode(system_status.mode);
+					},
+					function(err){
+						alert("Command error: " + err );
+					});
+			});
+		dialog.show();
+	}
+	function programRefresh(){
+		if ( dom.byId( "program-table" ) ) {
+			for ( var d = 0; d < 7; d++ ){
+				for ( var h = 0; h < 24; h++ ){
+					for ( var f = 0; f < 2; f++ ){
+						var i = "program-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30");
+						var c = program_status[d][h*2+f];
+						var s = c==''?"":'<img src="images/';
+						if ( c == 'p' ) s+='pellet.png"/>';
+						if ( c == 'g' ) s+='gas.png"/>';
+						if ( c == 'x' ) s+='pellet-gas.png"/>';
+						var n = dom.byId(i);
+						html.set(n,s);
+					}
+				}
+			}
+			if ( !program_linked )
+				query("#program-table > tbody > tr > td")
+					.on("click", 
+					function(evt){ 
+						var id = evt.currentTarget.id ;
+						var d = id.substr(13,1);
+						var h1 = id.substr(15,2);
+						var h2 = id.substr(17,2);
+						var h = (+h1)*2+(h2=="30"?1:0);
+						program_status[d][h] = selected_type;
+						programRefresh();
+					});
+			program_linked = true;
+		}
+	}
 
+	function switchMode(mode){
+		if ( mode == "auto" ){
+			dclass.add( "modsel-auto", "modselected" );
+			dclass.remove( "modsel-auto", "modunselected" );
+			dclass.remove("modsel-manual", "modselected" );
+			dclass.remove("modsel-program", "modselected" );
+			dclass.add( "modsel-manual", "modunselected" );
+			dclass.add( "modsel-program", "modunselected" );
+			modeStack.selectChild( autoPane );
+			autoRefresh();
+		}else if ( mode == "manual" ){
+			dclass.add( "modsel-manual", "modselected" );
+			dclass.remove( "modsel-manual", "modunselected" );
+			dclass.remove( "modsel-auto", "modselected" );
+			dclass.remove( "modsel-program", "modselected" );
+			dclass.add( "modsel-auto", "modunselected" );
+			dclass.add( "modsel-program", "modunselected" );
+			modeStack.selectChild( manualPane );
+		}else if ( mode == "program" ){
+			dclass.add( "modsel-program", "modselected" );
+			dclass.remove( "modsel-program", "modunselected" );
+			dclass.remove( "modsel-auto", "modselected" );
+			dclass.remove( "modsel-manual", "modselected" );
+			dclass.add( "modsel-auto", "modunselected" );
+			dclass.add( "modsel-manual", "modunselected" );
+			modeStack.selectChild( programPane );
+		}
+	}
 
 	function updateStatus()
 	{
@@ -188,49 +308,44 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 			function(result)
 			{
 				system_status = result;
-				if ( system_status.mode == "auto" ){
-					dclass.add( "modsel-auto", "modselected" );
-					dclass.remove( "modsel-auto", "modunselected" );
-					dclass.remove("modsel-manual", "modselected" );
-					dclass.remove("modsel-program", "modselected" );
-					dclass.add( "modsel-manual", "modunselected" );
-					dclass.add( "modsel-program", "modunselected" );
-					modeStack.selectChild( autoPane );
-					programRefresh();
-				}else if ( system_status.mode == "manual" ) {
-					dclass.add( "modsel-manual", "modselected" );
-					dclass.remove( "modsel-manual", "modunselected" );
-					dclass.remove( "modsel-auto", "modselected" );
-					dclass.remove( "modsel-program", "modselected" );
-					dclass.add( "modsel-auto", "modunselected" );
-					dclass.add( "modsel-program", "modunselected" );
-					modeStack.selectChild( manualPane );
-					if ( system_status.pellet.command == "on" ){
-						attr.set("pellet-status-led", "src", "images/pellet-on.png");
+				if ( system_status.pellet.command == "on" ){
+					attr.set("pellet-status-led", "src", "images/pellet-on.png");
+					if ( system_status.mode == "manual" ){
 						pelletOnBtn.set("disabled", true );
 						pelletOffBtn.set("disabled", false );
-					}else{
-						attr.set("pellet-status-led", "src", "images/pellet-off.png");
+					}
+				}else{
+					attr.set("pellet-status-led", "src", "images/pellet-off.png");
+					if ( system_status.mode == "manual" ){
 						pelletOnBtn.set("disabled", false );
 						pelletOffBtn.set("disabled", true );
 					}
-					if ( system_status.gas.command == "on" ){
-						attr.set("gas-status-led", "src", "images/gas-on.png");
+				}
+				if ( system_status.gas.command == "on" ){
+					attr.set("gas-status-led", "src", "images/gas-on.png");
+					if ( system_status.mode == "manual" ){
 						gasOnBtn.set("disabled", true );
 						gasOffBtn.set("disabled", false );
-					}else{
-						attr.set("gas-status-led", "src", "images/gas-off.png");
+					}
+				}else{
+					attr.set("gas-status-led", "src", "images/gas-off.png");
+					if ( system_status.mode == "manual" ){
 						gasOnBtn.set("disabled", false );
 						gasOffBtn.set("disabled", true );
 					}
-				}else if ( system_status.mode == "program" ){
-					dclass.add( "modsel-program", "modselected" );
-					dclass.remove( "modsel-program", "modunselected" );
-					dclass.remove( "modsel-auto", "modselected" );
-					dclass.remove( "modsel-manual", "modselected" );
-					dclass.add( "modsel-auto", "modunselected" );
-					dclass.add( "modsel-manual", "modunselected" );
-					modeStack.selectChild( programPane );
+				}
+				if ( system_status.mode != "auto" ){
+					autoBtn.set("disabled", false );
+					manualBtn.set("disabled", true );
+					html.set(modeLabel, "Impianto in MANUALE");
+				}else{
+					autoBtn.set("disabled", true );
+					manualBtn.set("disabled", false );
+					gasOnBtn.set("disabled", true );
+					gasOffBtn.set("disabled", true );
+					pelletOnBtn.set("disabled", true );
+					pelletOffBtn.set("disabled", true );
+					html.set(modeLabel, "Impianto in AUTOMATICO");
 				}
 				window.setTimeout( function(){ updateStatus(); }, 5000 );
 			}, 
@@ -265,13 +380,24 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 	autoPane = new ContentPane({
 		href: "auto.html",
 		onLoad: function() {
-				programRefresh();
+				autoRefresh();
 			}
 		}, "auto-pane" );
 	autoPane.startup();
 	manualPane = new ContentPane({
-		href: "manual.html",
+		href: "status.html",
 		onLoad: function() {
+				modeLabel = dom.byId( "mode-label" );
+				manualBtn = new Button({
+					label: "Manuale",
+					disabled: true,
+					onClick: setManualMode
+				}, "manual-btn");
+				autoBtn = new Button({
+					label: "Automatico",
+					disabled: true,
+					onClick: setAutoMode
+				}, "auto-btn");
 				pelletOnBtn = new Button({
 					label: "Accendi",
 					disabled: true,
@@ -301,6 +427,29 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 	manualPane.startup();
 	programPane = new ContentPane({
 		href: "program.html",
+		onLoad: function() {
+				prgResetBtn = new Button({
+					label: "Ripristina",
+					onClick: programReset
+				}, "program-reset");
+				prgResetBtn.startup();
+				prgApplyBtn = new Button({
+					label: "Applica",
+					onClick: programApply
+				}, "program-apply");
+				prgApplyBtn.startup();
+				program_status = system_status.program;
+				programRefresh();
+				selectOff = dom.byId("select-off");
+				on( selectOff, "click", function(){selectType('');});
+				selectGas = dom.byId("select-gas");
+				on( selectGas, "click", function(){selectType('g');});
+				selectPelletGas = dom.byId("select-pelletgas");
+				on( selectPelletGas, "click", function(){selectType('x');});
+				selectPellet = dom.byId("select-pellet");
+				on( selectPellet, "click", function(){selectType('p');});
+				selectType('');
+			}
 		}, "program_pane" );
 	programPane.startup();
 	modeStack.addChild( autoPane );
@@ -310,31 +459,31 @@ function(Button, request, dom, attr, dclass, style, html, registry, ConfirmDialo
 	modeStack.startup();
 
 	manualBtn = new Button({
-		label: "Manual",
-		onClick: setManualMode,
+		label: "Stato",
+		onClick: function(){switchMode("manual");}
 		}, "modsel-manual-btn");
 	manualBtn.startup();
 	autoBtn = new Button({
-		label: "Auto",
-		onClick: setAutoMode,
+		label: "Programma attivo",
+		onClick: function(){switchMode("auto");}
 		}, "modsel-auto-btn");
 	autoBtn.startup();
 	programBtn = new Button({
-		label: "Programma",
-		onClick: setProgramMode,
+		label: "Cambia programma",
+		onClick: function(){switchMode("program");}
 		}, "modsel-program-btn");
 	programBtn.startup();
+	switchMode("manual");
 	
 
-	historyGraph = new Chart("history");
+	updateStatus();
+	historyGraph = new Chart("history-graph");
 	historyGraph.addPlot("default", {type: Lines});
 	historyGraph.addAxis("x");
 	historyGraph.addAxis("y", {vertical: true});
 	historyGraph.addSeries("Temp", [], {stroke: {color: "red", width: 2}} );
 	historyGraph.render();
-
 	updateHistory();
-	updateStatus();
 });
 
 </script>
