@@ -177,7 +177,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 		dclass.remove(selectGas, "program-selected");
 		dclass.remove(selectPelletGas, "program-selected");
 		dclass.remove(selectPellet, "program-selected");
-		if ( t == ' ' ){
+		if ( t == 'o' ){
 			dclass.add(selectOff, "program-selected");
 		}else if ( t == 'g' ) {
 			dclass.add(selectGas, "program-selected");
@@ -359,7 +359,8 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 					pelletOffBtn.set("disabled", true );
 					html.set(modeLabel, "Impianto in AUTOMATICO");
 				}
-				window.setTimeout( function(){ updateStatus(); }, 5000 );
+				autoRefresh();
+				window.setTimeout( function(){ updateStatus(); }, 2000 );
 			}, 
 			function(err)
 			{
@@ -453,14 +454,14 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 				program_status = system_status.program;
 				programRefresh();
 				selectOff = dom.byId("select-off");
-				on( selectOff, "click", function(){selectType(' ');});
+				on( selectOff, "click", function(){selectType('o');});
 				selectGas = dom.byId("select-gas");
 				on( selectGas, "click", function(){selectType('g');});
 				selectPelletGas = dom.byId("select-pelletgas");
 				on( selectPelletGas, "click", function(){selectType('x');});
 				selectPellet = dom.byId("select-pellet");
 				on( selectPellet, "click", function(){selectType('p');});
-				selectType(' ');
+				selectType('o');
 				minTemp = new NumberSpinner({
 					value: system_status.temp.min,
 					smallDelta: 0.1,

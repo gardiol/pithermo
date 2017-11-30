@@ -234,7 +234,7 @@ void RunnerThread::updateStatus()
                     bool pellet_on = _program.getPellet(d,h,f);
                     bool gas_on = _program.getGas(d,h,f);
                     json += "\"";
-                    json += pellet_on ? (gas_on ? "x" : "p") : (gas_on ? "g" : "");
+                    json += pellet_on ? (gas_on ? "x" : "p") : (gas_on ? "g" : "o");
                     json += "\"";
                     if ( (h != 23) || (f != 1) )
                         json += ",";

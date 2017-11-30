@@ -76,7 +76,7 @@ bool Program::change(const std::string &p)
                             _gas_program[d][h][f] = false;
                             _pellet_program[d][h][f] = true;
                         }
-                        else if ( p == ' ' )
+                        else if ( p == 'o' || p == 'O' )
                         {
                             if ( !ret && (gas_on || pellet_on) )
                                 ret = true;
@@ -93,28 +93,31 @@ bool Program::change(const std::string &p)
 
 void Program::loadConfig(const ConfigData *c)
 {
-    for ( int d = 0; d < 7; d++ )
+    if ( c != NULL )
     {
-        std::string day = "day"+FrameworkUtils::tostring(d);
-        std::string day_string = c->getValue( day );
-        std::vector<std::string> tokens = FrameworkUtils::string_split( day_string, ",");
-        if ( tokens.size() >= 48 )
+        for ( int d = 0; d < 7; d++ )
         {
-            int t = 0;
-            for ( int h = 0; h < 24; h++ )
+            std::string day = "day"+FrameworkUtils::tostring(d);
+            std::string day_string = c->getValue( day );
+            std::vector<std::string> tokens = FrameworkUtils::string_split( day_string, ",");
+            if ( tokens.size() >= 48 )
             {
-                for ( int f = 0; f < 2; f++ )
+                int t = 0;
+                for ( int h = 0; h < 24; h++ )
                 {
-                    std::string token = tokens[t++];
-                    FrameworkUtils::string_tolower( token );
-                    if ( (token == "g") || (token == "x") )
-                        _gas_program[d][h][f] = true;
-                    else
-                        _gas_program[d][h][f] = false;
-                    if ( (token == "p") || (token == "x") )
-                        _pellet_program[d][h][f] = true;
-                    else
-                        _pellet_program[d][h][f] = false;
+                    for ( int f = 0; f < 2; f++ )
+                    {
+                        std::string token = tokens[t++];
+                        FrameworkUtils::string_tolower( token );
+                        if ( (token == "g") || (token == "x") )
+                            _gas_program[d][h][f] = true;
+                        else
+                            _gas_program[d][h][f] = false;
+                        if ( (token == "p") || (token == "x") )
+                            _pellet_program[d][h][f] = true;
+                        else
+                            _pellet_program[d][h][f] = false;
+                    }
                 }
             }
         }
@@ -140,7 +143,7 @@ void Program::saveConfig(ConfigData *c)
                 else if ( pellet_on )
                     value += "p";
                 else
-                    value += " ";
+                    value += "o";
                 value += ",";
             }
         }
