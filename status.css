@@ -19,3 +19,7 @@
 	font-size: 140%;
 	border-bottom: 1px dotted black;
 }
+
+#status > div > img {
+	height: 5em;
+}

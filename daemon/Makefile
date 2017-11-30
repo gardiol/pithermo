@@ -12,17 +12,17 @@ obj:
 $(FRAMEWORK_OBJS): ${FRAMEWORK_SRCS}
 	g++ $(CFLAGS) -o $@ -c $(FRAMEWORK_MAPS_$(basename $(notdir $@))) -Iframework
 
-obj/main.o: src/main.cpp
-	g++ $(CFLAGS) -o $@ -c $^ -Iframework
+obj/main.o: src/main.cpp src/runnerthread.h src/command.h 
+	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
-obj/runnerthread.o: src/runnerthread.cpp
-	g++ $(CFLAGS) -o $@ -c $^ -Iframework
+obj/runnerthread.o: src/runnerthread.cpp src/command.h src/program.h 
+	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
 obj/command.o: src/command.cpp
-	g++ $(CFLAGS) -o $@ -c $^ -Iframework
+	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
 obj/program.o: src/program.cpp
-	g++ $(CFLAGS) -o $@ -c $^ -Iframework
+	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
 pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o
 	g++ -o $@ $^ -lpthread -lrt 

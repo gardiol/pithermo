@@ -177,7 +177,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 		dclass.remove(selectGas, "program-selected");
 		dclass.remove(selectPelletGas, "program-selected");
 		dclass.remove(selectPellet, "program-selected");
-		if ( t == '' ){
+		if ( t == ' ' ){
 			dclass.add(selectOff, "program-selected");
 		}else if ( t == 'g' ) {
 			dclass.add(selectGas, "program-selected");
@@ -225,7 +225,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 					for ( var f = 0; f < 2; f++ ){
 						var i = "program-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30");
 						var c = program_status[d][h*2+f];
-						var s = c==''?"":'<img src="images/';
+						var s = c==' '?"":'<img src="images/';
 						if ( c == 'p' ) s+='pellet.png"/>';
 						if ( c == 'g' ) s+='gas.png"/>';
 						if ( c == 'x' ) s+='pellet-gas.png"/>';
@@ -453,14 +453,14 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 				program_status = system_status.program;
 				programRefresh();
 				selectOff = dom.byId("select-off");
-				on( selectOff, "click", function(){selectType('');});
+				on( selectOff, "click", function(){selectType(' ');});
 				selectGas = dom.byId("select-gas");
 				on( selectGas, "click", function(){selectType('g');});
 				selectPelletGas = dom.byId("select-pelletgas");
 				on( selectPelletGas, "click", function(){selectType('x');});
 				selectPellet = dom.byId("select-pellet");
 				on( selectPellet, "click", function(){selectType('p');});
-				selectType('');
+				selectType(' ');
 				minTemp = new NumberSpinner({
 					value: system_status.temp.min,
 					smallDelta: 0.1,

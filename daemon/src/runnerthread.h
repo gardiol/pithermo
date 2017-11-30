@@ -6,10 +6,11 @@
 #include "basemutex.h"
 #include "scheduledthread.h"
 
+#include "program.h"
+
 using namespace FrameworkLibrary;
 
 class Command;
-class Program;
 
 class RunnerThread : public ScheduledThread
 {
@@ -45,7 +46,7 @@ private:
 
     uint32_t _last_time;
 
-    Program* _program;
+    Program _program;
 
 };
 

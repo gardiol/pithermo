@@ -15,6 +15,7 @@ public:
                    MANUAL,
                    SET_MIN_TEMP,
                    SET_MAX_TEMP,
+                   PROGRAM,
                    AUTO };
 
     Command( const char* buffer, uint32_t size );

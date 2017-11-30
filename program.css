@@ -58,3 +58,8 @@
 	display: inline-block;
         vertical-align: middle;
 }
+
+.temp-img {
+	height: 2em;
+        vertical-align: middle;
+}

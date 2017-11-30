@@ -19,6 +19,11 @@ Command::Command(const char *buffer, uint32_t size):
     }
     else if ( (size == 7) && (std::string(buffer,7) == "gas-off") )
         _command = GAS_OFF;
+    else if ( (size >= 7) && (std::string(buffer,7) == "program") )
+    {
+        _command = PROGRAM;
+        _param = std::string( &buffer[7], size-7 );
+    }
     else if ( (size == 6) && (std::string(buffer,6) == "manual") )
         _command = MANUAL;
     else if ( (size == 6) && (std::string(buffer,6) == "gas-on") )

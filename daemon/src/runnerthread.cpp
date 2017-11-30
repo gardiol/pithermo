@@ -1,5 +1,6 @@
 #include "runnerthread.h"
 
+#include <time.h>
 #include <stdio.h>
 
 #define EPOCH_DOW 3
@@ -24,8 +25,7 @@ RunnerThread::RunnerThread(const std::string &cfg, const std::string &exchange_p
     _current_temp(20.0),
     _min_temp(16.0),
     _max_temp(17.0),
-    _error(false),
-    _program(NULL)
+    _error(false)
 {
     startThread();
     while ( !isRunning() && !_error )
@@ -46,11 +46,6 @@ RunnerThread::~RunnerThread()
     }
     _commands_list.clear();
     _commands_mutex.unlock();
-    if ( _program != NULL )
-    {
-        delete _program;
-        _program = NULL;
-    }
 }
 
 void RunnerThread::appendCommand(Command *cmd)
@@ -146,6 +141,14 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         }
             break;
 
+        case Command::PROGRAM:
+            if ( _program.change( cmd->getParam() ) )
+            {
+                update_status = true;
+                save_config = true;
+            }
+            break;
+
         case Command::INVALID:
         default:
             break;
@@ -181,6 +184,7 @@ bool RunnerThread::scheduleStart()
         _manual_mode = FrameworkUtils::string_tolower(config.getValue( "mode" )) == "manual";
         _min_temp = FrameworkUtils::string_tof( config.getValue( "min_temp" ) );
         _max_temp = FrameworkUtils::string_tof( config.getValue( "max_temp" ) );
+        _program.loadConfig( config.getSection( "program" ) );
     }
     else
         debugPrintWarning() << "Warning: empty config file!\n";
@@ -195,6 +199,10 @@ void RunnerThread::saveConfig()
     config.setValue( "mode", _manual_mode ? "manual" : "auto" );
     config.setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
     config.setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
+    ConfigData* prog_section = config.getSection( "program" );
+    if ( prog_section == NULL )
+        prog_section = config.newSection( "program" );
+    _program.saveConfig( prog_section );
     if ( !FrameworkUtils::str_to_file( _config_file, config.toStr() ) )
         debugPrintError() << "Unable to save file " << _config_file << "\n";
 }
@@ -223,8 +231,8 @@ void RunnerThread::updateStatus()
             {
                 for ( int f = 0; f < 2; f++ )
                 {
-                    bool pellet_on = _program != NULL ? _program->getPellet(d,h,f) : false;
-                    bool gas_on = _program != NULL ? _program->getGas(d,h,f) : false;
+                    bool pellet_on = _program.getPellet(d,h,f);
+                    bool gas_on = _program.getGas(d,h,f);
                     json += "\"";
                     json += pellet_on ? (gas_on ? "x" : "p") : (gas_on ? "g" : "");
                     json += "\"";
@@ -238,10 +246,11 @@ void RunnerThread::updateStatus()
         }
         json += "],";
 
-        uint32_t day_of_week = (uint32_t)( ( (_last_time / SECS_PER_DAY) + EPOCH_DOW) % 7);
-        uint32_t hour = (uint32_t)( (_last_time / SECS_PER_HOUR) % 24);
-        uint32_t half = (uint32_t)( (_last_time / SECS_PER_HHOUR) % 2);
-
+        time_t now = time(NULL);
+        struct tm *tm_struct = localtime(&now);
+        uint32_t day_of_week = (tm_struct->tm_wday-1)%7;
+        uint32_t hour = tm_struct->tm_hour;
+        uint32_t half = tm_struct->tm_min > 30 ? 1 : 0;
         json += "\"now\":{\"d\":"+FrameworkUtils::tostring( day_of_week ) +
                 ",\"h\":"+FrameworkUtils::tostring(hour) +
                 ",\"f\":"+FrameworkUtils::tostring(half) + "},";
