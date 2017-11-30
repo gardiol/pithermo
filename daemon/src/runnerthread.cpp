@@ -174,7 +174,8 @@ void RunnerThread::saveConfig()
     config.setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
     config.setValue( "max_gas_temp", FrameworkUtils::ftostring( _max_gas_temp ) );
     config.setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
-    FrameworkUtils::str_to_file( _config_file, config.toStr() );
+    if ( !FrameworkUtils::str_to_file( _config_file, config.toStr() ) )
+         debugPrintError() << "Unable to save file " << _config_file << "\n";
 }
 
 void RunnerThread::updateStatus()
