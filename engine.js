@@ -249,6 +249,41 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 			program_linked = true;
 		}
 	}
+	function tempReset() {
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "Annullare le modifiche?"});
+		dialog.set("buttonOk", "Si, annulla");
+		dialog.set("buttonCancel", "No, continua");
+		dialog.on("execute", function() {
+						maxTemp.set("value", system_status.temp.max );				
+						minTemp.set("value", system_status.temp.min );				
+					});
+		dialog.show();
+	}
+	function tempApply() {
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "Salvare le modifiche?"});
+		dialog.set("buttonOk", "Salva");
+		dialog.set("buttonCancel", "Continua a modificare");
+		dialog.on("execute", 
+			function() {
+       				request.post("/cgi-bin/set_min_temp",{data:minTemp.value}).then(
+					function(result){
+					},
+					function(err){
+						alert("Command error: " + err );
+					});
+       				request.post("/cgi-bin/set_max_temp",{data:maxTemp.value}).then(
+					function(result){
+					},
+					function(err){
+						alert("Command error: " + err );
+					});
+			});
+		dialog.show();
+	}
 
 	function switchMode(mode){
 		if ( mode == "auto" ){
@@ -442,11 +477,11 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 				maxTemp.startup();
 				tempResetBtn = new Button({
 					label: "Ripristina",
-					//onClick: programApply
+					onClick: tempReset
 				}, "temp-reset");
 				tempApplyBtn = new Button({
 					label: "Applica",
-					//onClick: programApply
+					onClick: tempApply
 				}, "temp-apply");
 			}
 		}, "program_pane" );
