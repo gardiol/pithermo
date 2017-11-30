@@ -110,6 +110,8 @@ int main(int argc, char** argv)
                          .setOptions(1));
     cmd.defineParameter( CmdLineParameter("xchange", "Exchange path", CmdLineParameter::single, true )
                          .setOptions(1));
+    cmd.defineParameter( CmdLineParameter("history", "History file", CmdLineParameter::single, true )
+                         .setOptions(1));
 
     cmd.setCommandLine( argc, argv );
 
@@ -117,6 +119,7 @@ int main(int argc, char** argv)
     {
         std::string config_file = cmd.consumeParameter( "config" ).getOption();
         std::string exchange_path = cmd.consumeParameter( "xchange" ).getOption();
+        std::string history_file = cmd.consumeParameter( "history" ).getOption();
         if ( FrameworkUtils::fileExist( exchange_path ) )
         {
             if ( cmd.consumeParameter( "daemon" ).isValid() )
@@ -128,7 +131,7 @@ int main(int argc, char** argv)
             UdpSocket command_server("CommandServer","", "127.0.0.1",0,5555);
             if ( command_server.activateInterface() )
             {
-                RunnerThread runner(config_file, exchange_path);
+                RunnerThread runner(config_file, exchange_path, history_file);
                 if ( runner.isRunning() )
                 {
                     while ( runner.isRunning() &&

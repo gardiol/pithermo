@@ -16,7 +16,8 @@ class RunnerThread : public ScheduledThread
 {
 public:
     RunnerThread( const std::string& cfg,
-                  const std::string& exchange_path );
+                  const std::string& exchange_path,
+                  const std::string& hst);
     virtual ~RunnerThread();
 
     void appendCommand( Command* cmd );
@@ -28,9 +29,11 @@ private:
 
     void saveConfig();
     void updateStatus();
+    void updateHistory();
 
     std::string _config_file;
     std::string _exchange_path;
+    std::string _history_file;
 
     std::list<Command*> _commands_list;
     BaseMutex _commands_mutex;
@@ -48,6 +51,9 @@ private:
 
     Program _program;
 
+    bool _history_warned;
+
+    std::list<float> _temp_history;
 };
 
 #endif // RUNNERTHREAD_H

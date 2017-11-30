@@ -1,5 +1,6 @@
 #include "runnerthread.h"
 
+#include <string.h>
 #include <time.h>
 #include <stdio.h>
 
@@ -14,10 +15,11 @@
 #include "command.h"
 #include "program.h"
 
-RunnerThread::RunnerThread(const std::string &cfg, const std::string &exchange_path):
+RunnerThread::RunnerThread(const std::string &cfg, const std::string &exchange_path, const std::string &hst):
     ScheduledThread("Runner", 10 * 1000 ),
     _config_file( cfg ),
     _exchange_path( exchange_path ),
+    _history_file( hst ),
     _commands_mutex("CommandsMutex"),
     _pellet_command(false),
     _gas_command(false),
@@ -25,7 +27,8 @@ RunnerThread::RunnerThread(const std::string &cfg, const std::string &exchange_p
     _current_temp(20.0),
     _min_temp(16.0),
     _max_temp(17.0),
-    _error(false)
+    _error(false),
+    _history_warned(false)
 {
     startThread();
     while ( !isRunning() && !_error )
@@ -58,6 +61,7 @@ void RunnerThread::appendCommand(Command *cmd)
 bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
 {
     bool update_status = false;
+    bool update_history = false;
     bool save_config = false;
     bool ret = true;
     _commands_mutex.lock();
@@ -160,14 +164,20 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     uint32_t current_time = FrameworkTimer::getTimeEpoc();
     if ( (_last_time+60) < current_time )
     {
+        _current_temp += 0.1;
+        if ( _current_temp > 28.0 )
+            _current_temp = 12.0;
         _last_time = current_time;
         update_status = true;
+        update_history = true;
     }
 
     if ( save_config )
         saveConfig();
     if ( update_status )
         updateStatus();
+    if ( update_history )
+        updateHistory();
 
     return ret;
 }
@@ -264,6 +274,44 @@ void RunnerThread::updateStatus()
         json +="}\n";
         fwrite( json.c_str(), json.length(), 1, status_file );
         fclose( status_file );
+    }
+}
+
+void RunnerThread::updateHistory()
+{
+    _temp_history.push_back( _current_temp );
+    while ( _temp_history.size() > 100 )
+        _temp_history.pop_front();
+
+    FILE* history_file = fopen( _history_file.c_str(), "a" );
+    if ( history_file != NULL )
+    {
+        char buffer[ sizeof(_last_time) + sizeof(_current_temp) ];
+        memcpy( &buffer[0], &_last_time, sizeof(_last_time) );
+        memcpy( &buffer[sizeof(_last_time)], &_current_temp, sizeof(_current_temp) );
+        fwrite( buffer, sizeof(_last_time) + sizeof(_current_temp), 1, history_file );
+        fclose(history_file);
+    }
+    else if ( !_history_warned )
+    {
+        _history_warned = true;
+        debugPrintWarning() << "Warning: unable to open history file!\n";
+    }
+
+    FILE* history_json = fopen( (_exchange_path+"/_history").c_str(), "w" );
+    if ( history_json )
+    {
+        std::string json = "[";
+        for ( std::list<float>::iterator t = _temp_history.begin(); t != _temp_history.end(); ++t )
+        {
+            float temp = *t;
+            if ( t != _temp_history.begin() )
+                json+=",";
+            json += FrameworkUtils::ftostring( temp );
+        }
+        json += "]";
+        fwrite( json.c_str(), json.length(), 1, history_json );
+        fclose( history_json );
     }
 }
 
