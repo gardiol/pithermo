@@ -1,26 +1,52 @@
 <link rel="stylesheet" href="program.css">
 
 <div id="program-selector">
-	<button id="program-reset"></button>
-	<div>
-	<div id="select-off">
-		<img id="select-off-img" src="images/off.png"/>
-		<p>Off</p>
+	<div id="temp-pane">
+		<div>
+			<div>
+				Temp min:
+				<div id="min-temp" style="width: 6em;"></div>
+			</div>
+			<div>
+				Temp max:
+				<div id="max-temp"></div>
+			</div>
+		</div>
+		<div>
+			<div>
+				<button id="temp-reset"></button>
+			</div>
+			<div>
+				<button id="temp-apply"></button>
+			</div>
+		</div>
 	</div>
-	<div id="select-gas">
-		<img id="select-gas-img" src="images/gas.png"/>
-		<p>Gas</p>
+	<div id="select-box">
+		<div id="select-off">
+			<img id="select-off-img" src="images/off.png"/>
+			<p>Off</p>
+		</div>
+		<div id="select-gas">
+			<img id="select-gas-img" src="images/gas.png"/>
+			<p>Gas</p>
+		</div>
+		<div id="select-pelletgas">
+			<img id="select-pelletgas-img" src="images/pellet-gas.png"/>
+			<p>Pellet+Gas</p>
+		</div>
+		<div id="select-pellet">
+			<img id="select-pellets-img" src="images/pellet.png"/>
+			<p>Pellet</p>
+		</div>
+		<div>
+			<div>
+				<button id="program-reset"></button>
+			</div>
+			<div>
+				<button id="program-apply"></button>
+			</div>
+		</div>
 	</div>
-	<div id="select-pelletgas">
-		<img id="select-pelletgas-img" src="images/pellet-gas.png"/>
-		<p>Pellet+Gas</p>
-	</div>
-	<div id="select-pellet">
-		<img id="select-pellets-img" src="images/pellet.png"/>
-		<p>Pellet</p>
-	</div>
-	</div>
-	<button id="program-apply"></button>
 </div>
 
 

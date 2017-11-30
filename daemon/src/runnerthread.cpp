@@ -23,8 +23,7 @@ RunnerThread::RunnerThread(const std::string &cfg, const std::string &exchange_p
     _manual_mode(true),
     _current_temp(20.0),
     _min_temp(16.0),
-    _max_gas_temp(17.0),
-    _max_temp(22.0),
+    _max_temp(17.0),
     _error(false),
     _program(NULL)
 {
@@ -123,6 +122,30 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             }
             break;
 
+        case Command::SET_MIN_TEMP:
+        {
+            float tmp_temp = FrameworkUtils::string_tof( cmd->getParam() );
+            if ( tmp_temp != _min_temp )
+            {
+                _min_temp = tmp_temp;
+                update_status = true;
+                save_config = true;
+            }
+        }
+            break;
+
+        case Command::SET_MAX_TEMP:
+        {
+            float tmp_temp = FrameworkUtils::string_tof( cmd->getParam() );
+            if ( tmp_temp != _max_temp )
+            {
+                _max_temp = tmp_temp;
+                update_status = true;
+                save_config = true;
+            }
+        }
+            break;
+
         case Command::INVALID:
         default:
             break;
@@ -157,7 +180,6 @@ bool RunnerThread::scheduleStart()
     {
         _manual_mode = FrameworkUtils::string_tolower(config.getValue( "mode" )) == "manual";
         _min_temp = FrameworkUtils::string_tof( config.getValue( "min_temp" ) );
-        _max_gas_temp = FrameworkUtils::string_tof( config.getValue( "max_gas_temp" ) );
         _max_temp = FrameworkUtils::string_tof( config.getValue( "max_temp" ) );
     }
     else
@@ -172,10 +194,9 @@ void RunnerThread::saveConfig()
     ConfigFile config("config", content );
     config.setValue( "mode", _manual_mode ? "manual" : "auto" );
     config.setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
-    config.setValue( "max_gas_temp", FrameworkUtils::ftostring( _max_gas_temp ) );
     config.setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
     if ( !FrameworkUtils::str_to_file( _config_file, config.toStr() ) )
-         debugPrintError() << "Unable to save file " << _config_file << "\n";
+        debugPrintError() << "Unable to save file " << _config_file << "\n";
 }
 
 void RunnerThread::updateStatus()
@@ -223,7 +244,13 @@ void RunnerThread::updateStatus()
 
         json += "\"now\":{\"d\":"+FrameworkUtils::tostring( day_of_week ) +
                 ",\"h\":"+FrameworkUtils::tostring(hour) +
-                ",\"f\":"+FrameworkUtils::tostring(half) + "}";
+                ",\"f\":"+FrameworkUtils::tostring(half) + "},";
+
+        json += "\"temp\":{\"min\":";
+        json += FrameworkUtils::ftostring( _min_temp );
+        json += ",\"max\":";
+        json += FrameworkUtils::ftostring( _max_temp );
+        json += "}";
 
         json +="}\n";
         fwrite( json.c_str(), json.length(), 1, status_file );

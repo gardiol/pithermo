@@ -39,7 +39,6 @@ private:
     bool _manual_mode;
     float _current_temp;
     float _min_temp;
-    float _max_gas_temp;
     float _max_temp;
 
     bool _error;

@@ -13,15 +13,19 @@ public:
                    GAS_ON,
                    GAS_OFF,
                    MANUAL,
+                   SET_MIN_TEMP,
+                   SET_MAX_TEMP,
                    AUTO };
 
     Command( const char* buffer, uint32_t size );
     ~Command();
 
     CmdType command() const;
+    std::string getParam() const;
 
 private:
     CmdType _command;
+    std::string _param;
 };
 
 #endif // COMMAND_H

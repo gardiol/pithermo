@@ -40,7 +40,7 @@
 	margin: 1em;
 	padding: 0.2em;
 }
-#program-selector > div > div {
+#select-box > div {
 	display: inline-block;
 	vertical-align: middle;
 }
@@ -54,3 +54,7 @@
 	border: 1px solid black;
 }
 
+#temp-pane > div {
+	display: inline-block;
+        vertical-align: middle;
+}

@@ -32,6 +32,10 @@ var program_status;
 var selected_type;
 var program_linked;
 var prev_mode;
+var minTemp;
+var maxTemp;
+var tempResetBtn;
+var tempApplyBtn;
 
 
 require(["dijit/form/Button", 
@@ -47,12 +51,13 @@ require(["dijit/form/Button",
 	 "dijit/ConfirmDialog",
 	 "dijit/layout/ContentPane",
 	 "dijit/layout/StackContainer",
+	 "dijit/form/NumberSpinner",
 	 "dojox/charting/Chart",
 	 "dojox/charting/axis2d/Default", 
 	 "dojox/charting/plot2d/Lines",
 	 "dojo/on",
 	 "dojo/domReady!"], 
-function(Button, request, dom, attr, dclass, style, html, query, json, registry, ConfirmDialog, ContentPane, StackContainer, Chart, Default, Lines, on)
+function(Button, request, dom, attr, dclass, style, html, query, json, registry, ConfirmDialog, ContentPane, StackContainer, NumberSpinner, Chart, Default, Lines, on)
 {
 	function executeCommand(cmd) {
        		request.put("/cgi-bin/command", {data:cmd}).then(
@@ -421,6 +426,28 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 				selectPellet = dom.byId("select-pellet");
 				on( selectPellet, "click", function(){selectType('p');});
 				selectType('');
+				minTemp = new NumberSpinner({
+					value: system_status.temp.min,
+					smallDelta: 0.1,
+					style: "width: 6em;",
+        				constraints: { min:0, max:25, places:1 }
+    				}, "min-temp");
+				minTemp.startup();
+				maxTemp = new NumberSpinner({
+					value: system_status.temp.max,
+					smallDelta: 0.1,
+					style: "width: 6em;",
+        				constraints: { min:0, max:25, places:1 }
+    				}, "max-temp");
+				maxTemp.startup();
+				tempResetBtn = new Button({
+					label: "Ripristina",
+					//onClick: programApply
+				}, "temp-reset");
+				tempApplyBtn = new Button({
+					label: "Applica",
+					//onClick: programApply
+				}, "temp-apply");
 			}
 		}, "program_pane" );
 	programPane.startup();
