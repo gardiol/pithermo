@@ -1400,6 +1400,13 @@ std::string FrameworkUtils::tostring( const int64_t t )
     return ss.str();
 }
 
+std::string FrameworkUtils::ftostring( const double t )
+{
+    std::ostringstream ss;
+    ss << t;
+    return ss.str();
+}
+
 bool FrameworkUtils::chDir(const std::string &path)
 {
     bool ret = false;

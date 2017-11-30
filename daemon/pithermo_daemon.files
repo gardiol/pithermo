@@ -1,5 +1,15 @@
 framework/udpsocket.cpp
 framework/udpsocket.h
+framework/variant.cpp
+framework/variant.h
+framework/variantlive.cpp
+framework/variantlive.h
+framework/variantstatic.cpp
+framework/variantstatic.h
+src/command.cpp
+src/command.h
+src/program.cpp
+src/program.h
 src/runnerthread.cpp
 src/runnerthread.h
 framework/basecomminterface.cpp

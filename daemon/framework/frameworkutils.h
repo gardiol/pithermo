@@ -403,6 +403,12 @@ public:
      */
     static std::string tostring( const int64_t t);
 
+    /** @brief Convert a double to string
+     * @param t float to convert
+     * @return converted string
+     */
+    static std::string ftostring( const double t);
+
     /** @brief Change working directory
      *
      * @param path directory name to change

@@ -99,13 +99,6 @@ public:
                      multiple /**< Accept this parameter more than once on the command line */
                    };
 
-    /** @brief create an invalid parameter (internal usage only)
-     *
-     * 
-     *
-     */
-    CmdLineParameter();
-
     /** @brief Create a new valid parameter
      * @since added "multiple" parameter in 4.0.0
      * @param name the parameter name (es: "param") without the leading delimiter
@@ -121,6 +114,13 @@ public:
                      const std::string& description,
                      MultiMode multiple,
                      bool mandatory = false);
+
+    /** @brief create an invalid parameter (internal usage only)
+     *
+     *
+     *
+     */
+    CmdLineParameter();
 
     /** @brief Copy-contructor for usage on the stack
      * @param other the other object

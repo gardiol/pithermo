@@ -1,34 +1,28 @@
 #!/bin/bash
+
+exec 3<>/dev/udp/127.0.0.1/5555
+
 echo "Content-type: text/html"
 echo ""
 read COMMAND
+
 if [ "$COMMAND" = "pellet_off" ]
 then
-	echo '"pellet" :
-	{"command": "off",
-	 "status": "off" }' > _pellet_status
+	echo -n "pellet-off" >&3
 elif [ "$COMMAND" = "pellet_on" ]
 then
-	echo '"pellet" :
-	{"command": "on",
-	 "status": "on" }' > _pellet_status
+	echo -n "pellet-on" >&3
 elif [ "$COMMAND" = "gas_off" ]
 then
-	echo '"gas" :
-	{"command": "off",
-	 "status": "off" }' > _gas_status
+	echo -n "gas-off" >&3
 elif [ "$COMMAND" = "gas_on" ]
 then
-	echo '"gas" :
-	{"command": "on",
-	 "status": "on" }' > _gas_status
+	echo -n "gas-on" >&3
 elif [ "$COMMAND" = "manual" ]
 then
-	echo '"mode":"manual"' > _mode
+	echo -n "manual" >&3
 elif [ "$COMMAND" = "auto" ]
 then
-	echo '"mode":"auto"' > _mode
-elif [ "$COMMAND" = "program" ]
-then
-	echo '"mode":"program"' > _mode
+	echo -n "auto" >&3
 fi
+

@@ -1,12 +1,4 @@
 #!/bin/bash
 echo "Content-type: application/json"
 echo ""
-echo '{'
-cat _mode
-echo ','
-cat _pellet_status
-echo ','
-cat _gas_status
-echo ','
-cat _program
-echo '}'
+cat _status
