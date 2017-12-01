@@ -724,9 +724,10 @@ std::vector<std::string> FrameworkUtils::parse_csv(const std::string &row, const
     return ret;
 }
 
-std::string FrameworkUtils::string_replace(const std::string &src, const std::string &token, const std::string &value )
+std::string FrameworkUtils::string_replace(const std::string &src, const std::string &token, const std::string &value, bool only_one )
 {
-    std::string ret_str = "";
+    std::string ret_str;
+    ret_str.reserve( src.size() + value.size() );
     std::string temp = "";
     int token_pos = 0;
     int src_len = src.length();
@@ -745,6 +746,11 @@ std::string FrameworkUtils::string_replace(const std::string &src, const std::st
                 ret_str += value;
                 token_pos = 0;
                 temp.clear();
+                if ( only_one )
+                {
+                    ret_str += src.substr( pos );
+                    return ret_str;
+                }
             }
         }
         else

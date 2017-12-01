@@ -1,5 +1,7 @@
 #include "program.h"
 
+#include <stdio.h>
+
 Program::Program()
 {
     _gas_program.resize(7);
@@ -149,4 +151,28 @@ void Program::saveConfig(ConfigData *c)
         }
         c->setValue( day_str, value );
     }
+}
+
+void Program::writeJSON(FILE *file)
+{
+    char s[5] = "\"_\",";
+    fwrite("[", 1, 1, file );
+    for ( int d = 0; d < 7; d++ )
+    {
+        fwrite("[", 1, 1, file );
+        for ( int h = 0; h < 24; h++ )
+        {
+            for ( int f = 0; f < 2; f++ )
+            {
+                bool pellet_on = _pellet_program[d][h][f];
+                bool gas_on = _gas_program[d][h][f];
+                s[1] = pellet_on ? (gas_on ? 'x' : 'p') : (gas_on ? 'g' : 'o');
+                // disegna , solo alla fine della giornata:
+                fwrite(s, ((h != 23) || (f != 1)) ? 4 : 3,1, file );
+            }
+        }
+        // disegna , solo alla fine della lista:
+        fwrite("],", (d != 6) ? 2 : 1, 1, file );
+    }
+    fwrite("]", 1, 1, file );
 }

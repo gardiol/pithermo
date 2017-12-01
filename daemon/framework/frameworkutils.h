@@ -329,9 +329,10 @@ public:
       * @param src string on which to perform the substitution
       * @param token the substring to replace
       * @param value the replacement string
+      * @param only_one if true quit after first find
       * @return source string with replacements in place
       */
-    static std::string string_replace( const std::string& src, const std::string& token, const std::string& value );
+    static std::string string_replace(const std::string& src, const std::string& token, const std::string& value , bool only_one = false);
 
     /** @brief Given an hostname, resolve it's IP address
      * @param hostname name of the host

@@ -4,13 +4,9 @@
 #include <time.h>
 #include <stdio.h>
 
-#define EPOCH_DOW 3
-#define SECS_PER_DAY 86400
-#define SECS_PER_HOUR 3600
-#define SECS_PER_HHOUR 1800
-
 #include "configfile.h"
 #include "debugprint.h"
+#include "profiler.h"
 
 #include "command.h"
 #include "program.h"
@@ -28,8 +24,22 @@ RunnerThread::RunnerThread(const std::string &cfg, const std::string &exchange_p
     _min_temp(16.0),
     _max_temp(17.0),
     _error(false),
-    _history_warned(false)
+    _history_warned(false),
+    _str_manual("manual"),
+    _str_auto("auto"),
+    _str_on("on"),
+    _str_off("off")
 {
+    _status_json_template.push_back("{\"mode\":\"");
+    _status_json_template.push_back("\",\"pellet\":{\"command\":\"");
+    _status_json_template.push_back("\",\"status\":\"off\"},\"gas\":{\"command\":\"");
+    _status_json_template.push_back("\",\"status\":\"off\"},\"temp\":{\"min\":");
+    _status_json_template.push_back(",\"max\":");
+    _status_json_template.push_back("},\"now\":{\"d\":");
+    _status_json_template.push_back(",\"h\":");
+    _status_json_template.push_back(",\"f\":");
+    _status_json_template.push_back("},\"program\":");
+
     startThread();
     while ( !isRunning() && !_error )
         FrameworkTimer::msleep_s( 100 );
@@ -127,6 +137,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             if ( tmp_temp != _min_temp )
             {
                 _min_temp = tmp_temp;
+                _str_min_t = FrameworkUtils::ftostring( _min_temp );
                 update_status = true;
                 save_config = true;
             }
@@ -139,6 +150,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             if ( tmp_temp != _max_temp )
             {
                 _max_temp = tmp_temp;
+                _str_max_t = FrameworkUtils::ftostring( _max_temp );
                 update_status = true;
                 save_config = true;
             }
@@ -161,13 +173,19 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     _commands_mutex.unlock();
 
 
-    uint32_t current_time = FrameworkTimer::getTimeEpoc();
-    if ( (_last_time+60) < current_time )
+    uint64_t current_time = FrameworkTimer::getTimeEpoc();
+    if ( (_last_time+60) <= current_time )
     {
-        _current_temp += 0.1;
+        _current_temp += 0.5;
         if ( _current_temp > 28.0 )
             _current_temp = 12.0;
+
         _last_time = current_time;
+        time_t now = (time_t)_last_time;
+        struct tm *tm_struct = localtime(&now);
+        _str_f = tm_struct->tm_min > 30 ? "1" : "0";
+        _str_day = FrameworkUtils::tostring( (tm_struct->tm_wday-1)%7 );
+        _str_h = FrameworkUtils::tostring( tm_struct->tm_hour );
         update_status = true;
         update_history = true;
     }
@@ -193,7 +211,9 @@ bool RunnerThread::scheduleStart()
     {
         _manual_mode = FrameworkUtils::string_tolower(config.getValue( "mode" )) == "manual";
         _min_temp = FrameworkUtils::string_tof( config.getValue( "min_temp" ) );
+        _str_min_t = FrameworkUtils::ftostring( _min_temp );
         _max_temp = FrameworkUtils::string_tof( config.getValue( "max_temp" ) );
+        _str_max_t = FrameworkUtils::ftostring( _max_temp );
         _program.loadConfig( config.getSection( "program" ) );
     }
     else
@@ -222,57 +242,44 @@ void RunnerThread::updateStatus()
     FILE* status_file = fopen( (_exchange_path+"/_status").c_str(), "w" );
     if ( status_file )
     {
-        std::string json = "{";
-        json += "\"mode\":";
-        json += ( _manual_mode ? "\"manual\"" : "\"auto\"" );
-        json += ",";
-        json += "\"pellet\":{\"command\":";
-        json += (_pellet_command ? "\"on\"" : "\"off\"" );
-        json += ",\"status\":\"off\"},";
-        json += "\"gas\":{\"command\":";
-        json += (_gas_command ? "\"on\"" : "\"off\"" );
-        json += ",\"status\":\"off\"},";
+        fwrite( _status_json_template[0].c_str(), _status_json_template[0].length(), 1, status_file);
+        if ( _manual_mode )
+            fwrite( _str_manual.c_str(), _str_manual.length(), 1, status_file);
+        else
+            fwrite( _str_auto.c_str(), _str_auto.length(), 1, status_file);
 
-        json += "\"program\":[";
-        for ( int d = 0; d < 7; d++ )
-        {
-            json += "[";
-            for ( int h = 0; h < 24; h++ )
-            {
-                for ( int f = 0; f < 2; f++ )
-                {
-                    bool pellet_on = _program.getPellet(d,h,f);
-                    bool gas_on = _program.getGas(d,h,f);
-                    json += "\"";
-                    json += pellet_on ? (gas_on ? "x" : "p") : (gas_on ? "g" : "o");
-                    json += "\"";
-                    if ( (h != 23) || (f != 1) )
-                        json += ",";
-                }
-            }
-            json += "]";
-            if ( d != 6 )
-                json += ",";
-        }
-        json += "],";
+        fwrite( _status_json_template[1].c_str(), _status_json_template[1].length(), 1, status_file);
+        if ( _pellet_command )
+            fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+        else
+            fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
 
-        time_t now = time(NULL);
-        struct tm *tm_struct = localtime(&now);
-        uint32_t day_of_week = (tm_struct->tm_wday-1)%7;
-        uint32_t hour = tm_struct->tm_hour;
-        uint32_t half = tm_struct->tm_min > 30 ? 1 : 0;
-        json += "\"now\":{\"d\":"+FrameworkUtils::tostring( day_of_week ) +
-                ",\"h\":"+FrameworkUtils::tostring(hour) +
-                ",\"f\":"+FrameworkUtils::tostring(half) + "},";
+        fwrite( _status_json_template[2].c_str(), _status_json_template[2].length(), 1, status_file);
+        if ( _gas_command )
+            fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+        else
+            fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
 
-        json += "\"temp\":{\"min\":";
-        json += FrameworkUtils::ftostring( _min_temp );
-        json += ",\"max\":";
-        json += FrameworkUtils::ftostring( _max_temp );
-        json += "}";
+        fwrite( _status_json_template[3].c_str(), _status_json_template[3].length(), 1, status_file);
+        fwrite( _str_min_t.c_str(), _str_min_t.length(), 1, status_file);
 
-        json +="}\n";
-        fwrite( json.c_str(), json.length(), 1, status_file );
+        fwrite( _status_json_template[4].c_str(), _status_json_template[4].length(), 1, status_file);
+        fwrite( _str_max_t.c_str(), _str_max_t.length(), 1, status_file);
+
+        fwrite( _status_json_template[5].c_str(), _status_json_template[5].length(), 1, status_file);
+        fwrite( _str_day.c_str(), _str_day.length(), 1, status_file);
+
+        fwrite( _status_json_template[6].c_str(), _status_json_template[6].length(), 1, status_file);
+        fwrite( _str_h.c_str(), _str_h.length(), 1, status_file);
+
+        fwrite( _status_json_template[7].c_str(), _status_json_template[7].length(), 1, status_file);
+        fwrite( _str_f.c_str(), _str_f.length(), 1, status_file);
+
+        fwrite( _status_json_template[8].c_str(), _status_json_template[8].length(), 1, status_file);
+
+        _program.writeJSON( status_file );
+
+        fwrite( "}", 1, 1, status_file );
         fclose( status_file );
     }
 }
@@ -301,16 +308,16 @@ void RunnerThread::updateHistory()
     FILE* history_json = fopen( (_exchange_path+"/_history").c_str(), "w" );
     if ( history_json )
     {
-        std::string json = "[";
+        fwrite( "[", 1, 1, history_json );
         for ( std::list<float>::iterator t = _temp_history.begin(); t != _temp_history.end(); ++t )
         {
             float temp = *t;
             if ( t != _temp_history.begin() )
-                json+=",";
-            json += FrameworkUtils::ftostring( temp );
+                fwrite( ",", 1, 1, history_json );
+            std::string x = FrameworkUtils::ftostring( temp );
+            fwrite( x.c_str(), x.length(), 1, history_json );
         }
-        json += "]";
-        fwrite( json.c_str(), json.length(), 1, history_json );
+        fwrite( "]", 1, 1, history_json );
         fclose( history_json );
     }
 }

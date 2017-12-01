@@ -31,6 +31,7 @@ private:
     void updateStatus();
     void updateHistory();
 
+    std::vector<std::string> _status_json_template;
     std::string _config_file;
     std::string _exchange_path;
     std::string _history_file;
@@ -54,6 +55,15 @@ private:
     bool _history_warned;
 
     std::list<float> _temp_history;
+    std::string _str_manual;
+    std::string _str_auto;
+    std::string _str_on;
+    std::string _str_off;
+    std::string _str_min_t;
+    std::string _str_max_t;
+    std::string _str_day;
+    std::string _str_h;
+    std::string _str_f;
 };
 
 #endif // RUNNERTHREAD_H

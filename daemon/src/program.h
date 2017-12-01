@@ -20,6 +20,8 @@ public:
     void loadConfig( const ConfigData* c );
     void saveConfig( ConfigData* c );
 
+    void writeJSON( FILE* file );
+
 private:
     std::vector<std::vector<std::vector<bool> > > _gas_program;
     std::vector<std::vector<std::vector<bool> > > _pellet_program;
