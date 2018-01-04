@@ -16,7 +16,7 @@ obj/main.o: src/main.cpp src/runnerthread.h src/command.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
 obj/runnerthread.o: src/runnerthread.cpp src/command.h src/program.h 
-	g++ $(CFLAGS) -o $@ -c $< -Iframework
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -I/usr/local/include
 
 obj/command.o: src/command.cpp
 	g++ $(CFLAGS) -o $@ -c $< -Iframework
@@ -25,7 +25,7 @@ obj/program.o: src/program.cpp
 	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
 pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o
-	g++ -o $@ $^ -lpthread -lrt 
+	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib -lwiringPi
 
 .PHONY: clean
 

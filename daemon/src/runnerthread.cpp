@@ -3,6 +3,8 @@
 #include <string.h>
 #include <time.h>
 #include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
 
 #include "configfile.h"
 #include "debugprint.h"
@@ -12,6 +14,17 @@
 #include "program.h"
 
 #include <wiringPi.h>
+static uint8_t sizecvt(const int read)
+{
+  /* digitalRead() and friends from wiringpi are defined as returning a value
+  < 256. However, they are returned as int() types. This is a safety function */
+
+  if (read > 255 || read < 0)
+  {
+     debugPrintError("WiringPi") << "Invalid data from wiringPi library\n";
+  }
+  return (uint8_t)read;
+}
 
 RunnerThread::RunnerThread(const std::string &cfg, const std::string &exchange_path, const std::string &hst):
     ScheduledThread("Runner", 10 * 1000 ),
@@ -356,7 +369,7 @@ void RunnerThread::readSensor()
     pinMode(pin, INPUT);
 
     // detect change and read data
-    for ( i=0; i< MAXTIMINGS; i++)
+    for ( i=0; i< 85; i++)
     {
         counter = 0;
         while (sizecvt(digitalRead(pin)) == laststate)
