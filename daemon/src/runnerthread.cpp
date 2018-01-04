@@ -11,6 +11,8 @@
 #include "command.h"
 #include "program.h"
 
+#include <wiringPi.h>
+
 RunnerThread::RunnerThread(const std::string &cfg, const std::string &exchange_path, const std::string &hst):
     ScheduledThread("Runner", 10 * 1000 ),
     _config_file( cfg ),
@@ -20,9 +22,12 @@ RunnerThread::RunnerThread(const std::string &cfg, const std::string &exchange_p
     _pellet_command(false),
     _gas_command(false),
     _manual_mode(true),
-    _current_temp(20.0),
+    _current_temp(0.0),
+    _current_humidity(50.0),
     _min_temp(16.0),
     _max_temp(17.0),
+    _temp_correction(2.0),
+    _sensor_timer(),
     _error(false),
     _history_warned(false),
     _str_manual("manual"),
@@ -43,6 +48,9 @@ RunnerThread::RunnerThread(const std::string &cfg, const std::string &exchange_p
     startThread();
     while ( !isRunning() && !_error )
         FrameworkTimer::msleep_s( 100 );
+
+    if (wiringPiSetup () == -1)
+        debugPrintError( "WiringPi setup" ) << "WiringPi error!\n";
 }
 
 RunnerThread::~RunnerThread()
@@ -59,6 +67,7 @@ RunnerThread::~RunnerThread()
     }
     _commands_list.clear();
     _commands_mutex.unlock();
+    saveConfig();
 }
 
 void RunnerThread::appendCommand(Command *cmd)
@@ -176,10 +185,10 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     uint64_t current_time = FrameworkTimer::getTimeEpoc();
     if ( (_last_time+60) <= current_time )
     {
-        _current_temp += 0.5;
+/*        _current_temp += 0.5;
         if ( _current_temp > 28.0 )
             _current_temp = 12.0;
-
+ */
         _last_time = current_time;
         time_t now = (time_t)_last_time;
         struct tm *tm_struct = localtime(&now);
@@ -197,6 +206,11 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     if ( update_history )
         updateHistory();
 
+    if ( _sensor_timer.elapsedLoop() )
+    {
+        readSensor();
+        _sensor_timer.reset();
+    }
     return ret;
 }
 
@@ -218,6 +232,7 @@ bool RunnerThread::scheduleStart()
     }
     else
         debugPrintWarning() << "Warning: empty config file!\n";
+    _sensor_timer.setLoopTime( 8000 * 1000 );
     return !_error;
 }
 
@@ -320,6 +335,76 @@ void RunnerThread::updateHistory()
         fwrite( "]", 1, 1, history_json );
         fclose( history_json );
     }
+}
+
+void RunnerThread::readSensor()
+{
+    int pin = 1;
+    uint8_t laststate = HIGH;
+    uint8_t counter = 0;
+    uint8_t j = 0, i;
+    int dht22_dat[5] = {0,0,0,0,0};
+
+    // pull pin down for 18 milliseconds
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW);
+    delay(18);
+    // then pull it up for 40 microseconds
+    digitalWrite(pin, HIGH);
+    delayMicroseconds(40);
+    // prepare to read the pin
+    pinMode(pin, INPUT);
+
+    // detect change and read data
+    for ( i=0; i< MAXTIMINGS; i++)
+    {
+        counter = 0;
+        while (sizecvt(digitalRead(pin)) == laststate)
+        {
+            counter++;
+            delayMicroseconds(1);
+            if (counter == 255)
+                break;
+        }
+        laststate = sizecvt(digitalRead(pin));
+        if (counter == 255)
+            break;
+        // ignore first 3 transitions
+        if ((i >= 4) && (i%2 == 0)) {
+            // shove each bit into the storage bytes
+            dht22_dat[j/8] <<= 1;
+            if (counter > 16)
+                dht22_dat[j/8] |= 1;
+            j++;
+        }
+    }
+
+    // check we read 40 bits (8bit x 5 ) + verify checksum in the last byte
+    // print it out if data is good
+    if ((j >= 40) &&
+            (dht22_dat[4] == ((dht22_dat[0] + dht22_dat[1] + dht22_dat[2] + dht22_dat[3]) & 0xFF)) )
+    {
+        float new_humidity = (dht22_dat[0] * 256 + dht22_dat[1]) / 10.0;
+        float new_temp = (((dht22_dat[2] & 0x7F)* 256 + dht22_dat[3]) / 10.0) + _temp_correction;
+
+        /* negative temp */
+        if ((dht22_dat[2] & 0x80) != 0)
+            new_temp = -new_temp;
+
+        if ( (new_humidity > 0) && (new_humidity < 950)  && (fabs(_current_humidity-new_humidity)<10.0) )
+        {
+            _current_humidity = new_humidity;
+        }
+        if ( (_current_temp == 0.0) ||
+             ( ( new_temp < 600 ) && (fabs(abs(_current_temp)-fabs(new_temp))<10.0) ) )
+        {
+            _current_temp = new_temp;
+        }
+
+        debugPrintNotice( "Sensor: " ) << "temp: " << _current_temp << " Humidity: " << _current_humidity << "\n";
+    }
+    else
+        debugPrintNotice( "Sensor error ");
 }
 
 void RunnerThread::schedulingStopped()

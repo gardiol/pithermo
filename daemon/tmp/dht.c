@@ -133,11 +133,6 @@ int main (int argc, char *argv[])
   fclose(f);  
   while(1)
   {
-//  while (read_dht22_dat() == 0 && tries--) 
-//  {
-//     delay(1000); // wait 1sec to refresh
-//  }
-//   if (readRHT03 (DHTPIN, &newTemp, &newRh))
      if ( readDHT(DHTPIN, &newTemp, &newRh) )
      {
         static int t2, h2, ft = 1, terror=0, herror=0;

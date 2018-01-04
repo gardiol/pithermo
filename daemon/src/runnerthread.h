@@ -31,6 +31,8 @@ private:
     void updateStatus();
     void updateHistory();
 
+    void readSensor();
+
     std::vector<std::string> _status_json_template;
     std::string _config_file;
     std::string _exchange_path;
@@ -43,8 +45,11 @@ private:
     bool _gas_command;
     bool _manual_mode;
     float _current_temp;
+    float _current_humidity;
     float _min_temp;
     float _max_temp;
+    float _temp_correction;
+    FrameworkTimer _sensor_timer;
 
     bool _error;
 
