@@ -104,33 +104,37 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         switch ( cmd->command() )
         {
         case Command::PELLET_ON:
-            if ( !_pellet_command )
+            if ( !_pellet_command  && _manual_mode )
             {
                 _pellet_command = true;
+		setPellet(_pellet_command);
                 update_status = true;
             }
             break;
 
         case Command::PELLET_OFF:
-            if ( _pellet_command )
+            if ( _pellet_command && _manual_mode )
             {
                 _pellet_command = false;
+		setPellet(_pellet_command);
                 update_status = true;
             }
             break;
 
         case Command::GAS_ON:
-            if ( !_gas_command )
+            if ( !_gas_command && _manual_mode )
             {
                 _gas_command = true;
+		setGas( _gas_command );
                 update_status = true;
             }
             break;
 
         case Command::GAS_OFF:
-            if ( _gas_command )
+            if ( _gas_command && _manual_mode )
             {
                 _gas_command = false;
+		setGas( _gas_command );
                 update_status = true;
             }
             break;
@@ -246,6 +250,7 @@ bool RunnerThread::scheduleStart()
     else
         debugPrintWarning() << "Warning: empty config file!\n";
     _sensor_timer.setLoopTime( 8000 * 1000 );
+    _sensor_timer.start();
     return !_error;
 }
 
@@ -417,10 +422,21 @@ void RunnerThread::readSensor()
         debugPrintNotice( "Sensor: " ) << "temp: " << _current_temp << " Humidity: " << _current_humidity << "\n";
     }
     else
-        debugPrintNotice( "Sensor error ");
+        debugPrintNotice( "Sensor error ") << "skipping invalid read\n";
 }
 
 void RunnerThread::schedulingStopped()
 {
 }
 
+void RunnerThread::setGas( bool on )
+{
+    pinMode( 0, OUTPUT);
+    digitalWrite( 0, on ? LOW : HIGH);
+}
+
+void RunnerThread::setPellet( bool on )
+{
+    pinMode( 5, OUTPUT);
+    digitalWrite( 5, on ? LOW : HIGH);
+}

@@ -32,6 +32,8 @@ private:
     void updateHistory();
 
     void readSensor();
+    void setGas( bool on );
+    void setPellet( bool on );
 
     std::vector<std::string> _status_json_template;
     std::string _config_file;
