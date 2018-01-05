@@ -77,7 +77,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
         		content: "Accendo il PELLET?"});
 		dialog.set("buttonOk", "Accendi!");
 		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("pellet_on");});
+		dialog.on("execute", function(){executeCommand("pellet-on");});
 		dialog.show();
 	}
 	function pelletOff() {
@@ -86,7 +86,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
         		content: "Spegno il PELLET?"});
 		dialog.set("buttonOk", "Spegni!");
 		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("pellet_off");});
+		dialog.on("execute", function(){executeCommand("pellet-off");});
 		dialog.show();
 	}
 	function pelletMinimumOn() {
@@ -95,7 +95,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
         		content: "PELLET al  minimo?"});
 		dialog.set("buttonOk", "Minimo!");
 		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("pellet_minimum_on");});
+		dialog.on("execute", function(){executeCommand("pellet-minimum-on");});
 		dialog.show();
 	}
 	function pelletMinimumOff() {
@@ -104,7 +104,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
         		content: "PELLET in mosulazione?"});
 		dialog.set("buttonOk", "Modula!");
 		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("pellet_minimum_off");});
+		dialog.on("execute", function(){executeCommand("pellet-minimum-off");});
 		dialog.show();
 	}
 	function gasOn() {
@@ -113,7 +113,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
         		content: "Accendo il GAS?"});
 		dialog.set("buttonOk", "Accendi!");
 		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("gas_on");});
+		dialog.on("execute", function(){executeCommand("gas-on");});
 		dialog.show();
 	}
 	function gasOff() {
@@ -122,7 +122,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
         		content: "Spegno il GAS?"});
 		dialog.set("buttonOk", "Spegni!");
 		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("gas_off");});
+		dialog.on("execute", function(){executeCommand("gas-off");});
 		dialog.show();
 	}
 	function setAutoMode() {

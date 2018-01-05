@@ -5,24 +5,4 @@ exec 3<>/dev/udp/127.0.0.1/5555
 echo "Content-type: text/html"
 echo ""
 read COMMAND
-
-if [ "$COMMAND" = "pellet_off" ]
-then
-	echo -n "pellet-off" >&3
-elif [ "$COMMAND" = "pellet_on" ]
-then
-	echo -n "pellet-on" >&3
-elif [ "$COMMAND" = "gas_off" ]
-then
-	echo -n "gas-off" >&3
-elif [ "$COMMAND" = "gas_on" ]
-then
-	echo -n "gas-on" >&3
-elif [ "$COMMAND" = "manual" ]
-then
-	echo -n "manual" >&3
-elif [ "$COMMAND" = "auto" ]
-then
-	echo -n "auto" >&3
-fi
-
+echo -n "$COMMAND" >&3

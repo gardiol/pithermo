@@ -508,7 +508,7 @@ void RunnerThread::readSensor()
 void RunnerThread::setGpioBool(uint8_t num, bool activate)
 {
     pinMode( num, OUTPUT);
-    digitalWrite( num, activate ? LOW : HIGH);
+    digitalWrite( num, activate ? HIGH : LOW );
 }
 
 bool RunnerThread::readGpioBool(uint8_t num)
