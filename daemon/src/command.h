@@ -10,6 +10,8 @@ public:
     enum CmdType { INVALID,
                    PELLET_ON,
                    PELLET_OFF,
+                   PELLET_MINIMUM_ON,
+                   PELLET_MINIMUM_OFF,
                    GAS_ON,
                    GAS_OFF,
                    MANUAL,

@@ -27,13 +27,15 @@ private:
     bool scheduleStart();
     void schedulingStopped();
 
+    uint8_t fixReading(const int read);
+
     void saveConfig();
     void updateStatus();
     void updateHistory();
 
     void readSensor();
-    void setGas( bool on );
-    void setPellet( bool on );
+    void setGpioBool( uint8_t num, bool activate );
+    bool readGpioBool( uint8_t num );
 
     std::vector<std::string> _status_json_template;
     std::string _config_file;
@@ -43,23 +45,32 @@ private:
     std::list<Command*> _commands_list;
     BaseMutex _commands_mutex;
 
-    bool _pellet_command;
-    bool _gas_command;
+    bool _pellet_on;
+    bool _pellet_minimum;
+    bool _pellet_feedback;
+    bool _gas_on;
     bool _manual_mode;
-    float _current_temp;
     float _current_humidity;
+    float _current_temp;
     float _min_temp;
     float _max_temp;
     float _temp_correction;
     FrameworkTimer _sensor_timer;
+    uint64_t _sensor_failed_reads;
+    uint64_t _sensor_success_reads;
 
-    bool _error;
-
-    uint32_t _last_time;
+    uint8_t _pellet_command_gpio;
+    uint8_t _pellet_minimum_gpio;
+    uint8_t _pellet_feedback_gpio;
+    uint8_t _gas_command_gpio;
+    uint8_t _sensor_gpio;
 
     Program _program;
 
+    bool _gpio_error;
     bool _history_warned;
+    bool _print_sensor;
+    uint32_t _last_time;
 
     std::list<float> _temp_history;
     std::string _str_manual;

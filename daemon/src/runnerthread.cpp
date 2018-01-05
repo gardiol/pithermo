@@ -1,4 +1,4 @@
-#include "runnerthread.h"
+﻿#include "runnerthread.h"
 
 #include <string.h>
 #include <time.h>
@@ -14,43 +14,58 @@
 #include "program.h"
 
 #include <wiringPi.h>
-static uint8_t sizecvt(const int read)
-{
-  /* digitalRead() and friends from wiringpi are defined as returning a value
-  < 256. However, they are returned as int() types. This is a safety function */
 
-  if (read > 255 || read < 0)
-  {
-     debugPrintError("WiringPi") << "Invalid data from wiringPi library\n";
-  }
-  return (uint8_t)read;
-}
-
-RunnerThread::RunnerThread(const std::string &cfg, const std::string &exchange_path, const std::string &hst):
+// GPIO
+// 5 = minimo
+// 4 = ???
+// 6 = quarto relé libero
+// 0 = gas
+// 2 = pellet
+RunnerThread::RunnerThread(const std::string &cfg,
+                           const std::string &exchange_path,
+                           const std::string &hst):
     ScheduledThread("Runner", 10 * 1000 ),
     _config_file( cfg ),
     _exchange_path( exchange_path ),
     _history_file( hst ),
     _commands_mutex("CommandsMutex"),
-    _pellet_command(false),
-    _gas_command(false),
+    _pellet_on(false),
+    _pellet_minimum(false),
+    _pellet_feedback(false),
+    _gas_on(false),
     _manual_mode(true),
+    _current_humidity(0.0),
     _current_temp(0.0),
-    _current_humidity(50.0),
     _min_temp(16.0),
     _max_temp(17.0),
-    _temp_correction(2.0),
+    _temp_correction(1.0),
+    _sensor_failed_reads(0),
+    _sensor_success_reads(0),
     _sensor_timer(),
-    _error(false),
+    _pellet_command_gpio(2),
+    _pellet_minimum_gpio(5),
+    _pellet_feedback_gpio(),
+    _gas_command_gpio(0),
+    _sensor_gpio(),
+    _gpio_error(false),
     _history_warned(false),
+    _print_sensor(true),
+    _last_time(0),
     _str_manual("manual"),
     _str_auto("auto"),
     _str_on("on"),
-    _str_off("off")
+    _str_off("off"),
+    _str_min_t(FrameworkUtils::ftostring( _min_temp ) ),
+    _str_max_t(FrameworkUtils::ftostring( _max_temp ) ),
+    _str_day("0"),
+    _str_h("00"),
+    _str_f("0")
 {
     _status_json_template.push_back("{\"mode\":\"");
     _status_json_template.push_back("\",\"pellet\":{\"command\":\"");
-    _status_json_template.push_back("\",\"status\":\"off\"},\"gas\":{\"command\":\"");
+    _status_json_template.push_back("\",\"status\":\"");
+    _status_json_template.push_back("\",\"minimum\":\"");
+    _status_json_template.push_back("\"},\"gas\":{\"command\":\"");
     _status_json_template.push_back("\",\"status\":\"off\"},\"temp\":{\"min\":");
     _status_json_template.push_back(",\"max\":");
     _status_json_template.push_back("},\"now\":{\"d\":");
@@ -58,11 +73,13 @@ RunnerThread::RunnerThread(const std::string &cfg, const std::string &exchange_p
     _status_json_template.push_back(",\"f\":");
     _status_json_template.push_back("},\"program\":");
 
-    startThread();
-    while ( !isRunning() && !_error )
-        FrameworkTimer::msleep_s( 100 );
-
-    if (wiringPiSetup () == -1)
+    if (wiringPiSetup () != -1)
+    {
+        startThread();
+        while ( !_gpio_error && !isRunning() )
+            FrameworkTimer::msleep_s( 100 );
+    }
+    else
         debugPrintError( "WiringPi setup" ) << "WiringPi error!\n";
 }
 
@@ -96,6 +113,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     bool update_history = false;
     bool save_config = false;
     bool ret = true;
+
     _commands_mutex.lock();
     while ( _commands_list.size() > 0 )
     {
@@ -103,38 +121,56 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         _commands_list.pop_front();
         switch ( cmd->command() )
         {
-        case Command::PELLET_ON:
-            if ( !_pellet_command  && _manual_mode )
+        case Command::PELLET_MINIMUM_ON:
+            if ( !_pellet_minimum  && _manual_mode )
             {
-                _pellet_command = true;
-		setPellet(_pellet_command);
+                _pellet_minimum = true;
+                setGpioBool( _pellet_minimum_gpio, _pellet_minimum );
+                update_status = true;
+            }
+            break;
+
+        case Command::PELLET_MINIMUM_OFF:
+            if ( _pellet_minimum && _manual_mode )
+            {
+                _pellet_minimum = false;
+                setGpioBool( _pellet_minimum_gpio, _pellet_minimum );
+                update_status = true;
+            }
+            break;
+
+        case Command::PELLET_ON:
+            if ( !_pellet_on  && _manual_mode )
+            {
+                _pellet_on = true;
+                setGpioBool( _pellet_command_gpio, _pellet_on );
                 update_status = true;
             }
             break;
 
         case Command::PELLET_OFF:
-            if ( _pellet_command && _manual_mode )
+            if ( _pellet_on && _manual_mode )
             {
-                _pellet_command = false;
-		setPellet(_pellet_command);
+                _pellet_on = false;
+                setGpioBool( _pellet_command_gpio, _pellet_on );
                 update_status = true;
             }
             break;
 
         case Command::GAS_ON:
-            if ( !_gas_command && _manual_mode )
+            if ( !_gas_on && _manual_mode )
             {
-                _gas_command = true;
-		setGas( _gas_command );
+                _gas_on = true;
+                setGpioBool( _gas_command_gpio, _gas_on );
                 update_status = true;
             }
             break;
 
         case Command::GAS_OFF:
-            if ( _gas_command && _manual_mode )
+            if ( _gas_on && _manual_mode )
             {
-                _gas_command = false;
-		setGas( _gas_command );
+                _gas_on = false;
+                setGpioBool( _gas_command_gpio, _gas_on );
                 update_status = true;
             }
             break;
@@ -202,10 +238,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     uint64_t current_time = FrameworkTimer::getTimeEpoc();
     if ( (_last_time+60) <= current_time )
     {
-/*        _current_temp += 0.5;
-        if ( _current_temp > 28.0 )
-            _current_temp = 12.0;
- */
         _last_time = current_time;
         time_t now = (time_t)_last_time;
         struct tm *tm_struct = localtime(&now);
@@ -216,6 +248,11 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         update_history = true;
     }
 
+    if ( !_manual_mode )
+    {
+        ;
+    }
+
     if ( save_config )
         saveConfig();
     if ( update_status )
@@ -223,18 +260,17 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     if ( update_history )
         updateHistory();
 
-    if ( _sensor_timer.elapsedLoop() )
+    if ( !_sensor_timer.isRunning() || _sensor_timer.elapsedLoop() )
     {
         readSensor();
         _sensor_timer.reset();
     }
+
     return ret;
 }
 
 bool RunnerThread::scheduleStart()
 {
-    _last_time = 0;
-    _error = false;
     std::string content;
     FrameworkUtils::file_to_str( _config_file, content );
     ConfigFile config("config", content );
@@ -245,13 +281,32 @@ bool RunnerThread::scheduleStart()
         _str_min_t = FrameworkUtils::ftostring( _min_temp );
         _max_temp = FrameworkUtils::string_tof( config.getValue( "max_temp" ) );
         _str_max_t = FrameworkUtils::ftostring( _max_temp );
+        _temp_correction = FrameworkUtils::string_tof( config.getValue( "temp_correction" ) );
+        _print_sensor = config.getValueBool( "print_sensor" );
         _program.loadConfig( config.getSection( "program" ) );
     }
     else
-        debugPrintWarning() << "Warning: empty config file!\n";
+        saveConfig();
+
+    _pellet_on = readGpioBool( _pellet_command_gpio );
+    _pellet_minimum = readGpioBool( _pellet_minimum_gpio );
+    _pellet_feedback = readGpioBool( _pellet_feedback );
+    _gas_on = readGpioBool( _gas_command_gpio );
+
     _sensor_timer.setLoopTime( 8000 * 1000 );
-    _sensor_timer.start();
-    return !_error;
+
+    return !_gpio_error;
+}
+
+void RunnerThread::schedulingStopped()
+{
+}
+
+uint8_t RunnerThread::fixReading(const int read)
+{
+    if (read > 255 || read < 0)
+        debugPrintError("WiringPi") << "Invalid data from wiringPi library\n";
+    return (uint8_t)read;
 }
 
 void RunnerThread::saveConfig()
@@ -260,8 +315,10 @@ void RunnerThread::saveConfig()
     FrameworkUtils::file_to_str( _config_file, content );
     ConfigFile config("config", content );
     config.setValue( "mode", _manual_mode ? "manual" : "auto" );
-    config.setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
-    config.setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
+    config.setValue( "min_temp", _str_min_t );
+    config.setValue( "max_temp", _str_max_t );
+    config.setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
+    config.setValueBool( "print_sensor", _print_sensor );
     ConfigData* prog_section = config.getSection( "program" );
     if ( prog_section == NULL )
         prog_section = config.newSection( "program" );
@@ -275,40 +332,62 @@ void RunnerThread::updateStatus()
     FILE* status_file = fopen( (_exchange_path+"/_status").c_str(), "w" );
     if ( status_file )
     {
-        fwrite( _status_json_template[0].c_str(), _status_json_template[0].length(), 1, status_file);
-        if ( _manual_mode )
-            fwrite( _str_manual.c_str(), _str_manual.length(), 1, status_file);
-        else
-            fwrite( _str_auto.c_str(), _str_auto.length(), 1, status_file);
-
-        fwrite( _status_json_template[1].c_str(), _status_json_template[1].length(), 1, status_file);
-        if ( _pellet_command )
-            fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
-        else
-            fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
-
-        fwrite( _status_json_template[2].c_str(), _status_json_template[2].length(), 1, status_file);
-        if ( _gas_command )
-            fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
-        else
-            fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
-
-        fwrite( _status_json_template[3].c_str(), _status_json_template[3].length(), 1, status_file);
-        fwrite( _str_min_t.c_str(), _str_min_t.length(), 1, status_file);
-
-        fwrite( _status_json_template[4].c_str(), _status_json_template[4].length(), 1, status_file);
-        fwrite( _str_max_t.c_str(), _str_max_t.length(), 1, status_file);
-
-        fwrite( _status_json_template[5].c_str(), _status_json_template[5].length(), 1, status_file);
-        fwrite( _str_day.c_str(), _str_day.length(), 1, status_file);
-
-        fwrite( _status_json_template[6].c_str(), _status_json_template[6].length(), 1, status_file);
-        fwrite( _str_h.c_str(), _str_h.length(), 1, status_file);
-
-        fwrite( _status_json_template[7].c_str(), _status_json_template[7].length(), 1, status_file);
-        fwrite( _str_f.c_str(), _str_f.length(), 1, status_file);
-
-        fwrite( _status_json_template[8].c_str(), _status_json_template[8].length(), 1, status_file);
+        for ( int i = 0; i < _status_json_template.size(); ++i )
+        {
+            fwrite( _status_json_template[i].c_str(),
+                    _status_json_template[i].length(), 1, status_file);
+            switch (i)
+            {
+            case 0:
+                if ( _manual_mode )
+                    fwrite( _str_manual.c_str(), _str_manual.length(), 1, status_file);
+                else
+                    fwrite( _str_auto.c_str(), _str_auto.length(), 1, status_file);
+                break;
+            case 1:
+                if ( _pellet_on )
+                    fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+                else
+                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
+                break;
+            case 2:
+                if ( _pellet_feedback )
+                    fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+                else
+                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
+                break;
+            case 3:
+                if ( _pellet_minimum )
+                    fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+                else
+                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
+                break;
+            case 4:
+                if ( _gas_on )
+                    fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+                else
+                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
+                break;
+            case 5:
+                fwrite( _str_min_t.c_str(), _str_min_t.length(), 1, status_file);
+                break;
+            case 6:
+                fwrite( _str_max_t.c_str(), _str_max_t.length(), 1, status_file);
+                break;
+            case 7:
+                fwrite( _str_day.c_str(), _str_day.length(), 1, status_file);
+                break;
+            case 8:
+                fwrite( _str_h.c_str(), _str_h.length(), 1, status_file);
+                break;
+            case 9:
+                fwrite( _str_f.c_str(), _str_f.length(), 1, status_file);
+                break;
+            case 10:
+                fwrite( _status_json_template[10].c_str(), _status_json_template[8].length(), 1, status_file);
+                break;
+            }
+        }
 
         _program.writeJSON( status_file );
 
@@ -377,14 +456,14 @@ void RunnerThread::readSensor()
     for ( i=0; i< 85; i++)
     {
         counter = 0;
-        while (sizecvt(digitalRead(pin)) == laststate)
+        while (fixReading(digitalRead(pin)) == laststate)
         {
             counter++;
             delayMicroseconds(1);
             if (counter == 255)
                 break;
         }
-        laststate = sizecvt(digitalRead(pin));
+        laststate = fixReading(digitalRead(pin));
         if (counter == 255)
             break;
         // ignore first 3 transitions
@@ -419,30 +498,21 @@ void RunnerThread::readSensor()
             _current_temp = new_temp;
         }
 
-        debugPrintNotice( "Sensor: " ) << "temp: " << _current_temp << " Humidity: " << _current_humidity << "\n";
+        _sensor_success_reads++;
+        if ( _print_sensor )
+            debugPrintNotice( "Sensor: " ) << "temp: " << _current_temp << " Humidity: " << _current_humidity << "(" << _sensor_success_reads << "/" << (_sensor_success_reads+_sensor_failed_reads) << ")\n";
     }
     else
-        debugPrintNotice( "Sensor error ") << "skipping invalid read\n";
+        _sensor_failed_reads++;
 }
 
-void RunnerThread::schedulingStopped()
+void RunnerThread::setGpioBool(uint8_t num, bool activate)
 {
+    pinMode( num, OUTPUT);
+    digitalWrite( num, activate ? LOW : HIGH);
 }
 
-void RunnerThread::setGas( bool on )
-{// è lo 0
-    pinMode( 6, OUTPUT);
-    digitalWrite( 6, on ? LOW : HIGH);
-}
-
-void RunnerThread::setPellet( bool on )
+bool RunnerThread::readGpioBool(uint8_t num)
 {
-    pinMode( 5, OUTPUT);
-    digitalWrite( 5, on ? LOW : HIGH);
+    return digitalRead( num ) == HIGH;
 }
-
-// 5 = minimo
-// 4 = ???
-// 6 = rele libero
-// 0 = gas
-// 2 = pellet

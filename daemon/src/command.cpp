@@ -3,7 +3,11 @@
 Command::Command(const char *buffer, uint32_t size):
     _command(INVALID)
 {
-    if ( (size == 10) && (std::string(buffer,10) == "pellet-off") )
+    if ( (size == 18) && (std::string(buffer,18) == "pellet-minimum-off") )
+        _command = PELLET_MINIMUM_OFF;
+    else if ( (size == 17) && (std::string(buffer,17) == "pellet-minimum-on") )
+        _command = PELLET_MINIMUM_ON;
+    else if ( (size == 10) && (std::string(buffer,10) == "pellet-off") )
         _command = PELLET_OFF;
     else if ( (size == 9) && (std::string(buffer,9) == "pellet-on") )
         _command = PELLET_ON;
