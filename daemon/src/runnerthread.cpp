@@ -513,5 +513,6 @@ void RunnerThread::setGpioBool(uint8_t num, bool activate)
 
 bool RunnerThread::readGpioBool(uint8_t num)
 {
+    debugPrintNotice("read") << num << " Status: " << digitalRead( num );
     return digitalRead( num ) == HIGH;
 }
