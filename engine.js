@@ -439,7 +439,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 				pelletOnBtn.startup();
 				pelletMinimumOnBtn = new Button({
 					label: "minimo",
-					disabled: true,
+				//	disabled: true,
 					onClick: pelletMinimumOn
 				}, "pellet-minimum-on-btn");
 				pelletMinimumOnBtn.startup();
@@ -451,7 +451,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 				pelletOffBtn.startup();
 				pelletMinimumOffBtn = new Button({
 					label: "modula",
-					disabled: true,
+				//	disabled: true,
 					onClick: pelletMinimumOff
 				}, "pellet-minimum-off-btn");
 				pelletMinimumOffBtn.startup();
