@@ -430,9 +430,9 @@ void RunnerThread::schedulingStopped()
 }
 
 void RunnerThread::setGas( bool on )
-{
-    pinMode( 0, OUTPUT);
-    digitalWrite( 0, on ? LOW : HIGH);
+{// è lo 0
+    pinMode( 6, OUTPUT);
+    digitalWrite( 6, on ? LOW : HIGH);
 }
 
 void RunnerThread::setPellet( bool on )
@@ -440,3 +440,9 @@ void RunnerThread::setPellet( bool on )
     pinMode( 5, OUTPUT);
     digitalWrite( 5, on ? LOW : HIGH);
 }
+
+// 5 = minimo
+// 4 = ???
+// 6 = rele libero
+// 0 = gas
+// 2 = pellet
