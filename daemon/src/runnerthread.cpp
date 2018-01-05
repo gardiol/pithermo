@@ -384,7 +384,6 @@ void RunnerThread::updateStatus()
                 fwrite( _str_f.c_str(), _str_f.length(), 1, status_file);
                 break;
             case 10:
-                fwrite( _status_json_template[10].c_str(), _status_json_template[8].length(), 1, status_file);
                 break;
             }
         }
