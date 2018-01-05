@@ -13,7 +13,9 @@ var manualBtn;
 var programBtn;
 // For status
 var pelletOnBtn;
+var pelletMinimumOnBtn;
 var pelletOffBtn;
+var pelletMinimumOffBtn;
 var gasOnBtn;
 var gasOffBtn;
 var manualBtn;
@@ -85,6 +87,24 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 		dialog.set("buttonOk", "Spegni!");
 		dialog.set("buttonCancel", "Annulla");
 		dialog.on("execute", function(){executeCommand("pellet_off");});
+		dialog.show();
+	}
+	function pelletMinimumOn() {
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "PELLET al  minimo?"});
+		dialog.set("buttonOk", "Minimo!");
+		dialog.set("buttonCancel", "Annulla");
+		dialog.on("execute", function(){executeCommand("pellet_minimum_on");});
+		dialog.show();
+	}
+	function pelletMinimumOff() {
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "PELLET in mosulazione?"});
+		dialog.set("buttonOk", "Modula!");
+		dialog.set("buttonCancel", "Annulla");
+		dialog.on("execute", function(){executeCommand("pellet_minimum_off");});
 		dialog.show();
 	}
 	function gasOn() {
@@ -417,12 +437,24 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 					onClick: pelletOn
 				}, "pellet-on-btn");
 				pelletOnBtn.startup();
+				pelletMinimumOnBtn = new Button({
+					label: "minimo",
+					disabled: true,
+					onClick: pelletMinimumOn
+				}, "pellet-minimum-on-btn");
+				pelletMinimumOnBtn.startup();
 				pelletOffBtn = new Button({
 					label: "Spegni",
 					disabled: true,
 					onClick: pelletOff
 				}, "pellet-off-btn");
 				pelletOffBtn.startup();
+				pelletMinimumOffBtn = new Button({
+					label: "modula",
+					disabled: true,
+					onClick: pelletMinimumOff
+				}, "pellet-minimum-off-btn");
+				pelletMinimumOffBtn.startup();
 				gasOnBtn = new Button({
 					label: "Accendi",
 					disabled: true,
