@@ -340,43 +340,48 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 			function(result)
 			{
 				system_status = result;
-				if ( system_status.pellet.command == "on" ){
-					attr.set("pellet-status-led", "src", "images/pellet-on.png");
-					if ( system_status.mode == "manual" ){
-						pelletOnBtn.set("disabled", true );
-						pelletOffBtn.set("disabled", false );
-					}
-				}else{
-					attr.set("pellet-status-led", "src", "images/pellet-off.png");
-					if ( system_status.mode == "manual" ){
-						pelletOnBtn.set("disabled", false );
-						pelletOffBtn.set("disabled", true );
-					}
-				}
-				if ( system_status.gas.command == "on" ){
-					attr.set("gas-status-led", "src", "images/gas-on.png");
-					if ( system_status.mode == "manual" ){
-						gasOnBtn.set("disabled", true );
-						gasOffBtn.set("disabled", false );
-					}
-				}else{
-					attr.set("gas-status-led", "src", "images/gas-off.png");
-					if ( system_status.mode == "manual" ){
-						gasOnBtn.set("disabled", false );
-						gasOffBtn.set("disabled", true );
-					}
-				}
-				if ( system_status.mode != "auto" ){
+				if ( system_status.mode == "manual" ){
 					autoBtn.set("disabled", false );
 					manualBtn.set("disabled", true );
 					html.set(modeLabel, "Impianto in MANUALE");
-				}else{
+					if ( system_status.pellet.command == "on" ){
+						attr.set("pellet-status-led", "src", "images/pellet-on.png");
+						pelletOnBtn.set("disabled", true );
+						pelletOffBtn.set("disabled", false );
+					} else {
+						attr.set("pellet-status-led", "src", "images/pellet-off.png");
+						pelletOnBtn.set("disabled", false );
+						pelletOffBtn.set("disabled", true );
+					}
+					if ( system_status.pellet.minimum == "on" ){
+						pelletMinimumOnBtn.set("disabled", true );
+						pelletMinimumOffBtn.set("disabled", false );
+					} else {
+						pelletMinimumOnBtn.set("disabled", false );
+						pelletMinimumOffBtn.set("disabled", true );
+					}
+					if ( system_status.gas.command == "on" ){
+						attr.set("gas-status-led", "src", "images/gas-on.png");
+						if ( system_status.mode == "manual" ){
+							gasOnBtn.set("disabled", true );
+							gasOffBtn.set("disabled", false );
+						}
+					}else{
+						attr.set("gas-status-led", "src", "images/gas-off.png");
+						if ( system_status.mode == "manual" ){
+							gasOnBtn.set("disabled", false );
+							gasOffBtn.set("disabled", true );
+						}
+					}
+				} else {
 					autoBtn.set("disabled", true );
 					manualBtn.set("disabled", false );
 					gasOnBtn.set("disabled", true );
 					gasOffBtn.set("disabled", true );
 					pelletOnBtn.set("disabled", true );
 					pelletOffBtn.set("disabled", true );
+					pelletMinimumOnBtn.set("disabled", true );
+					pelletMinimumOffBtn.set("disabled", true );
 					html.set(modeLabel, "Impianto in AUTOMATICO");
 				}
 				autoRefresh();

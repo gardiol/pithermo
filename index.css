@@ -37,8 +37,9 @@ div.clear {
 
 #history-pane {
 	background: beige;
-	height: 10em;
+	height: 20em;
 	margin-bottom: 2em;
+	margin-left: 2em;
 }
 
 #history-graph {
