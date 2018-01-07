@@ -13,7 +13,9 @@ var manualBtn;
 var programBtn;
 // For status
 var pelletOnBtn;
+var pelletMinimumOnBtn;
 var pelletOffBtn;
+var pelletMinimumOffBtn;
 var gasOnBtn;
 var gasOffBtn;
 var manualBtn;
@@ -75,7 +77,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
         		content: "Accendo il PELLET?"});
 		dialog.set("buttonOk", "Accendi!");
 		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("pellet_on");});
+		dialog.on("execute", function(){executeCommand("pellet-on");});
 		dialog.show();
 	}
 	function pelletOff() {
@@ -84,7 +86,25 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
         		content: "Spegno il PELLET?"});
 		dialog.set("buttonOk", "Spegni!");
 		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("pellet_off");});
+		dialog.on("execute", function(){executeCommand("pellet-off");});
+		dialog.show();
+	}
+	function pelletMinimumOn() {
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "PELLET al  minimo?"});
+		dialog.set("buttonOk", "Minimo!");
+		dialog.set("buttonCancel", "Annulla");
+		dialog.on("execute", function(){executeCommand("pellet-minimum-on");});
+		dialog.show();
+	}
+	function pelletMinimumOff() {
+		var dialog = new ConfirmDialog({
+        		title: "ATTENZIONE!",
+        		content: "PELLET in mosulazione?"});
+		dialog.set("buttonOk", "Modula!");
+		dialog.set("buttonCancel", "Annulla");
+		dialog.on("execute", function(){executeCommand("pellet-minimum-off");});
 		dialog.show();
 	}
 	function gasOn() {
@@ -93,7 +113,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
         		content: "Accendo il GAS?"});
 		dialog.set("buttonOk", "Accendi!");
 		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("gas_on");});
+		dialog.on("execute", function(){executeCommand("gas-on");});
 		dialog.show();
 	}
 	function gasOff() {
@@ -102,7 +122,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
         		content: "Spegno il GAS?"});
 		dialog.set("buttonOk", "Spegni!");
 		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("gas_off");});
+		dialog.on("execute", function(){executeCommand("gas-off");});
 		dialog.show();
 	}
 	function setAutoMode() {
@@ -320,43 +340,48 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 			function(result)
 			{
 				system_status = result;
-				if ( system_status.pellet.command == "on" ){
-					attr.set("pellet-status-led", "src", "images/pellet-on.png");
-					if ( system_status.mode == "manual" ){
-						pelletOnBtn.set("disabled", true );
-						pelletOffBtn.set("disabled", false );
-					}
-				}else{
-					attr.set("pellet-status-led", "src", "images/pellet-off.png");
-					if ( system_status.mode == "manual" ){
-						pelletOnBtn.set("disabled", false );
-						pelletOffBtn.set("disabled", true );
-					}
-				}
-				if ( system_status.gas.command == "on" ){
-					attr.set("gas-status-led", "src", "images/gas-on.png");
-					if ( system_status.mode == "manual" ){
-						gasOnBtn.set("disabled", true );
-						gasOffBtn.set("disabled", false );
-					}
-				}else{
-					attr.set("gas-status-led", "src", "images/gas-off.png");
-					if ( system_status.mode == "manual" ){
-						gasOnBtn.set("disabled", false );
-						gasOffBtn.set("disabled", true );
-					}
-				}
-				if ( system_status.mode != "auto" ){
+				if ( system_status.mode == "manual" ){
 					autoBtn.set("disabled", false );
 					manualBtn.set("disabled", true );
 					html.set(modeLabel, "Impianto in MANUALE");
-				}else{
+					if ( system_status.pellet.command == "on" ){
+						attr.set("pellet-status-led", "src", "images/pellet-on.png");
+						pelletOnBtn.set("disabled", true );
+						pelletOffBtn.set("disabled", false );
+					} else {
+						attr.set("pellet-status-led", "src", "images/pellet-off.png");
+						pelletOnBtn.set("disabled", false );
+						pelletOffBtn.set("disabled", true );
+					}
+					if ( system_status.pellet.minimum == "on" ){
+						pelletMinimumOnBtn.set("disabled", true );
+						pelletMinimumOffBtn.set("disabled", false );
+					} else {
+						pelletMinimumOnBtn.set("disabled", false );
+						pelletMinimumOffBtn.set("disabled", true );
+					}
+					if ( system_status.gas.command == "on" ){
+						attr.set("gas-status-led", "src", "images/gas-on.png");
+						if ( system_status.mode == "manual" ){
+							gasOnBtn.set("disabled", true );
+							gasOffBtn.set("disabled", false );
+						}
+					}else{
+						attr.set("gas-status-led", "src", "images/gas-off.png");
+						if ( system_status.mode == "manual" ){
+							gasOnBtn.set("disabled", false );
+							gasOffBtn.set("disabled", true );
+						}
+					}
+				} else {
 					autoBtn.set("disabled", true );
 					manualBtn.set("disabled", false );
 					gasOnBtn.set("disabled", true );
 					gasOffBtn.set("disabled", true );
 					pelletOnBtn.set("disabled", true );
 					pelletOffBtn.set("disabled", true );
+					pelletMinimumOnBtn.set("disabled", true );
+					pelletMinimumOffBtn.set("disabled", true );
 					html.set(modeLabel, "Impianto in AUTOMATICO");
 				}
 				autoRefresh();
@@ -417,12 +442,24 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 					onClick: pelletOn
 				}, "pellet-on-btn");
 				pelletOnBtn.startup();
+				pelletMinimumOnBtn = new Button({
+					label: "minimo",
+				//	disabled: true,
+					onClick: pelletMinimumOn
+				}, "pellet-minimum-on-btn");
+				pelletMinimumOnBtn.startup();
 				pelletOffBtn = new Button({
 					label: "Spegni",
 					disabled: true,
 					onClick: pelletOff
 				}, "pellet-off-btn");
 				pelletOffBtn.startup();
+				pelletMinimumOffBtn = new Button({
+					label: "modula",
+				//	disabled: true,
+					onClick: pelletMinimumOff
+				}, "pellet-minimum-off-btn");
+				pelletMinimumOffBtn.startup();
 				gasOnBtn = new Button({
 					label: "Accendi",
 					disabled: true,

@@ -126,7 +126,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             if ( !_pellet_minimum  && _manual_mode )
             {
                 _pellet_minimum = true;
-                setGpioBool( _pellet_minimum_gpio, _pellet_minimum );
+                setGpioBool( _pellet_minimum_gpio, !_pellet_minimum );
                 update_status = true;
             }
             break;
@@ -135,7 +135,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             if ( _pellet_minimum && _manual_mode )
             {
                 _pellet_minimum = false;
-                setGpioBool( _pellet_minimum_gpio, _pellet_minimum );
+                setGpioBool( _pellet_minimum_gpio, !_pellet_minimum );
                 update_status = true;
             }
             break;
@@ -144,7 +144,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             if ( !_pellet_on  && _manual_mode )
             {
                 _pellet_on = true;
-                setGpioBool( _pellet_command_gpio, _pellet_on );
+                setGpioBool( _pellet_command_gpio, !_pellet_on );
                 update_status = true;
             }
             break;
@@ -153,7 +153,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             if ( _pellet_on && _manual_mode )
             {
                 _pellet_on = false;
-                setGpioBool( _pellet_command_gpio, _pellet_on );
+                setGpioBool( _pellet_command_gpio, !_pellet_on );
                 update_status = true;
             }
             break;
@@ -162,7 +162,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             if ( !_gas_on && _manual_mode )
             {
                 _gas_on = true;
-                setGpioBool( _gas_command_gpio, _gas_on );
+                setGpioBool( _gas_command_gpio, !_gas_on );
                 update_status = true;
             }
             break;
@@ -171,7 +171,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             if ( _gas_on && _manual_mode )
             {
                 _gas_on = false;
-                setGpioBool( _gas_command_gpio, _gas_on );
+                setGpioBool( _gas_command_gpio, !_gas_on );
                 update_status = true;
             }
             break;
@@ -289,10 +289,10 @@ bool RunnerThread::scheduleStart()
     else
         saveConfig();
 
-    _pellet_on = readGpioBool( _pellet_command_gpio );
-    _pellet_minimum = readGpioBool( _pellet_minimum_gpio );
-    _pellet_feedback = readGpioBool( _pellet_feedback );
-    _gas_on = readGpioBool( _gas_command_gpio );
+    _pellet_on = !readGpioBool( _pellet_command_gpio );
+    _pellet_minimum = !readGpioBool( _pellet_minimum_gpio );
+    _pellet_feedback = false; //!readGpioBool( _pellet_feedback_gpio );
+    _gas_on = !readGpioBool( _gas_command_gpio );
 
     _sensor_timer.setLoopTime( 8000 * 1000 );
 
@@ -509,11 +509,12 @@ void RunnerThread::readSensor()
 void RunnerThread::setGpioBool(uint8_t num, bool activate)
 {
     pinMode( num, OUTPUT);
-    digitalWrite( num, activate ? LOW : HIGH);
+    digitalWrite( num, activate ? HIGH : LOW );
 }
 
 bool RunnerThread::readGpioBool(uint8_t num)
 {
-    debugPrintNotice("read") << num << " Status: " << digitalRead( num );
-    return digitalRead( num ) == HIGH;
+    pinMode( num, OUTPUT);
+    uint8_t pin = digitalRead( num );
+    return pin == HIGH;
 }
