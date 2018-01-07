@@ -21,6 +21,7 @@
 // 6 = quarto relé libero
 // 0 = gas
 // 2 = pellet
+// 3 = ???
 RunnerThread::RunnerThread(const std::string &cfg,
                            const std::string &exchange_path,
                            const std::string &hst):
