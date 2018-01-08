@@ -172,78 +172,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     bool save_config = false;
     bool ret = true;
 
-    if ( !_sensor_timer.isRunning() || _sensor_timer.elapsedLoop() )
-    {
-        if ( readSensor( _current_temp, _current_humidity ) )
-        {
-            updateHistory( _current_temp, _current_humidity, _last_time );
-            _logger->logTemp( _current_temp, _current_humidity );
-            if ( _current_temp <= 5.0 )
-            {
-                if ( !_anti_ice_active )
-                {
-                    _logger->logEvent("Anti-ice ON");
-                    gasOn();
-                    update_status = true;
-                    _anti_ice_active = true;
-                }
-            }
-            else if ( _anti_ice_active )
-            {
-                _logger->logEvent("Anti-ice OFF");
-                gasOff();
-                update_status = true;
-                _anti_ice_active = false;
-            }
-            else if ( _current_temp > _max_temp )
-            {
-                if ( _manual_mode )
-                {
-                    _logger->logEvent("Max temp reached - manual mode");
-                    if ( checkGas() )
-                        gasOff();
-                    if ( checkPellet() )
-                        pelletMinimum(true);
-                    update_status = true;
-                }
-                else
-                {
-                    _logger->logEvent("Max temp reached - program mode");
-                    if ( _program.getGas( _day, _hour, _half_hour ) )
-                        gasOff();
-                    if ( _program.getPellet( _day, _hour, _half_hour ) )
-                        pelletMinimum(true);
-                }
-            }
-            else if ( _current_temp < _min_temp )
-            {
-                if ( _manual_mode )
-                {
-                    _logger->logEvent("Min temp reached - manual mode");
-                    if ( checkPellet() )
-                        pelletMinimum( false );
-                    else
-                        gasOn();
-                }
-                else
-                {
-                    _logger->logEvent("Min temp reached - program mode");
-                    if ( _program.getGas( _day, _hour, _half_hour ) )
-                        gasOn();
-                    if ( _program.getPellet( _day, _hour, _half_hour ) )
-                    {
-                        pelletOn();
-                        if ( _program.getPelletMinimum( _day, _hour, _half_hour ) )
-                            pelletMinimum(true);
-                        else
-                            pelletMinimum(false);
-                    }
-                }
-            }
-        }
-        _sensor_timer.reset();
-    }
-
     // Processa comandi
     _commands_mutex.lock();
     while ( _commands_list.size() > 0 )
@@ -364,7 +292,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     }
     _commands_mutex.unlock();
 
-    // Aggiorna tempo e history
+    // Aggiorna tempo, history e programma
     uint64_t current_time = FrameworkTimer::getTimeEpoc();
     if ( (_last_time+60) <= current_time )
     {
@@ -372,6 +300,117 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         updateCurrentTime();
         writeHistoryJson();
         update_status = true;
+
+        if ( !_manual_mode )
+        {
+            bool gas = _program.getGas( _day, _hour, _half_hour );
+            bool pellet = _program.getPellet( _day, _hour, _half_hour );
+            bool minimum_pellet = _program.getPelletMinimum( _day, _hour, _half_hour );
+
+            if ( checkGas() )
+            {
+                if ( !gas )
+                    gasOff();
+            }
+            else
+            {
+                if ( gas )
+                    gasOn();
+            }
+            if ( checkPellet() )
+            {
+                if ( !pellet )
+                    pelletOff();
+            }
+            else
+            {
+                if ( pellet )
+                    pelletOn();
+            }
+            if ( checkPelletMinimum() )
+            {
+                if ( !minimum_pellet )
+                    pelletMinimum(true);
+            }
+            else
+            {
+                if ( minimum_pellet )
+                    pelletMinimum(false);
+            }
+        }
+    }
+
+    // Applica i constraint di temperatura
+    if ( !_sensor_timer.isRunning() || _sensor_timer.elapsedLoop() )
+    {
+        if ( readSensor( _current_temp, _current_humidity ) )
+        {
+            updateHistory( _current_temp, _current_humidity, _last_time );
+            _logger->logTemp( _current_temp, _current_humidity );
+            if ( _current_temp <= 5.0 )
+            {
+                if ( !_anti_ice_active )
+                {
+                    _logger->logEvent("Anti-ice ON");
+                    gasOn();
+                    update_status = true;
+                    _anti_ice_active = true;
+                }
+            }
+            else if ( _anti_ice_active )
+            {
+                _logger->logEvent("Anti-ice OFF");
+                gasOff();
+                update_status = true;
+                _anti_ice_active = false;
+            }
+            else if ( _current_temp > _max_temp )
+            {
+                if ( _manual_mode )
+                {
+                    _logger->logEvent("Max temp reached - manual mode");
+                    if ( checkGas() )
+                        gasOff();
+                    if ( checkPellet() )
+                        pelletMinimum(true);
+                    update_status = true;
+                }
+                else
+                {
+                    _logger->logEvent("Max temp reached - program mode");
+                    if ( _program.getGas( _day, _hour, _half_hour ) )
+                        gasOff();
+                    if ( _program.getPellet( _day, _hour, _half_hour ) )
+                        pelletMinimum(true);
+                }
+            }
+            else if ( _current_temp < _min_temp )
+            {
+                if ( _manual_mode )
+                {
+                    _logger->logEvent("Min temp reached - manual mode");
+                    if ( checkPellet() )
+                        pelletMinimum( false );
+                    else
+                        gasOn();
+                }
+                else
+                {
+                    _logger->logEvent("Min temp reached - program mode");
+                    if ( _program.getGas( _day, _hour, _half_hour ) )
+                        gasOn();
+                    if ( _program.getPellet( _day, _hour, _half_hour ) )
+                    {
+                        pelletOn();
+                        if ( _program.getPelletMinimum( _day, _hour, _half_hour ) )
+                            pelletMinimum(true);
+                        else
+                            pelletMinimum(false);
+                    }
+                }
+            }
+        }
+        _sensor_timer.reset();
     }
 
     if ( save_config )
