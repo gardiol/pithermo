@@ -29,6 +29,7 @@ void Logger::logEvent(const std::string &event)
     {
         printStamp();
         fprintf(_log_file, " -- %s\n", event.c_str() );
+        fflush(_log_file);
     }
 }
 
@@ -38,6 +39,7 @@ void Logger::logTemp(float t, float h)
     {
         printStamp();
         fprintf(_log_file, " -- Temp: %f Humidity: %f\n", t, h );
+        fflush(_log_file);
     }
 }
 
@@ -51,5 +53,5 @@ void Logger::printStamp()
     int h = tm_struct->tm_hour;
     int m = tm_struct->tm_min;
     int s = tm_struct->tm_sec;
-    fprintf(_log_file, "&d/%d/%d-%d:%d.%d", y, M, d, h, m, s );
+    fprintf(_log_file, "%04d/%02d/%02d-%02d:%02d.%02d", y, M, d, h, m, s );
 }

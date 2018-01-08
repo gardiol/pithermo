@@ -13,7 +13,9 @@
 #include "command.h"
 #include "program.h"
 
+#ifndef NOPI
 #include <wiringPi.h>
+#endif
 
 // GPIO
 // 5 = minimo
@@ -46,10 +48,9 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _sensor_gpio(),
     _last_time(0),
     _current_temp(0.0),
-    _current_humidity(0.0),
+    _current_humidity(50.0),
     _gpio_error(false),
     _history_warned(false),
-    _print_sensor(true),
     _str_manual("manual"),
     _str_auto("auto"),
     _str_on("on"),
@@ -64,7 +65,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _half_hour(0)
 {
     _status_json_template.push_back("{\"mode\":\"");
-    _status_json_template.push_back("{,\"antiice\":\"");
+    _status_json_template.push_back("\",\"antiice\":\"");
     _status_json_template.push_back("\",\"pellet\":{\"command\":\"");
     _status_json_template.push_back("\",\"status\":\"");
     _status_json_template.push_back("\",\"minimum\":\"");
@@ -76,7 +77,12 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _status_json_template.push_back(",\"f\":");
     _status_json_template.push_back("},\"program\":");
 
+#ifdef NOPI
+    debugPrintNotice("") << "DemoMode\n";
+    if ( true )
+#else
     if (wiringPiSetup () != -1)
+#endif
     {
         startThread();
         while ( !_gpio_error && !isRunning() )
@@ -229,23 +235,17 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             break;
 
         case Command::MANUAL:
-            if ( !_manual_mode )
-            {
-                _logger->logEvent("Manual mode");
-                _manual_mode = true;
-                update_status = true;
-                save_config = true;
-            }
+            _logger->logEvent("Manual mode");
+            _manual_mode = true;
+            update_status = true;
+            save_config = true;
             break;
 
         case Command::AUTO:
-            if ( _manual_mode )
-            {
-                _logger->logEvent("Program mode");
-                _manual_mode = false;
-                update_status = true;
-                save_config = true;
-            }
+            _logger->logEvent("Program mode");
+            _manual_mode = false;
+            update_status = true;
+            save_config = true;
             break;
 
         case Command::SET_MIN_TEMP:
@@ -437,7 +437,6 @@ bool RunnerThread::scheduleStart()
         _max_temp = FrameworkUtils::string_tof( config.getValue( "max_temp" ) );
         _str_max_t = FrameworkUtils::ftostring( _max_temp );
         _temp_correction = FrameworkUtils::string_tof( config.getValue( "temp_correction" ) );
-        _print_sensor = config.getValueBool( "print_sensor" );
         _program.loadConfig( config.getSection( "program" ) );
     }
     else
@@ -447,8 +446,13 @@ bool RunnerThread::scheduleStart()
     FILE* history_file = fopen( _history_file.c_str(), "r" );
     if ( history_file != NULL )
     {
-        uint32_t item_size = sizeof(HistoryItem::getSize());
-        fseek( history_file, item_size * default_history_items, SEEK_END );
+        fseek( history_file, 0, SEEK_END );
+        uint32_t len = ftell(history_file);
+        uint32_t size = HistoryItem::getSize() * default_history_items;
+        if ( size > len )
+            fseek( history_file, 0, SEEK_SET);
+        else
+            fseek( history_file, len - size, SEEK_SET);
         for (uint32_t i = 0; !feof(history_file); ++i )
         {
             HistoryItem item(history_file);
@@ -494,7 +498,6 @@ void RunnerThread::saveConfig()
     config.setValue( "min_temp", _str_min_t );
     config.setValue( "max_temp", _str_max_t );
     config.setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
-    config.setValueBool( "print_sensor", _print_sensor );
 
     ConfigData* prog_section = config.getSection( "program" );
     if ( prog_section == NULL )
@@ -602,26 +605,34 @@ void RunnerThread::writeHistoryJson()
     FILE* history_json = fopen( (_exchange_path+"/_history").c_str(), "w" );
     if ( history_json )
     {
-        fwrite( "[", 1, 1, history_json );
+        fwrite("{\"temp\":[", 9, 1, history_json );
         for ( std::list<HistoryItem>::iterator t = _th_history.begin(); t != _th_history.end(); ++t )
         {
             float temp = (*t).getTemp();
-            float humidity = (*t).getHumidity();
-            uint64_t ltime = (*t).getTime();
             if ( t != _th_history.begin() )
                 fwrite( ",", 1, 1, history_json );
             std::string temp_str = FrameworkUtils::ftostring( temp );
-            std::string humidity_str = FrameworkUtils::ftostring( humidity );
-            std::string time_str = FrameworkUtils::tostring( ltime );
-            fwrite("{time:", 6, 1, history_json );
-            fwrite( time_str.c_str(), time_str.length(), 1, history_json );
-            fwrite(",temp:", 6, 1, history_json );
             fwrite( temp_str.c_str(), temp_str.length(), 1, history_json );
-            fwrite(",humidity:", 10, 1, history_json );
-            fwrite( humidity_str.c_str(), humidity_str.length(), 1, history_json );
-            fwrite("}", 1, 1, history_json );
         }
-        fwrite( "]", 1, 1, history_json );
+        fwrite( "],\"humidity\":[", 14, 1, history_json );
+        for ( std::list<HistoryItem>::iterator t = _th_history.begin(); t != _th_history.end(); ++t )
+        {
+            float humidity = (*t).getHumidity();
+            if ( t != _th_history.begin() )
+                fwrite( ",", 1, 1, history_json );
+            std::string humidity_str = FrameworkUtils::ftostring( humidity );
+            fwrite( humidity_str.c_str(), humidity_str.length(), 1, history_json );
+        }
+        fwrite( "],\"time\":[", 10, 1, history_json );
+        for ( std::list<HistoryItem>::iterator t = _th_history.begin(); t != _th_history.end(); ++t )
+        {
+            uint64_t ltime = (*t).getTime();
+            if ( t != _th_history.begin() )
+                fwrite( ",", 1, 1, history_json );
+            std::string time_str = FrameworkUtils::tostring( ltime );
+            fwrite( time_str.c_str(), time_str.length(), 1, history_json );
+        }
+        fwrite( "]}", 2, 1, history_json );
         fclose( history_json );
     }
 }
@@ -629,11 +640,19 @@ void RunnerThread::writeHistoryJson()
 bool RunnerThread::readSensor( float & current_temp, float & current_humidity )
 {
     bool ret = false;
+#ifdef NOPI
+    float new_humidity = current_humidity+1.0;
+    float new_temp = current_temp+1;
+    if ( new_humidity > 95.0 ) new_humidity = 1;
+    if ( new_temp > 30 ) new_temp = 1;
+    if ( true )
+    {
+#else
     int pin = 1;
     uint8_t laststate = HIGH;
     uint8_t counter = 0;
-    uint8_t j = 0, i;
     int dht22_dat[5] = {0,0,0,0,0};
+    uint8_t j = 0, i;
 
     // pull pin down for 18 milliseconds
     pinMode(pin, OUTPUT);
@@ -681,6 +700,7 @@ bool RunnerThread::readSensor( float & current_temp, float & current_humidity )
         if ((dht22_dat[2] & 0x80) != 0)
             new_temp = -new_temp;
 
+#endif
         if ( (new_humidity > 0) && (new_humidity < 950)  &&
              (fabs(current_humidity-new_humidity)<10.0) )
         {
@@ -695,8 +715,6 @@ bool RunnerThread::readSensor( float & current_temp, float & current_humidity )
             ret = true;
         }
         _sensor_success_reads++;
-        if ( ret && _print_sensor )
-            debugPrintNotice( "Sensor: " ) << "temp: " << current_temp << " Humidity: " << current_humidity << "(" << _sensor_success_reads << "/" << (_sensor_success_reads+_sensor_failed_reads) << ")\n";
     }
     else
         _sensor_failed_reads++;
@@ -704,13 +722,19 @@ bool RunnerThread::readSensor( float & current_temp, float & current_humidity )
 
 void RunnerThread::setGpioBool(uint8_t num, bool activate)
 {
+#ifndef NOPI
     pinMode( num, OUTPUT);
     digitalWrite( num, activate ? HIGH : LOW );
+#endif
 }
 
 bool RunnerThread::readGpioBool(uint8_t num)
 {
+#ifdef NOPI
+    return false;
+#else
     pinMode( num, OUTPUT);
     uint8_t pin = digitalRead( num );
     return pin == HIGH;
+#endif
 }

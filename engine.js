@@ -398,7 +398,8 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 	{
        		request("cgi-bin/history" , {handleAs :"json"}).then(
 			function(result){
-				historyGraph.updateSeries("Temp", result );
+				historyGraph.updateSeries("Temp", result.temp );
+				historyGraph.updateSeries("Humidity", result.humidity );
 				historyGraph.render();
 				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
 			},
@@ -554,6 +555,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 	historyGraph.addAxis("x");
 	historyGraph.addAxis("y", {vertical: true});
 	historyGraph.addSeries("Temp", [], {stroke: {color: "red", width: 2}} );
+	historyGraph.addSeries("Humidity", [], {stroke: {color: "yellow", width: 2}} );
 	historyGraph.render();
 	updateHistory();
 });

@@ -21,9 +21,15 @@ HistoryItem::HistoryItem(FILE *file):
 {
     if ( file != NULL )
     {
-        fread( &_time, sizeof(_time), 1, file );
-        fread( &_temp, sizeof(_temp), 1, file );
-        fread( &_humidity, sizeof(_humidity), 1, file );
+        if ( !feof( file )  )
+            fread( &_time, sizeof(_time), 1, file );
+        if ( !feof( file )  )
+            fread( &_temp, sizeof(_temp), 1, file );
+        if ( !feof( file )  )
+        {
+            if ( fread( &_humidity, sizeof(_humidity), 1, file ) == 1 )
+                _valid = true;
+        }
     }
 }
 

@@ -86,7 +86,6 @@ private:
 
     bool _gpio_error;
     bool _history_warned;
-    bool _print_sensor;
 
     std::list<HistoryItem> _th_history;
     std::string _str_manual;
