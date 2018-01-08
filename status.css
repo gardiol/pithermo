@@ -20,8 +20,12 @@
 	border-bottom: 1px dotted black;
 }
 
-#status > div > img {
+img.status-icon {
 	height: 5em;
+}
+
+img.status-icon-sub {
+	height: 1em;
 }
 
 #pellet-status > div {

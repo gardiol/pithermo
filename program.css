@@ -38,11 +38,18 @@
 	vertical-align: middle;
 	border: 2px solid black;
 	margin: 1em;
-	padding: 0.2em;
+	padding: 1em;
 }
+
+#select-box {
+	height: 6.5em;
+}
+
 #select-box > div {
 	display: inline-block;
 	vertical-align: middle;
+	width: 5em;
+	height: 100%;
 }
 
 #program-selector > div > div > img {

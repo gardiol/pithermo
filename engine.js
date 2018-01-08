@@ -29,6 +29,7 @@ var prgApplyBtn;
 var selectOff;
 var selectGas;
 var selectPellet;
+var selectPelletMinimum;
 var selectPelletGas;
 var program_status;
 var selected_type;
@@ -174,6 +175,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 						if ( c == 'p' ) s+='pellet.png"/>';
 						if ( c == 'g' ) s+='gas.png"/>';
 						if ( c == 'x' ) s+='pellet-gas.png"/>';
+						if ( c == 'm' ) s+='pellet-min.png"/>';
 						var n = dom.byId(i);
 						html.set(n,s);
 						if ( (d == nd) && (h!=nh || f!=nf)  ){
@@ -197,6 +199,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 		dclass.remove(selectGas, "program-selected");
 		dclass.remove(selectPelletGas, "program-selected");
 		dclass.remove(selectPellet, "program-selected");
+		dclass.remove(selectPelletMinimum, "program-selected");
 		if ( t == 'o' ){
 			dclass.add(selectOff, "program-selected");
 		}else if ( t == 'g' ) {
@@ -205,6 +208,8 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 			dclass.add(selectPelletGas, "program-selected");
 		}else if ( t == 'p' ) {
 			dclass.add(selectPellet, "program-selected");
+		}else if ( t == 'm' ) {
+			dclass.add(selectPelletMinimum, "program-selected");
 		}
 	}
 	function programReset() {
@@ -249,6 +254,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 						if ( c == 'p' ) s+='pellet.png"/>';
 						if ( c == 'g' ) s+='gas.png"/>';
 						if ( c == 'x' ) s+='pellet-gas.png"/>';
+						if ( c == 'm' ) s+='pellet-min.png"/>';
 						var n = dom.byId(i);
 						html.set(n,s);
 					}
@@ -354,9 +360,11 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 						pelletOffBtn.set("disabled", true );
 					}
 					if ( system_status.pellet.minimum == "on" ){
+						attr.set("pellet-minimum-status-led", "src", "images/pellet-minimo.png");
 						pelletMinimumOnBtn.set("disabled", true );
 						pelletMinimumOffBtn.set("disabled", false );
 					} else {
+						attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
 						pelletMinimumOnBtn.set("disabled", false );
 						pelletMinimumOffBtn.set("disabled", true );
 					}
@@ -499,6 +507,8 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 				on( selectPelletGas, "click", function(){selectType('x');});
 				selectPellet = dom.byId("select-pellet");
 				on( selectPellet, "click", function(){selectType('p');});
+				selectPelletMinimum = dom.byId("select-pellet-minimum");
+				on( selectPelletMinimum, "click", function(){selectType('m');});
 				selectType('o');
 				minTemp = new NumberSpinner({
 					value: system_status.temp.min,

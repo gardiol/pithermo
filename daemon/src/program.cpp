@@ -66,13 +66,14 @@ bool Program::change(const std::string &p)
                         day_str = day_str.substr( 1 );
                         bool gas_on = _gas_program[d][h][f];
                         bool pellet_on = _pellet_program[d][h][f];
-                        bool pellet_minimum_on = _pellet_program[d][h][f];
+                        bool pellet_minimum_on = _pellet_minimum_program[d][h][f];
                         if ( p == 'x' || p == 'X' )
                         {
                             if ( !ret && (!gas_on || !pellet_on) )
                                 ret = true;
                             _gas_program[d][h][f] = true;
                             _pellet_program[d][h][f] = true;
+                            _pellet_minimum_program[d][h][f] = false;
                         }
                         else if ( p == 'g' || p == 'G' )
                         {
@@ -80,6 +81,7 @@ bool Program::change(const std::string &p)
                                 ret = true;
                             _gas_program[d][h][f] = true;
                             _pellet_program[d][h][f] = false;
+                            _pellet_minimum_program[d][h][f] = false;
                         }
                         else if ( p == 'p' || p == 'P' )
                         {
@@ -162,7 +164,7 @@ void Program::saveConfig(ConfigData *c)
             {
                 bool gas_on = _gas_program[d][h][f];
                 bool pellet_on = _pellet_program[d][h][f];
-                bool pellet_minimum_on = _pellet_program[d][h][f];
+                bool pellet_minimum_on = _pellet_minimum_program[d][h][f];
                 if ( gas_on && pellet_on )
                     value += "x";
                 else if ( gas_on )
@@ -196,7 +198,7 @@ void Program::writeJSON(FILE *file)
             {
                 bool pellet_on = _pellet_program[d][h][f];
                 bool gas_on = _gas_program[d][h][f];
-                bool pellet_minimum_on = _pellet_program[d][h][f];
+                bool pellet_minimum_on = _pellet_minimum_program[d][h][f];
                 s[1] = pellet_on ? (gas_on ? 'x' : (pellet_minimum_on ? 'm' : 'p') ) : (gas_on ? 'g' : 'o');
                 // disegna , solo alla fine della giornata:
                 fwrite(s, ((h != 23) || (f != 1)) ? 4 : 3,1, file );

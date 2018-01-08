@@ -461,11 +461,16 @@ bool RunnerThread::scheduleStart()
         }
         fclose(history_file);
     }
-    writeHistoryJson();
 
     _sensor_timer.setLoopTime( 8000 * 1000 );
     _last_time = FrameworkTimer::getTimeEpoc();
     updateCurrentTime();
+
+    writeHistoryJson();
+    updateStatus( checkGas(),
+                  checkPellet(),
+                  checkPelletMinimum(),
+                  pelletFeedback() );
 
     return !_gpio_error;
 }
@@ -643,8 +648,10 @@ bool RunnerThread::readSensor( float & current_temp, float & current_humidity )
 #ifdef NOPI
     float new_humidity = current_humidity+1.0;
     float new_temp = current_temp+1;
-    if ( new_humidity > 95.0 ) new_humidity = 1;
-    if ( new_temp > 30 ) new_temp = 1;
+    if ( new_humidity > 95.0 )
+        new_humidity = 40;
+    if ( new_temp > 30 )
+        new_temp = 1;
     if ( true )
     {
 #else
