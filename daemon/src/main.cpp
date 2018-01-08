@@ -112,6 +112,8 @@ int main(int argc, char** argv)
                          .setOptions(1));
     cmd.defineParameter( CmdLineParameter("history", "History file", CmdLineParameter::single, true )
                          .setOptions(1));
+    cmd.defineParameter( CmdLineParameter("log", "log file", CmdLineParameter::single, true )
+                         .setOptions(1));
 
     cmd.setCommandLine( argc, argv );
 
@@ -120,43 +122,50 @@ int main(int argc, char** argv)
         std::string config_file = cmd.consumeParameter( "config" ).getOption();
         std::string exchange_path = cmd.consumeParameter( "xchange" ).getOption();
         std::string history_file = cmd.consumeParameter( "history" ).getOption();
-        if ( FrameworkUtils::fileExist( exchange_path ) )
+        std::string log_file = cmd.consumeParameter( "log" ).getOption();
+        Logger logger( log_file );
+        if ( logger.isValid() )
         {
-            if ( cmd.consumeParameter( "daemon" ).isValid() )
-                daemonize();
-
-            SigHandler sig_handler;
-            FrameworkSigHandler::setHandler( &sig_handler, FrameworkSigHandler::SIGINT_SIGNAL );
-
-            UdpSocket command_server("CommandServer","", "127.0.0.1",0,5555);
-            if ( command_server.activateInterface() )
+            if ( FrameworkUtils::fileExist( exchange_path ) )
             {
-                RunnerThread runner(config_file, exchange_path, history_file);
-                if ( runner.isRunning() )
+                if ( cmd.consumeParameter( "daemon" ).isValid() )
+                    daemonize();
+
+                SigHandler sig_handler;
+                FrameworkSigHandler::setHandler( &sig_handler, FrameworkSigHandler::SIGINT_SIGNAL );
+
+                UdpSocket command_server("CommandServer","", "127.0.0.1",0,5555);
+                if ( command_server.activateInterface() )
                 {
-                    while ( runner.isRunning() &&
-                            sig_handler.keepRunning() &&
-                            command_server.isActive() )
+                    RunnerThread runner(config_file, exchange_path, history_file, &logger);
+                    if ( runner.isRunning() )
                     {
-                        if ( command_server.waitForIncomingData(10*1000) )
+                        while ( runner.isRunning() &&
+                                sig_handler.keepRunning() &&
+                                command_server.isActive() )
                         {
-                            uint32_t frame_size = 0;
-                            char* frame = static_cast<char*>(command_server.getFrame(frame_size));
-                            Command* cmd = new Command( frame, frame_size );
-                            runner.appendCommand( cmd );
-                            delete [] frame;
+                            if ( command_server.waitForIncomingData(10*1000) )
+                            {
+                                uint32_t frame_size = 0;
+                                char* frame = static_cast<char*>(command_server.getFrame(frame_size));
+                                Command* cmd = new Command( frame, frame_size );
+                                runner.appendCommand( cmd );
+                                delete [] frame;
+                            }
                         }
+                        ret = 0;
                     }
-                    ret = 0;
+                    else
+                        logger.logEvent( "Unable to start runner thread!" );
                 }
                 else
-                    debugPrintError() << "Unable to start runner thread!\n";
+                    logger.logEvent( "Unable to open socket!" );
             }
             else
-                debugPrintError() << "Unable to open socket!\n";
+                logger.logEvent( "Exchange path does not exist!" );
         }
         else
-            debugPrintError() << "Exchange path does not exist!\n";
+            debugPrintError() << "Unable to open log file!\n";
     }
     return ret;
 }
