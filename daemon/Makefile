@@ -24,7 +24,10 @@ obj/command.o: src/command.cpp
 obj/program.o: src/program.cpp
 	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
-pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o
+obj/historyitem.o: src/historyitem.cpp
+	g++ $(CFLAGS) -o $@ -c $< -Iframework
+
+pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o
 	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib -lwiringPi
 
 .PHONY: clean

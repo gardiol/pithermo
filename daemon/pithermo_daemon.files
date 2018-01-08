@@ -55,6 +55,8 @@ framework/variantstatic.cpp
 framework/variantstatic.h
 src/command.cpp
 src/command.h
+src/historyitem.cpp
+src/historyitem.h
 src/main.cpp
 src/program.cpp
 src/program.h

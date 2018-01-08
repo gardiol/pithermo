@@ -35,8 +35,6 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _pellet_feedback(false),
     _gas_on(false),
     _manual_mode(true),
-    _current_humidity(0.0),
-    _current_temp(0.0),
     _min_temp(16.0),
     _max_temp(17.0),
     _temp_correction(1.0),
@@ -51,7 +49,6 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _gpio_error(false),
     _history_warned(false),
     _print_sensor(true),
-    _last_time(0),
     _str_manual("manual"),
     _str_auto("auto"),
     _str_on("on"),
@@ -114,6 +111,10 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     bool update_history = false;
     bool save_config = false;
     bool ret = true;
+
+    uint64_t last_time = 0;
+    float current_temp = 0.0;
+    float current_humidity = 0.0;
 
     _commands_mutex.lock();
     while ( _commands_list.size() > 0 )
@@ -237,10 +238,10 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
 
 
     uint64_t current_time = FrameworkTimer::getTimeEpoc();
-    if ( (_last_time+60) <= current_time )
+    if ( (last_time+60) <= current_time )
     {
-        _last_time = current_time;
-        time_t now = (time_t)_last_time;
+        last_time = current_time;
+        time_t now = (time_t)last_time;
         struct tm *tm_struct = localtime(&now);
         _str_f = tm_struct->tm_min > 30 ? "1" : "0";
         _str_day = FrameworkUtils::tostring( (tm_struct->tm_wday-1)%7 );
@@ -259,7 +260,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     if ( update_status )
         updateStatus();
     if ( update_history )
-        updateHistory();
+        updateHistory( current_temp, _current_humidity, current_time );
 
     if ( !_sensor_timer.isRunning() || _sensor_timer.elapsedLoop() )
     {
@@ -284,11 +285,16 @@ bool RunnerThread::scheduleStart()
         _str_max_t = FrameworkUtils::ftostring( _max_temp );
         _temp_correction = FrameworkUtils::string_tof( config.getValue( "temp_correction" ) );
         _print_sensor = config.getValueBool( "print_sensor" );
+        // Questi sono letti ma poi ignorati volutamente
+        _pellet_on = config.getValueBool( "pellet_on" );
+        _pellet_minimum = config.getValueBool( "pellet_minimum" );
+        _gas_on = config.getValueBool( "gas_on" );
         _program.loadConfig( config.getSection( "program" ) );
     }
     else
         saveConfig();
-
+    // Per evitare accensioni non volute o spegnimenti accidentali,
+    // leggiamo lo stato dei relé e usiamo questi come dato di partenza
     _pellet_on = !readGpioBool( _pellet_command_gpio );
     _pellet_minimum = !readGpioBool( _pellet_minimum_gpio );
     _pellet_feedback = false; //!readGpioBool( _pellet_feedback_gpio );
@@ -320,6 +326,10 @@ void RunnerThread::saveConfig()
     config.setValue( "max_temp", _str_max_t );
     config.setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
     config.setValueBool( "print_sensor", _print_sensor );
+    config.setValueBool( "pellet_on", _pellet_on );
+    config.setValueBool( "pellet_minimum", _pellet_minimum );
+    config.setValueBool( "gas_on", _gas_on );
+
     ConfigData* prog_section = config.getSection( "program" );
     if ( prog_section == NULL )
         prog_section = config.newSection( "program" );
@@ -396,46 +406,54 @@ void RunnerThread::updateStatus()
     }
 }
 
-void RunnerThread::updateHistory()
+void RunnerThread::updateHistory( float last_temp, float last_humidity, uint32_t last_time )
 {
-    _temp_history.push_back( _current_temp );
-    while ( _temp_history.size() > 100 )
-        _temp_history.pop_front();
+    _th_history.push_back( HistoryItem( last_time, last_temp, last_humidity ) );
+    while ( _th_history.size() > 100 )
+        _th_history.pop_front();
 
     FILE* history_file = fopen( _history_file.c_str(), "a" );
     if ( history_file != NULL )
     {
-        char buffer[ sizeof(_last_time) + sizeof(_current_temp) ];
-        memcpy( &buffer[0], &_last_time, sizeof(_last_time) );
-        memcpy( &buffer[sizeof(_last_time)], &_current_temp, sizeof(_current_temp) );
-        fwrite( buffer, sizeof(_last_time) + sizeof(_current_temp), 1, history_file );
+        _th_history.back().writeToFile( history_file );
         fclose(history_file);
     }
     else if ( !_history_warned )
     {
         _history_warned = true;
-        debugPrintWarning() << "Warning: unable to open history file!\n";
+        debugPrintWarning() << "Warning: unable to open history file (" << _history_file << ")!\n";
     }
 
     FILE* history_json = fopen( (_exchange_path+"/_history").c_str(), "w" );
     if ( history_json )
     {
         fwrite( "[", 1, 1, history_json );
-        for ( std::list<float>::iterator t = _temp_history.begin(); t != _temp_history.end(); ++t )
+        for ( std::list<HistoryItem>::iterator t = _th_history.begin(); t != _th_history.end(); ++t )
         {
-            float temp = *t;
-            if ( t != _temp_history.begin() )
+            float temp = (*t).getTemp();
+            float humidity = (*t).getHumidity();
+            uint64_t ltime = (*t).getTime();
+            if ( t != _th_history.begin() )
                 fwrite( ",", 1, 1, history_json );
-            std::string x = FrameworkUtils::ftostring( temp );
-            fwrite( x.c_str(), x.length(), 1, history_json );
+            std::string temp_str = FrameworkUtils::ftostring( temp );
+            std::string humidity_str = FrameworkUtils::ftostring( humidity );
+            std::string time_str = FrameworkUtils::tostring( ltime );
+            fwrite("{time:", 6, 1, history_json );
+            fwrite( time_str.c_str(), time_str.length(), 1, history_json );
+            fwrite(",temp:", 6, 1, history_json );
+            fwrite( temp_str.c_str(), temp_str.length(), 1, history_json );
+            fwrite(",humidity:", 10, 1, history_json );
+            fwrite( humidity_str.c_str(), humidity_str.length(), 1, history_json );
+            fwrite("}", 1, 1, history_json );
         }
         fwrite( "]", 1, 1, history_json );
         fclose( history_json );
     }
 }
 
-void RunnerThread::readSensor()
+bool RunnerThread::readSensor( float & current_temp, float & current_humidity )
 {
+    bool ret = false;
     int pin = 1;
     uint8_t laststate = HIGH;
     uint8_t counter = 0;
@@ -488,18 +506,21 @@ void RunnerThread::readSensor()
         if ((dht22_dat[2] & 0x80) != 0)
             new_temp = -new_temp;
 
-        if ( (new_humidity > 0) && (new_humidity < 950)  && (fabs(_current_humidity-new_humidity)<10.0) )
+        if ( (new_humidity > 0) && (new_humidity < 950)  &&
+             (fabs(current_humidity-new_humidity)<10.0) )
         {
-            _current_humidity = new_humidity;
+            current_humidity = new_humidity;
+            ret = true;
         }
         if ( (_current_temp == 0.0) ||
-             ( ( new_temp < 600 ) && (fabs(abs(_current_temp)-fabs(new_temp))<10.0) ) )
+             ( ( new_temp < 600 ) &&
+               (fabs(abs(current_temp)-fabs(new_temp))<10.0) ) )
         {
-            _current_temp = new_temp;
+            current_temp = new_temp;
+            ret = true;
         }
-
         _sensor_success_reads++;
-        if ( _print_sensor )
+        if ( ret && _print_sensor )
             debugPrintNotice( "Sensor: " ) << "temp: " << _current_temp << " Humidity: " << _current_humidity << "(" << _sensor_success_reads << "/" << (_sensor_success_reads+_sensor_failed_reads) << ")\n";
     }
     else

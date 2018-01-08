@@ -7,6 +7,7 @@
 #include "scheduledthread.h"
 
 #include "program.h"
+#include "historyitem.h"
 
 using namespace FrameworkLibrary;
 
@@ -31,9 +32,9 @@ private:
 
     void saveConfig();
     void updateStatus();
-    void updateHistory();
+    void updateHistory(float last_temp, float last_humidity, uint32_t last_time);
 
-    void readSensor();
+    bool readSensor(float &current_temp, float &current_humidity);
     void setGpioBool( uint8_t num, bool activate );
     bool readGpioBool( uint8_t num );
 
@@ -50,8 +51,6 @@ private:
     bool _pellet_feedback;
     bool _gas_on;
     bool _manual_mode;
-    float _current_humidity;
-    float _current_temp;
     float _min_temp;
     float _max_temp;
     float _temp_correction;
@@ -70,9 +69,8 @@ private:
     bool _gpio_error;
     bool _history_warned;
     bool _print_sensor;
-    uint32_t _last_time;
 
-    std::list<float> _temp_history;
+    std::list<HistoryItem> _th_history;
     std::string _str_manual;
     std::string _str_auto;
     std::string _str_on;
