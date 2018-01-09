@@ -10,7 +10,18 @@ public:
     Logger( const std::string& log_file );
     ~Logger();
 
+    void enableDebug( bool d )
+    {
+        _debug = d;
+    }
+
+    bool getDebug() const
+    {
+        return _debug;
+    }
+
     void logEvent( const std::string& event );
+    void logDebug( const std::string& str );
     void logTemp( float t, float h );
 
     bool isValid() const
@@ -23,6 +34,7 @@ private:
 
     std::string _log_filename;
     FILE* _log_file;
+    bool _debug;
 };
 
 #endif // LOGGER_H

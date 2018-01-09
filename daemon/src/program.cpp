@@ -32,19 +32,12 @@ Program::~Program()
 
 }
 
-bool Program::getPellet(int d, int h, int f)
+void Program::getProgram( int d, int h, int f,
+                          bool& g, bool& p, bool &m )
 {
-    return _pellet_program[d][h][f];
-}
-
-bool Program::getGas(int d, int h, int f)
-{
-    return _gas_program[d][h][f];
-}
-
-bool Program::getPelletMinimum(int d, int h, int f)
-{
-    return _pellet_minimum_program[d][h][f];
+    p = _pellet_program[d][h][f];
+    g = _gas_program[d][h][f];
+    m = _pellet_minimum_program[d][h][f];
 }
 
 bool Program::change(const std::string &p)

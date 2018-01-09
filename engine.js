@@ -58,9 +58,10 @@ require(["dijit/form/Button",
 	 "dojox/charting/Chart",
 	 "dojox/charting/axis2d/Default", 
 	 "dojox/charting/plot2d/Lines",
+	 "dojox/charting/themes/Wetland",
 	 "dojo/on",
 	 "dojo/domReady!"], 
-function(Button, request, dom, attr, dclass, style, html, query, json, registry, ConfirmDialog, ContentPane, StackContainer, NumberSpinner, Chart, Default, Lines, on)
+function(Button, request, dom, attr, dclass, style, html, query, json, registry, ConfirmDialog, ContentPane, StackContainer, NumberSpinner, Chart, Default, Lines, Wetland, on)
 {
 	function executeCommand(cmd) {
        		request.put("/cgi-bin/command", {data:cmd}).then(
@@ -127,9 +128,12 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 		dialog.show();
 	}
 	function setAutoMode() {
+		var cont = "Passare in automatico?";
+		if ( system_status.warnings.modeswitch != "" )
+			cont += "<p> ATTENZIONE: " + system_status.warnings.modeswitch+"</p>";
 		var dialog = new ConfirmDialog({
         		title: "ATTENZIONE!",
-        		content: "Pssare in automatico?"});
+        		content: cont});
 		dialog.set("buttonOk", "Passa in auto");
 		dialog.set("buttonCancel", "Annulla");
 		dialog.on("execute", function(){executeCommand("auto");});
@@ -260,7 +264,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 					}
 				}
 			}
-			if ( !program_linked )
+			if ( !program_linked ){
 				query("#program-table > tbody > tr > td")
 					.on("click", 
 					function(evt){ 
@@ -269,9 +273,76 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 						var h1 = id.substr(15,2);
 						var h2 = id.substr(17,2);
 						var h = (+h1)*2+(h2=="30"?1:0);
-						program_status[d][h] = selected_type;
+						if ( program_status[d][h] == selected_type ){
+							program_status[d][h] = 'o';
+						} else {
+							program_status[d][h] = selected_type;
+						}
 						programRefresh();
 					});
+				query("#program-table > thead > tr:first-child > th")
+					.on("click",
+					function(evt){
+						var id = evt.currentTarget.id ;
+						var h = id.substr(15,2);
+						var dialog = new ConfirmDialog({
+                        						title: "Imposta ora intera",
+                        						content: "Imposto l'intera ora su tutta la settimana?"});
+                				dialog.set("buttonOk", "Si");
+                				dialog.set("buttonCancel", "Annulla");
+                				dialog.on("execute",
+                        				function() {
+								for ( var d = 0; d < 7; d++ ){
+									for ( var f = 0; f < 2; f++ ){
+										program_status[d][h*2+f] = selected_type;
+									}
+								}
+								programRefresh();
+							});
+                				dialog.show();
+					});
+				query("#program-table > thead > tr:nth-child(2) > th")
+					.on("click",
+					function(evt){
+						var id = evt.currentTarget.id ;
+						var h = id.substr(15,2);
+						var f = id.substr(17,2) == "00" ? 0 : 1;
+						var dialog = new ConfirmDialog({
+                        						title: "Imposta mezz'ora",
+                        						content: "Imposto la mezz'ora su tutta la settimana?"});
+                				dialog.set("buttonOk", "Si");
+                				dialog.set("buttonCancel", "Annulla");
+                				dialog.on("execute",
+                        				function() {
+								for ( var d = 0; d < 7; d++ ){
+									program_status[d][h*2+f] = selected_type;
+								}
+								programRefresh();
+							});
+                				dialog.show();
+					});
+				query("#program-table > tbody > tr > th")
+					.on("click",
+					function(evt){
+						var id = evt.currentTarget.id ;
+						var d = id.substr(12,1);
+						var dialog = new ConfirmDialog({
+                        						title: "Imposta giornata",
+                        						content: "Imposto l'intero giorno?"});
+                				dialog.set("buttonOk", "Si");
+                				dialog.set("buttonCancel", "Annulla");
+                				dialog.on("execute",
+                        				function() {
+								for ( var h = 0; h < 24; h++ ){
+									for ( var f = 0; f < 2; f++ ){
+										program_status[d][h*2+f] = selected_type;
+									}
+								}
+								programRefresh();
+							});
+                				dialog.show();
+					});
+			}
 			program_linked = true;
 		}
 	}
@@ -407,7 +478,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
        		request("cgi-bin/history" , {handleAs :"json"}).then(
 			function(result){
 				historyGraph.updateSeries("Temp", result.temp );
-				historyGraph.updateSeries("Humidity", result.humidity );
+				//historyGraph.updateSeries("Humidity", result.humidity );
 				historyGraph.render();
 				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
 			},
@@ -560,12 +631,23 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 	
 
 	updateStatus();
-	historyGraph = new Chart("history-graph");
+	historyGraph = new Chart("history-graph",{ 
+				title: "Storico temperatura",
+				titlePos: "bottom",
+				titleGap: 25})
+			.setTheme(Wetland);
 	historyGraph.addPlot("default", {type: Lines});
-	historyGraph.addAxis("x");
-	historyGraph.addAxis("y", {vertical: true});
+	historyGraph.addAxis("x", {
+			labelFunc:function(text,value,prec){
+					return new Date(parseInt(value)*1000).toLocaleTimeString();
+				}});
+	historyGraph.addAxis("y", {plot:"default", 
+					vertical: true, 
+					majorTickStep: 1,
+					minorTickStep: 0.1,
+					fixLower: "major", 
+					fixUpper: "major"});
 	historyGraph.addSeries("Temp", [], {stroke: {color: "red", width: 2}} );
-	historyGraph.addSeries("Humidity", [], {stroke: {color: "yellow", width: 2}} );
 	historyGraph.render();
 	updateHistory();
 });

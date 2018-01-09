@@ -35,14 +35,11 @@ div.clear {
 	width: 100%;
 }
 
-#history-pane {
-	background: beige;
-	height: 20em;
-	margin-bottom: 2em;
-	margin-left: 2em;
-}
-
 #history-graph {
-	height: 100%;
+	height: 24em;
 	width: 100%;
+	margin-bottom: -1em;
+	margin-left: 1em;
+	margin-top: 0px;
+	margin-right: -5em;
 }

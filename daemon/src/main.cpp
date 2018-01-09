@@ -102,6 +102,7 @@ private:
 
 int main(int argc, char** argv)
 {
+    Command::init();
     DebugPrint::setDefaultTag("PiThermoDaemon");
     int ret = 255;
     CmdlineParser cmd("PiThermo Daemon");

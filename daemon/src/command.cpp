@@ -1,39 +1,52 @@
 #include "command.h"
 
-Command::Command(const char *buffer, uint32_t size):
-    _command(INVALID)
+#include <stdio.h>
+
+std::vector<std::set< std::pair<std::string, Command::CmdType> > > Command::_commands;
+int Command::_commands_size = 0;
+
+void Command::init()
 {
-    if ( (size == 18) && (std::string(buffer,18) == "pellet-minimum-off") )
-        _command = PELLET_MINIMUM_OFF;
-    else if ( (size == 17) && (std::string(buffer,17) == "pellet-minimum-on") )
-        _command = PELLET_MINIMUM_ON;
-    else if ( (size == 10) && (std::string(buffer,10) == "pellet-off") )
-        _command = PELLET_OFF;
-    else if ( (size == 9) && (std::string(buffer,9) == "pellet-on") )
-        _command = PELLET_ON;
-    else if ( (size >= 8) && (std::string(buffer,8) == "min-temp") )
+    _commands.resize(19);
+    _commands[4].insert( std::pair<std::string, CmdType>("auto", AUTO) );
+    _commands[6].insert( std::pair<std::string, CmdType>("gas-on", GAS_ON) );
+    _commands[6].insert( std::pair<std::string, CmdType>("manual", MANUAL) );
+    _commands[7].insert( std::pair<std::string, CmdType>("program", PROGRAM) );
+    _commands[7].insert( std::pair<std::string, CmdType>("gas-off", GAS_OFF) );
+    _commands[8].insert( std::pair<std::string, CmdType>("max-temp", SET_MAX_TEMP) );
+    _commands[8].insert( std::pair<std::string, CmdType>("min-temp", SET_MIN_TEMP) );
+    _commands[9].insert( std::pair<std::string, CmdType>("pellet-on", PELLET_ON) );
+    _commands[10].insert( std::pair<std::string, CmdType>("pellet-off", PELLET_OFF) );
+    _commands[17].insert( std::pair<std::string, CmdType>("pellet-minimum-on", PELLET_MINIMUM_ON) );
+    _commands[18].insert( std::pair<std::string, CmdType>("pellet-minimum-off", PELLET_MINIMUM_OFF) );
+    _commands_size = _commands.size();
+}
+
+Command::Command(const char *buffer, uint32_t size):
+    _command(INVALID),
+    _param(),
+    _cmd_string( buffer, 4 )
+{    
+    bool found = false;
+    // Non sprecare cicli, non controllare oltre la massima lunghezza del comando:
+    int check_size = (size+1) > _commands_size ? _commands_size : size+1;
+    for ( int i = 4;
+          (i < check_size) && !found; i++ )
     {
-        _command = SET_MIN_TEMP;
-        _param = std::string( &buffer[8], size-8 );
+        for ( std::set<std::pair<std::string, CmdType> >::const_iterator x = _commands[i].begin();
+              (x != _commands[i].end()) &&
+              !found; ++x )
+        {
+            if ( _cmd_string == x->first )
+            {
+                found = true;
+                _command = x->second;
+                _param = std::string( &buffer[i], size-i );
+            }
+        }
+        if ( !found )
+            _cmd_string += buffer[i];
     }
-    else if ( (size >= 8) && (std::string(buffer,8) == "max-temp") )
-    {
-        _command = SET_MAX_TEMP;
-        _param = std::string( &buffer[8], size-8 );
-    }
-    else if ( (size == 7) && (std::string(buffer,7) == "gas-off") )
-        _command = GAS_OFF;
-    else if ( (size >= 7) && (std::string(buffer,7) == "program") )
-    {
-        _command = PROGRAM;
-        _param = std::string( &buffer[7], size-7 );
-    }
-    else if ( (size == 6) && (std::string(buffer,6) == "manual") )
-        _command = MANUAL;
-    else if ( (size == 6) && (std::string(buffer,6) == "gas-on") )
-        _command = GAS_ON;
-    else if ( (size == 4) && (std::string(buffer,4) == "auto") )
-        _command = AUTO;
 }
 
 Command::~Command()
@@ -44,6 +57,11 @@ Command::~Command()
 Command::CmdType Command::command() const
 {
     return _command;
+}
+
+std::string Command::commandStr() const
+{
+    return _cmd_string;
 }
 
 std::string Command::getParam() const

@@ -45,6 +45,7 @@ private:
 
     uint8_t fixReading(const int read);
     void updateCurrentTime();
+    void updateProgram();
 
     void saveConfig();
     void updateStatus(bool gas_on, bool pellet_on, bool pellet_minimum, bool pellet_feedback);
@@ -83,6 +84,9 @@ private:
     float _current_humidity;
 
     Program _program;
+    bool _program_gas;
+    bool _program_pellet;
+    bool _program_pellet_minimum;
 
     bool _gpio_error;
     bool _history_warned;
@@ -97,6 +101,8 @@ private:
     std::string _str_day;
     std::string _str_h;
     std::string _str_f;
+    std::string _str_pellet_off_warning;
+    std::string _str_pellet_on_warning;
     uint32_t _day;
     uint32_t _hour;
     uint32_t _half_hour;

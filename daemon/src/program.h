@@ -13,9 +13,8 @@ public:
     Program();
     ~Program();
 
-    bool getPellet( int d, int h, int f );
-    bool getGas( int d, int h, int f );
-    bool getPelletMinimum( int d, int h, int f );
+    void getProgram( int d, int h, int f,
+                     bool& g, bool& p, bool &m );
 
     bool change( const std::string& p );
     void loadConfig( const ConfigData* c );

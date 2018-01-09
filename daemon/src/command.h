@@ -2,11 +2,15 @@
 #define COMMAND_H
 
 #include "common_defs.h"
+
 #include <string>
+#include <vector>
+#include <set>
 
 class Command
 {
 public:
+    static void init();
     enum CmdType { INVALID,
                    PELLET_ON,
                    PELLET_OFF,
@@ -18,17 +22,23 @@ public:
                    SET_MIN_TEMP,
                    SET_MAX_TEMP,
                    PROGRAM,
-                   AUTO };
+                   AUTO};
 
     Command( const char* buffer, uint32_t size );
     ~Command();
 
     CmdType command() const;
+    std::string commandStr() const;
     std::string getParam() const;
 
 private:
     CmdType _command;
     std::string _param;
+    std::string _cmd_string;
+
+    static std::vector<std::set< std::pair<std::string, CmdType> > > _commands;
+    static int _commands_size;
+
 };
 
 #endif // COMMAND_H

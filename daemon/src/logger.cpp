@@ -7,7 +7,8 @@ using namespace FrameworkLibrary;
 
 Logger::Logger(const std::string &log_file):
     _log_filename(log_file),
-    _log_file(NULL)
+    _log_file(NULL),
+    _debug(false)
 {
     _log_file = fopen( _log_filename.c_str(), "a" );
     if ( _log_file != NULL )
@@ -29,6 +30,16 @@ void Logger::logEvent(const std::string &event)
     {
         printStamp();
         fprintf(_log_file, " -- %s\n", event.c_str() );
+        fflush(_log_file);
+    }
+}
+
+void Logger::logDebug(const std::string &str)
+{
+    if ( _debug )
+    {
+        printStamp();
+        fprintf(_log_file, " -debug- %s\n", str.c_str() );
         fflush(_log_file);
     }
 }
