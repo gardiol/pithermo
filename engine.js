@@ -59,9 +59,11 @@ require(["dijit/form/Button",
 	 "dojox/charting/axis2d/Default", 
 	 "dojox/charting/plot2d/Lines",
 	 "dojox/charting/themes/Wetland",
+	 "dojox/charting/plot2d/Areas",
+	 "dojox/charting/plot2d/Markers",
 	 "dojo/on",
 	 "dojo/domReady!"], 
-function(Button, request, dom, attr, dclass, style, html, query, json, registry, ConfirmDialog, ContentPane, StackContainer, NumberSpinner, Chart, Default, Lines, Wetland, on)
+function(Button, request, dom, attr, dclass, style, html, query, json, registry, ConfirmDialog, ContentPane, StackContainer, NumberSpinner, Chart, Default, Lines, Wetland, Areas, Markers, on)
 {
 	function executeCommand(cmd) {
        		request.put("/cgi-bin/command", {data:cmd}).then(
@@ -477,8 +479,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 	{
        		request("cgi-bin/history" , {handleAs :"json"}).then(
 			function(result){
-				historyGraph.updateSeries("Temp", result.temp );
-				//historyGraph.updateSeries("Humidity", result.humidity );
+				historyGraph.updateSeries("Temperatura", result.temp );
 				historyGraph.render();
 				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
 			},
@@ -631,23 +632,44 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 	
 
 	updateStatus();
-	historyGraph = new Chart("history-graph",{ 
-				title: "Storico temperatura",
-				titlePos: "bottom",
-				titleGap: 25})
-			.setTheme(Wetland);
-	historyGraph.addPlot("default", {type: Lines});
-	historyGraph.addAxis("x", {
-			labelFunc:function(text,value,prec){
-					return new Date(parseInt(value)*1000).toLocaleTimeString();
-				}});
-	historyGraph.addAxis("y", {plot:"default", 
-					vertical: true, 
-					majorTickStep: 1,
-					minorTickStep: 0.1,
-					fixLower: "major", 
-					fixUpper: "major"});
-	historyGraph.addSeries("Temp", [], {stroke: {color: "red", width: 2}} );
+	historyGraph =new Chart("history-graph",{ 
+							title: "Storico temperatura",
+							titlePos: "bottom",
+							titleGap: 25
+						});
+	historyGraph.setTheme(Wetland);
+	historyGraph.addPlot("tempPlot",{
+						type: Lines,
+						lines: true, 
+						areas: false, 
+						markers: false,
+						tension: "X",
+						stroke: {
+								color: "red", 
+								width: 2
+							}
+					});
+	historyGraph.addAxis("x", 	{
+						plot:"tempPlot", 
+						majorTickStep: 60,
+						minorTickStep: 5,
+						labelFunc:function(text,value,prec){
+							return new Date(parseInt(value)*1000).toLocaleTimeString();
+						}
+					});
+	historyGraph.addAxis("y", 	{
+						plot:"tempPlot", 
+						vertical: true, 
+						majorTickStep: 1,
+						minorTickStep: 0.1,
+						fixLower: "major", 
+						fixUpper: "major"
+					});
+	historyGraph.addSeries("Temperatura",
+				[],
+				{
+					plot: "tempPlot"
+				});
 	historyGraph.render();
 	updateHistory();
 });

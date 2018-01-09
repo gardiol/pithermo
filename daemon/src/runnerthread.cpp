@@ -662,29 +662,29 @@ void RunnerThread::writeHistoryJson()
         fwrite("{\"temp\":[", 9, 1, history_json );
         for ( std::list<HistoryItem>::iterator t = _th_history.begin(); t != _th_history.end(); ++t )
         {
-            float temp = (*t).getTemp();
+            std::string temp_str = (*t).getTempStr();
+            std::string time_str = (*t).getTimeStr();
             if ( t != _th_history.begin() )
                 fwrite( ",", 1, 1, history_json );
-            std::string temp_str = FrameworkUtils::ftostring( temp );
+            fwrite( "{\"x\":", 5, 1, history_json );
+            fwrite( time_str.c_str(), time_str.length(), 1, history_json );
+            fwrite( ",\"y\":", 5, 1, history_json );
             fwrite( temp_str.c_str(), temp_str.length(), 1, history_json );
+            fwrite( "}", 1, 1, history_json );
         }
+
         fwrite( "],\"humidity\":[", 14, 1, history_json );
         for ( std::list<HistoryItem>::iterator t = _th_history.begin(); t != _th_history.end(); ++t )
         {
-            float humidity = (*t).getHumidity();
+            std::string humidity_str = (*t).getHumidityStr();
+            std::string time_str = (*t).getTimeStr();
             if ( t != _th_history.begin() )
                 fwrite( ",", 1, 1, history_json );
-            std::string humidity_str = FrameworkUtils::ftostring( humidity );
-            fwrite( humidity_str.c_str(), humidity_str.length(), 1, history_json );
-        }
-        fwrite( "],\"time\":[", 10, 1, history_json );
-        for ( std::list<HistoryItem>::iterator t = _th_history.begin(); t != _th_history.end(); ++t )
-        {
-            uint64_t ltime = (*t).getTime();
-            if ( t != _th_history.begin() )
-                fwrite( ",", 1, 1, history_json );
-            std::string time_str = FrameworkUtils::tostring( ltime );
+            fwrite( "{\"x\":", 5, 1, history_json );
             fwrite( time_str.c_str(), time_str.length(), 1, history_json );
+            fwrite( ",\"y\":", 5, 1, history_json );
+            fwrite( humidity_str.c_str(), humidity_str.length(), 1, history_json );
+            fwrite( "}", 1, 1, history_json );
         }
         fwrite( "]}", 2, 1, history_json );
         fclose( history_json );

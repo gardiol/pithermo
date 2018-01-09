@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
+#include <string>
+
 class HistoryItem
 {
 public:
@@ -36,6 +38,21 @@ public:
         return _humidity;
     }
 
+    std::string getTimeStr() const
+    {
+        return _time_str;
+    }
+
+    std::string getTempStr() const
+    {
+        return _temp_str;
+    }
+
+    std::string getHumidityStr() const
+    {
+        return _humidity_str;
+    }
+
     void writeToFile( FILE* file );
 
 private:
@@ -43,6 +60,11 @@ private:
     float _temp;
     float _humidity;
     bool _valid;
+    std::string _time_str;
+    std::string _temp_str;
+    std::string _humidity_str;
+
+    void updateStr();
 };
 
 #endif // HISTORYITEM_H
