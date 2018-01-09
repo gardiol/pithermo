@@ -58,12 +58,12 @@ require(["dijit/form/Button",
 	 "dojox/charting/Chart",
 	 "dojox/charting/axis2d/Default", 
 	 "dojox/charting/plot2d/Lines",
-	 "dojox/charting/themes/Wetland",
+	 "dojox/charting/themes/Chris",
 	 "dojox/charting/plot2d/Areas",
 	 "dojox/charting/plot2d/Markers",
 	 "dojo/on",
 	 "dojo/domReady!"], 
-function(Button, request, dom, attr, dclass, style, html, query, json, registry, ConfirmDialog, ContentPane, StackContainer, NumberSpinner, Chart, Default, Lines, Wetland, Areas, Markers, on)
+function(Button, request, dom, attr, dclass, style, html, query, json, registry, ConfirmDialog, ContentPane, StackContainer, NumberSpinner, Chart, Default, Lines, Chris, Areas, Markers, on)
 {
 	function executeCommand(cmd) {
        		request.put("/cgi-bin/command", {data:cmd}).then(
@@ -480,6 +480,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
        		request("cgi-bin/history" , {handleAs :"json"}).then(
 			function(result){
 				historyGraph.updateSeries("Temperatura", result.temp );
+				historyGraph.updateSeries("Umidita", result.humidity );
 				historyGraph.render();
 				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
 			},
@@ -637,7 +638,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 							titlePos: "bottom",
 							titleGap: 25
 						});
-	historyGraph.setTheme(Wetland);
+	historyGraph.setTheme(Chris);
 	historyGraph.addPlot("tempPlot",{
 						type: Lines,
 						lines: true, 
@@ -660,6 +661,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 	historyGraph.addAxis("y", 	{
 						plot:"tempPlot", 
 						vertical: true, 
+						includeZero: true,
 						majorTickStep: 1,
 						minorTickStep: 0.1,
 						fixLower: "major", 
@@ -669,6 +671,34 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 				[],
 				{
 					plot: "tempPlot"
+				});
+	historyGraph.addPlot("humiPlot",{
+						type: Lines,
+						lines: true, 
+						areas: false, 
+						markers: false,
+						tension: "X",
+						hAxis: "x",
+						vAxis: "h",
+						stroke: {
+								color: "yellow", 
+								width: 2
+							}
+					});
+	historyGraph.addAxis("h", 	{
+						plot:"humiPlot", 
+						vertical: true, 
+						leftBottom: false,
+						includeZero: true,
+						majorTickStep: 1,
+						minorTickStep: 0.1,
+						fixLower: "major", 
+						fixUpper: "major"
+					});
+	historyGraph.addSeries("Umidita",
+				[],
+				{
+					plot: "humiPlot"
 				});
 	historyGraph.render();
 	updateHistory();
