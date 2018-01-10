@@ -328,8 +328,11 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         _last_time = current_time;
         updateCurrentTime();
         updateProgram();
-        updateHistory( _current_temp, _current_humidity, _last_time );
-        writeHistoryJson();
+        if ( _sensor_success_reads > 0 )
+        {
+            updateHistory( _current_temp, _current_humidity, _last_time );
+            writeHistoryJson();
+        }
         update_status = true;
         if ( !_manual_mode )
             check_program = true;
