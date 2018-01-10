@@ -338,7 +338,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             check_program = true;
     }
 
-    if ( check_program )
+    if ( ( (cycle == 0) && !_manual_mode ) || check_program )
     {
         _logger->logDebug("(in auto mode) Check program...");
         _logger->logDebug( std::string("program gas ") + (_program_gas ? "on" : "off"));
