@@ -53,7 +53,6 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _program_pellet(false),
     _program_pellet_minimum(false),
     _gpio_error(false),
-    _history_warned(false),
     _str_manual("manual"),
     _str_auto("auto"),
     _str_on("on"),
@@ -72,7 +71,8 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _status_json_template.push_back("{\"mode\":\"");
     _status_json_template.push_back("\",\"antiice\":\"");
     _status_json_template.push_back("\",\"warnings\":{\"modeswitch\":\"");
-    _status_json_template.push_back("\"},\"pellet\":{\"command\":\"");
+    _status_json_template.push_back("\",\"messages\":[");
+    _status_json_template.push_back("]},\"pellet\":{\"command\":\"");
     _status_json_template.push_back("\",\"status\":\"");
     _status_json_template.push_back("\",\"minimum\":\"");
     _status_json_template.push_back("\"},\"gas\":{\"command\":\"");
@@ -314,7 +314,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
 
         case Command::INVALID:
         default:
-            _logger->logDebug("Invalid command received");
+            _logger->logDebug("Invalid command received (" + cmd->commandStr() + ")");
             break;
         }
     }
@@ -328,6 +328,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         _last_time = current_time;
         updateCurrentTime();
         updateProgram();
+        updateHistory( _current_temp, _current_humidity, _last_time );
         writeHistoryJson();
         update_status = true;
         if ( !_manual_mode )
@@ -343,32 +344,56 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         if ( checkGas() )
         {
             if ( !_program_gas )
+            {
+                appendMessage("programma: gas spento");
+                update_status = true;
                 gasOff();
+            }
         }
         else
         {
             if ( _program_gas )
+            {
+                appendMessage("programma: gas acceso");
+                update_status = true;
                 gasOn();
+            }
         }
         if ( checkPellet() )
         {
             if ( !_program_pellet )
+            {
+                appendMessage("programma: pellet spento");
+                update_status = true;
                 pelletOff();
+            }
         }
         else
         {
             if ( _program_pellet )
+            {
+                appendMessage("programma: pellet acceso");
+                update_status = true;
                 pelletOn();
+            }
         }
         if ( checkPelletMinimum() )
         {
             if ( !_program_pellet_minimum )
+            {
+                appendMessage("programma: pellet al minimo");
+                update_status = true;
                 pelletMinimum(true);
+            }
         }
         else
         {
             if ( _program_pellet_minimum )
+            {
+                appendMessage("programma: pellet in modulazione");
+                update_status = true;
                 pelletMinimum(false);
+            }
         }
     }
 
@@ -378,11 +403,11 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         if ( readSensor( _current_temp, _current_humidity ) )
         {
             _logger->logTemp( _current_temp, _current_humidity );
-            updateHistory( _current_temp, _current_humidity, _last_time );
             if ( _current_temp <= 5.0 )
             {
                 if ( !_anti_ice_active )
                 {
+                    appendMessage("Anti-ice attivato!");
                     _logger->logEvent("Anti-ice ON");
                     gasOn();
                     update_status = true;
@@ -391,6 +416,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             }
             else if ( _anti_ice_active )
             {
+                appendMessage("Anti-ice disattivato!");
                 _logger->logEvent("Anti-ice OFF");
                 gasOff();
                 update_status = true;
@@ -400,6 +426,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             {
                 if ( _manual_mode )
                 {
+                    appendMessage("Max temp superata in manuale");
                     _logger->logEvent("Max temp reached - manual mode");
                     if ( checkGas() )
                         gasOff();
@@ -409,6 +436,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 }
                 else
                 {
+                    appendMessage("Max temp superata in programma");
                     _logger->logEvent("Max temp reached - program mode");
                     if ( _program_gas )
                         gasOff();
@@ -420,6 +448,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             {
                 if ( _manual_mode )
                 {
+                    appendMessage("Sotto la min temp in manuale");
                     _logger->logEvent("Min temp reached - manual mode");
                     if ( checkPellet() )
                         pelletMinimum( false );
@@ -428,6 +457,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 }
                 else
                 {
+                    appendMessage("Sotto la min temp in programma");
                     _logger->logEvent("Min temp reached - program mode");
                     if ( _program_gas )
                         gasOn();
@@ -536,6 +566,22 @@ void RunnerThread::updateProgram()
                          _program_pellet_minimum );
 }
 
+void RunnerThread::appendMessage(const std::string &msg)
+{
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+    std::string stamp = (tm.tm_mday < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_mday ) + "/" +
+                        (tm.tm_mon < 10 ? "0" : "" ) +FrameworkUtils::tostring( tm.tm_mon+1 ) + "/" +
+                        FrameworkUtils::tostring( tm.tm_year+1900 ) + " " +
+                        (tm.tm_hour < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_hour ) + ":" +
+                        (tm.tm_min < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_min ) + "." +
+                        (tm.tm_sec < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_sec );
+
+    _messages.push_back( stamp + " - " + msg );
+    while ( _messages.size() > 5 )
+        _messages.pop_front();
+}
+
 void RunnerThread::saveConfig()
 {
     std::string content;
@@ -585,45 +631,57 @@ void RunnerThread::updateStatus( bool gas_on, bool pellet_on, bool pellet_minimu
                     fwrite( _str_pellet_on_warning.c_str(), _str_pellet_on_warning.size(), 1, status_file);
                 break;
             case 3:
+                for ( std::list<std::string>::iterator m = _messages.begin();
+                      m != _messages.end(); ++m )
+                {
+                    std::string msg = *m;
+                    if ( m != _messages.begin() )
+                        fwrite(",", 1, 1, status_file );
+                    fwrite("\"", 1, 1, status_file );
+                    fwrite( msg.c_str(), msg.length(), 1, status_file );
+                    fwrite("\"", 1, 1, status_file );
+                }
+                break;
+            case 4:
                 if ( pellet_on )
                     fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
                 else
                     fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
                 break;
-            case 4:
+            case 5:
                 if ( pellet_feedback )
                     fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
                 else
                     fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
                 break;
-            case 5:
+            case 6:
                 if ( pellet_minimum )
                     fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
                 else
                     fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
                 break;
-            case 6:
+            case 7:
                 if ( gas_on )
                     fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
                 else
                     fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
                 break;
-            case 7:
+            case 8:
                 fwrite( _str_min_t.c_str(), _str_min_t.length(), 1, status_file);
                 break;
-            case 8:
+            case 9:
                 fwrite( _str_max_t.c_str(), _str_max_t.length(), 1, status_file);
                 break;
-            case 9:
+            case 10:
                 fwrite( _str_day.c_str(), _str_day.length(), 1, status_file);
                 break;
-            case 10:
+            case 11:
                 fwrite( _str_h.c_str(), _str_h.length(), 1, status_file);
                 break;
-            case 11:
+            case 12:
                 fwrite( _str_f.c_str(), _str_f.length(), 1, status_file);
                 break;
-            case 12:
+            case 13:
                 break;
             }
         }
@@ -640,17 +698,11 @@ void RunnerThread::updateHistory( float last_temp, float last_humidity, uint32_t
     _th_history.push_back( HistoryItem( last_time, last_temp, last_humidity ) );
     while ( _th_history.size() > default_history_items )
         _th_history.pop_front();
-
     FILE* history_file = fopen( _history_file.c_str(), "a" );
     if ( history_file != NULL )
     {
         _th_history.back().writeToFile( history_file );
         fclose(history_file);
-    }
-    else if ( !_history_warned )
-    {
-        _history_warned = true;
-        debugPrintWarning() << "Warning: unable to open history file (" << _history_file << ")!\n";
     }
 }
 

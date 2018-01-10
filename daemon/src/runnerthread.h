@@ -46,6 +46,7 @@ private:
     uint8_t fixReading(const int read);
     void updateCurrentTime();
     void updateProgram();
+    void appendMessage( const std::string& msg );
 
     void saveConfig();
     void updateStatus(bool gas_on, bool pellet_on, bool pellet_minimum, bool pellet_feedback);
@@ -89,7 +90,6 @@ private:
     bool _program_pellet_minimum;
 
     bool _gpio_error;
-    bool _history_warned;
 
     std::list<HistoryItem> _th_history;
     std::string _str_manual;
@@ -106,6 +106,7 @@ private:
     uint32_t _day;
     uint32_t _hour;
     uint32_t _half_hour;
+    std::list<std::string> _messages;
 
     static const uint32_t default_history_items = 100;
 };

@@ -28,8 +28,27 @@ img.status-icon-sub {
 	height: 1em;
 }
 
+img#pellet-feedback-led {
+	height: 2em;
+}
+
 #pellet-status > div {
 	display: inline-block;
         vertical-align: middle;
+}
+
+#messages {
+	margin-left: 3em;
+	margin-right: 3em;
+	margin-bottom: 1em;
+	border: 2px solid gray;
+	height: 5em;
+	overflow-y: scroll;
+	background: lightyellow;
+	color: blue;
+}
+
+#messages > ul {
+	list-style: none;
 }
 

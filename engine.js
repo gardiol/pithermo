@@ -50,6 +50,7 @@ require(["dijit/form/Button",
 	 "dojo/html",
 	 "dojo/query",
 	 "dojo/json",
+	 "dojo/dom-construct",
 	 "dijit/registry",
 	 "dijit/ConfirmDialog",
 	 "dijit/layout/ContentPane",
@@ -63,7 +64,7 @@ require(["dijit/form/Button",
 	 "dojox/charting/plot2d/Markers",
 	 "dojo/on",
 	 "dojo/domReady!"], 
-function(Button, request, dom, attr, dclass, style, html, query, json, registry, ConfirmDialog, ContentPane, StackContainer, NumberSpinner, Chart, Default, Lines, Chris, Areas, Markers, on)
+function(Button, request, dom, attr, dclass, style, html, query, json, domConstruct, registry, ConfirmDialog, ContentPane, StackContainer, NumberSpinner, Chart, Default, Lines, Chris, Areas, Markers, on)
 {
 	function executeCommand(cmd) {
        		request.put("/cgi-bin/command", {data:cmd}).then(
@@ -441,6 +442,11 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 						pelletMinimumOnBtn.set("disabled", false );
 						pelletMinimumOffBtn.set("disabled", true );
 					}
+					if ( system_status.pellet.status == "on" ){
+						attr.set("pellet-feedback-led", "src", "images/max-temp.png");
+					} else {
+						attr.set("pellet-feedback-led", "src", "images/min-temp.png");
+					}
 					if ( system_status.gas.command == "on" ){
 						attr.set("gas-status-led", "src", "images/gas-on.png");
 						if ( system_status.mode == "manual" ){
@@ -464,6 +470,12 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 					pelletMinimumOnBtn.set("disabled", true );
 					pelletMinimumOffBtn.set("disabled", true );
 					html.set(modeLabel, "Impianto in AUTOMATICO");
+				}
+				domConstruct.empty("messages-queue");
+				for ( var i = 0; i < system_status.warnings.messages.length; ++i ){
+					domConstruct.place(
+							"<li>" + system_status.warnings.messages[i] + "</li>",
+							"messages-queue","first");
 				}
 				autoRefresh();
 				window.setTimeout( function(){ updateStatus(); }, 2000 );
@@ -647,7 +659,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 						tension: "X",
 						stroke: {
 								color: "red", 
-								width: 2
+								width: 1
 							}
 					});
 	historyGraph.addAxis("x", 	{
@@ -661,9 +673,9 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 	historyGraph.addAxis("y", 	{
 						plot:"tempPlot", 
 						vertical: true, 
-						includeZero: true,
-						majorTickStep: 1,
-						minorTickStep: 0.1,
+						majorTickStep: 10,
+						minorTickStep: 1,
+						microTickStep: 0.1,
 						fixLower: "major", 
 						fixUpper: "major"
 					});
@@ -682,16 +694,15 @@ function(Button, request, dom, attr, dclass, style, html, query, json, registry,
 						vAxis: "h",
 						stroke: {
 								color: "yellow", 
-								width: 2
+								width: 1
 							}
 					});
 	historyGraph.addAxis("h", 	{
 						plot:"humiPlot", 
 						vertical: true, 
 						leftBottom: false,
-						includeZero: true,
-						majorTickStep: 1,
-						minorTickStep: 0.1,
+						majorTickStep: 10,
+						minorTickStep: 1,
 						fixLower: "major", 
 						fixUpper: "major"
 					});
