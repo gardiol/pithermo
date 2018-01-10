@@ -23,7 +23,7 @@
 // 6 = quarto relé libero
 // 0 = gas
 // 2 = pellet
-// 3 = ???
+// 3 = pellet feedback
 RunnerThread::RunnerThread(const std::string &cfg,
                            const std::string &exchange_path,
                            const std::string &hst, Logger *l):
@@ -43,7 +43,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _sensor_timer(),
     _pellet_command_gpio(2),
     _pellet_minimum_gpio(5),
-    _pellet_feedback_gpio(),
+    _pellet_feedback_gpio(3),
     _gas_command_gpio(0),
     _sensor_gpio(),
     _last_time(0),
