@@ -3,4 +3,4 @@ exec 3<>/dev/udp/127.0.0.1/5555
 echo "Content-type: text/html"
 echo ""
 read PROG
-echo -n "program"$PROG >&3
+echo -n "program"$PROG | sed 's/[",]//g' >&3
