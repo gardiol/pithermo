@@ -426,40 +426,25 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 					manualBtn.set("disabled", true );
 					html.set(modeLabel, "Impianto in MANUALE");
 					if ( system_status.pellet.command == "on" ){
-						attr.set("pellet-status-led", "src", "images/pellet-on.png");
 						pelletOnBtn.set("disabled", true );
 						pelletOffBtn.set("disabled", false );
 					} else {
-						attr.set("pellet-status-led", "src", "images/pellet-off.png");
 						pelletOnBtn.set("disabled", false );
 						pelletOffBtn.set("disabled", true );
 					}
 					if ( system_status.pellet.minimum == "on" ){
-						attr.set("pellet-minimum-status-led", "src", "images/pellet-minimo.png");
 						pelletMinimumOnBtn.set("disabled", true );
 						pelletMinimumOffBtn.set("disabled", false );
 					} else {
-						attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
 						pelletMinimumOnBtn.set("disabled", false );
 						pelletMinimumOffBtn.set("disabled", true );
 					}
-					if ( system_status.pellet.status == "on" ){
-						attr.set("pellet-feedback-led", "src", "images/max-temp.png");
-					} else {
-						attr.set("pellet-feedback-led", "src", "images/min-temp.png");
-					}
 					if ( system_status.gas.command == "on" ){
-						attr.set("gas-status-led", "src", "images/gas-on.png");
-						if ( system_status.mode == "manual" ){
-							gasOnBtn.set("disabled", true );
-							gasOffBtn.set("disabled", false );
-						}
+						gasOnBtn.set("disabled", true );
+						gasOffBtn.set("disabled", false );
 					}else{
-						attr.set("gas-status-led", "src", "images/gas-off.png");
-						if ( system_status.mode == "manual" ){
-							gasOnBtn.set("disabled", false );
-							gasOffBtn.set("disabled", true );
-						}
+						gasOnBtn.set("disabled", false );
+						gasOffBtn.set("disabled", true );
 					}
 				} else {
 					autoBtn.set("disabled", true );
@@ -471,6 +456,26 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 					pelletMinimumOnBtn.set("disabled", true );
 					pelletMinimumOffBtn.set("disabled", true );
 					html.set(modeLabel, "Impianto in AUTOMATICO");
+				}
+				if ( system_status.pellet.status == "on" ){
+					attr.set("pellet-feedback-led", "src", "images/max-temp.png");
+				} else {
+					attr.set("pellet-feedback-led", "src", "images/min-temp.png");
+				}
+				if ( system_status.pellet.minimum == "on" ){
+					attr.set("pellet-minimum-status-led", "src", "images/pellet-minimo.png");
+				} else {
+					attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
+				}
+				if ( system_status.pellet.command == "on" ){
+					attr.set("pellet-status-led", "src", "images/pellet-on.png");
+				} else {
+					attr.set("pellet-status-led", "src", "images/pellet-off.png");
+				}
+				if ( system_status.gas.command == "on" ){
+					attr.set("gas-status-led", "src", "images/gas-on.png");
+				}else{
+					attr.set("gas-status-led", "src", "images/gas-off.png");
 				}
 				domConstruct.empty("messages-queue");
 				for ( var i = 0; i < system_status.warnings.messages.length; ++i ){

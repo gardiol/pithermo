@@ -349,8 +349,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 update_status = true;
                 gasOff();
             }
-            else
-                appendMessage("programma: gas mantenuto acceso");
+/*            else
+                appendMessage("programma: gas mantenuto acceso");*/
         }
         else
         {
@@ -360,8 +360,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 update_status = true;
                 gasOn();
             }
-            else
-                appendMessage("programma: gas mantenuto spento");
+/*            else
+                appendMessage("programma: gas mantenuto spento");*/
         }
         if ( checkPellet() )
         {
@@ -371,8 +371,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 update_status = true;
                 pelletOff();
             }
-            else
-                appendMessage("programma: gas mantenuto acceso");
+/*            else
+                appendMessage("programma: pellet mantenuto acceso");*/
         }
         else
         {
@@ -382,8 +382,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 update_status = true;
                 pelletOn();
             }
-            else
-                appendMessage("programma: gas mantenuto spento");
+/*            else
+                appendMessage("programma: pellet mantenuto spento");*/
         }
         if ( checkPelletMinimum() )
         {
@@ -393,8 +393,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 update_status = true;
                 pelletMinimum(false);
             }
-            else
-                appendMessage("programma: pellet mantenuto al minimo");
+/*            else
+                appendMessage("programma: pellet mantenuto al minimo");*/
         }
         else
         {
@@ -404,8 +404,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 update_status = true;
                 pelletMinimum(true);
             }
-            else
-                appendMessage("programma: pellet in mantenuto in modulazione");
+/*            else
+                appendMessage("programma: pellet in mantenuto in modulazione");*/
         }
     }
 
