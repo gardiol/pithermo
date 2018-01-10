@@ -350,7 +350,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 gasOff();
             }
             else
-                appendMessage("programma: mantenuto acceso");
+                appendMessage("programma: gas mantenuto acceso");
         }
         else
         {
@@ -361,7 +361,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 gasOn();
             }
             else
-                appendMessage("programma: mantenuto spento");
+                appendMessage("programma: gas mantenuto spento");
         }
         if ( checkPellet() )
         {
@@ -372,7 +372,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 pelletOff();
             }
             else
-                appendMessage("programma: mantenuto acceso");
+                appendMessage("programma: gas mantenuto acceso");
         }
         else
         {
@@ -383,7 +383,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 pelletOn();
             }
             else
-                appendMessage("programma: mantenuto spento");
+                appendMessage("programma: gas mantenuto spento");
         }
         if ( checkPelletMinimum() )
         {
