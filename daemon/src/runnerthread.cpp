@@ -379,20 +379,20 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         }
         if ( checkPelletMinimum() )
         {
-            if ( !_program_pellet_minimum )
-            {
-                appendMessage("programma: pellet al minimo");
-                update_status = true;
-                pelletMinimum(true);
-            }
-        }
-        else
-        {
-            if ( _program_pellet_minimum )
+            if ( _program_pellet && !_program_pellet_minimum )
             {
                 appendMessage("programma: pellet in modulazione");
                 update_status = true;
                 pelletMinimum(false);
+            }
+        }
+        else
+        {
+            if ( _program_pellet && _program_pellet_minimum )
+            {
+                appendMessage("programma: pellet al minimo");
+                update_status = true;
+                pelletMinimum(true);
             }
         }
     }
