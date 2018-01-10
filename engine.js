@@ -11,6 +11,7 @@ var programPane;
 var autoBtn;
 var manualBtn;
 var programBtn;
+var firstStatusUpdate = true;
 // For status
 var pelletOnBtn;
 var pelletMinimumOnBtn;
@@ -422,6 +423,9 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 			{
 				system_status = result;
 				if ( system_status.mode == "manual" ){
+					if ( firstStatusUpdate ) {
+						modeStack.selectChild( manualPane );
+					}
 					autoBtn.set("disabled", false );
 					manualBtn.set("disabled", true );
 					html.set(modeLabel, "Impianto in MANUALE");
@@ -447,6 +451,9 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 						gasOffBtn.set("disabled", true );
 					}
 				} else {
+					if ( firstStatusUpdate ) {
+						modeStack.selectChild( autoPane );
+					}
 					autoBtn.set("disabled", true );
 					manualBtn.set("disabled", false );
 					gasOnBtn.set("disabled", true );
@@ -483,6 +490,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 							"<li>" + system_status.warnings.messages[i] + "</li>",
 							"messages-queue","first");
 				}
+				firstStatusUpdate = false;
 				autoRefresh();
 				window.setTimeout( function(){ updateStatus(); }, 2000 );
 			}, 
