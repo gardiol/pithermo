@@ -746,16 +746,7 @@ void RunnerThread::writeHistoryJson()
 bool RunnerThread::readSensor( float & current_temp, float & current_humidity )
 {
     bool ret = false;
-#ifdef NOPI
-    float new_humidity = current_humidity+1.0;
-    float new_temp = current_temp+1;
-    if ( new_humidity > 95.0 )
-        new_humidity = 40;
-    if ( new_temp > 30 )
-        new_temp = 1;
-    if ( true )
-    {
-#else
+#ifndef NOPI
     int pin = 1;
     uint8_t laststate = HIGH;
     uint8_t counter = 0;
@@ -803,34 +794,46 @@ bool RunnerThread::readSensor( float & current_temp, float & current_humidity )
     {
         float new_humidity = (dht22_dat[0] * 256 + dht22_dat[1]) / 10.0;
         float new_temp = (((dht22_dat[2] & 0x7F)* 256 + dht22_dat[3]) / 10.0) + _temp_correction;
-
         /* negative temp */
         if ((dht22_dat[2] & 0x80) != 0)
             new_temp = -new_temp;
 
-        if ( (new_humidity > 0) && (new_humidity < 950)  &&
-             (fabs(current_humidity-new_humidity)<10.0) )
+        if ( (_sensor_success_reads == 0) || // prima lettura sempre buona!
+             ( (new_humidity > 0.0) &&    // dato valido?
+               (new_humidity < 95.0) &&   // dato valido?
+               (fabs(current_humidity-new_humidity)<10.0) // delta ragionevole?
+             ) )
         {
-#endif
             current_humidity = new_humidity;
-#ifndef NOPI
             ret = true;
         }
-        if ( (current_temp == 0.0) ||
-             ( ( new_temp < 600 ) &&
-               (fabs(abs(current_temp)-fabs(new_temp))<10.0) ) )
+        if ( (_sensor_success_reads == 0) || // prima lettura sempre buona!
+             ( ( new_temp > -60.0 ) && // dato valido?
+               ( new_temp < 60.0 ) &&  // dato valido?
+               (fabs(current_temp-new_temp)<2.0) // delta ragionevole?
+             ) )
         {
-#endif
             current_temp = new_temp;
             ret = true;
-#ifndef NOPI
         }
-#endif
         _sensor_success_reads++;
     }
     else
         _sensor_failed_reads++;
+#else
+    float new_humidity = current_humidity+1.0;
+    float new_temp = current_temp+1;
+    if ( new_humidity > 95.0 )
+        new_humidity = 40;
+    if ( new_temp > 30 )
+        new_temp = 1;
+    current_humidity = new_humidity;
+    current_temp = new_temp;
+    ret = true;
+    _sensor_success_reads++;
+#endif
     _logger->logDebug("Sensor reads: " + FrameworkUtils::tostring( _sensor_success_reads ) + " ok - " + FrameworkUtils::tostring( _sensor_failed_reads ) + " failed");
+    return ret;
 }
 
 void RunnerThread::setGpioBool(uint8_t num, bool activate)

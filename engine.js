@@ -62,9 +62,10 @@ require(["dijit/form/Button",
 	 "dojox/charting/themes/Chris",
 	 "dojox/charting/plot2d/Areas",
 	 "dojox/charting/plot2d/Markers",
+	 "dojox/charting/action2d/MouseIndicator",
 	 "dojo/on",
 	 "dojo/domReady!"], 
-function(Button, request, dom, attr, dclass, style, html, query, json, domConstruct, registry, ConfirmDialog, ContentPane, StackContainer, NumberSpinner, Chart, Default, Lines, Chris, Areas, Markers, on)
+function(Button, request, dom, attr, dclass, style, html, query, json, domConstruct, registry, ConfirmDialog, ContentPane, StackContainer, NumberSpinner, Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator, on)
 {
 	function executeCommand(cmd) {
        		request.put("/cgi-bin/command", {data:cmd}).then(
@@ -665,7 +666,11 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 	historyGraph.addAxis("x", 	{
 						plot:"tempPlot", 
 						majorTickStep: 60,
-						minorTickStep: 5,
+						majorTicks: true,
+						majorLabels: true,
+						minorTicks: false,
+						minorLabels: false,
+						microTicks: false,
 						labelFunc:function(text,value,prec){
 							return new Date(parseInt(value)*1000).toLocaleTimeString();
 						}
@@ -673,9 +678,15 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 	historyGraph.addAxis("y", 	{
 						plot:"tempPlot", 
 						vertical: true, 
+						dropLabels: false,
 						majorTickStep: 10,
+						majorTicks: true,
+						majorLabels: true,
 						minorTickStep: 1,
+						minorTicks: true,
+						minorLabels: true,
 						microTickStep: 0.1,
+						microTicks: true,
 						fixLower: "major", 
 						fixUpper: "major"
 					});
@@ -711,6 +722,21 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 				{
 					plot: "humiPlot"
 				});
+	new MouseIndicator(historyGraph, "humiPlot",	{ 
+							series: "Umidita",
+							start: true,
+							mouseOver: true,
+    							labelFunc: function(v){
+      								return "H: "+v.y+"";
+    							}
+						});
+	new MouseIndicator(historyGraph, "tempPlot",	{ 
+							series: "Temperatura",
+							mouseOver: true,
+    							labelFunc: function(v){
+      								return "T: "+v.y+"";
+    							}
+						});
 	historyGraph.render();
 	updateHistory();
 });
