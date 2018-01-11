@@ -423,9 +423,6 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 			{
 				system_status = result;
 				if ( system_status.mode == "manual" ){
-					if ( firstStatusUpdate ) {
-						switchMode(system_status.mode);
-					}
 					autoBtn.set("disabled", false );
 					manualBtn.set("disabled", true );
 					html.set(modeLabel, "Impianto in MANUALE");
@@ -451,9 +448,6 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 						gasOffBtn.set("disabled", true );
 					}
 				} else {
-					if ( firstStatusUpdate ) {
-						modeStack.selectChild( autoPane );
-					}
 					autoBtn.set("disabled", true );
 					manualBtn.set("disabled", false );
 					gasOnBtn.set("disabled", true );
@@ -490,7 +484,10 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 							"<li>" + system_status.warnings.messages[i] + "</li>",
 							"messages-queue","first");
 				}
-				firstStatusUpdate = false;
+				if ( firstStatusUpdate ) {
+					switchMode(system_status.mode);
+					firstStatusUpdate = false;
+				}
 				autoRefresh();
 				window.setTimeout( function(){ updateStatus(); }, 2000 );
 			}, 
