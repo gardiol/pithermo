@@ -46,6 +46,8 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _pellet_feedback_gpio(3),
     _gas_command_gpio(0),
     _sensor_gpio(),
+    _num_history_points(100),
+    _num_warnings(5),
     _last_time(0),
     _current_temp(0.0),
     _current_humidity(50.0),
@@ -264,6 +266,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         case Command::AUTO:
             _logger->logEvent("Auto mode");
             _manual_mode = false;
+            updateProgram();
             check_program = true;
             update_status = true;
             save_config = true;
@@ -515,6 +518,8 @@ bool RunnerThread::scheduleStart()
         _max_temp = FrameworkUtils::string_tof( config.getValue( "max_temp" ) );
         _str_max_t = FrameworkUtils::ftostring( _max_temp );
         _temp_correction = FrameworkUtils::string_tof( config.getValue( "temp_correction" ) );
+        _num_history_points = FrameworkUtils::string_toi( config.getValue("history_points") );
+        _num_warnings = FrameworkUtils::string_toi( config.getValue("num_warnings") );
         _program.loadConfig( config.getSection( "program" ) );
     }
     else
@@ -526,7 +531,7 @@ bool RunnerThread::scheduleStart()
     {
         fseek( history_file, 0, SEEK_END );
         uint32_t len = ftell(history_file);
-        uint32_t size = HistoryItem::getSize() * default_history_items;
+        uint32_t size = HistoryItem::getSize() * _num_history_points;
         if ( size > len )
             fseek( history_file, 0, SEEK_SET);
         else
@@ -593,7 +598,7 @@ void RunnerThread::appendMessage(const std::string &msg)
                         (tm.tm_sec < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_sec );
 
     _messages.push_back( stamp + " - " + msg );
-    while ( _messages.size() > 5 )
+    while ( _messages.size() > _num_warnings )
         _messages.pop_front();
 }
 
@@ -606,6 +611,8 @@ void RunnerThread::saveConfig()
     config.setValue( "min_temp", _str_min_t );
     config.setValue( "max_temp", _str_max_t );
     config.setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
+    config.setValue("history_points", FrameworkUtils::tostring( _num_history_points ) );
+    config.setValue("num_warnings", FrameworkUtils::tostring( _num_warnings ) );
     config.setValueBool( "debug", _logger->getDebug() );
 
     ConfigData* prog_section = config.getSection( "program" );
@@ -711,7 +718,7 @@ void RunnerThread::updateStatus( bool gas_on, bool pellet_on, bool pellet_minimu
 void RunnerThread::updateHistory( float last_temp, float last_humidity, uint32_t last_time )
 {
     _th_history.push_back( HistoryItem( last_time, last_temp, last_humidity ) );
-    while ( _th_history.size() > default_history_items )
+    while ( _th_history.size() > _num_history_points )
         _th_history.pop_front();
     FILE* history_file = fopen( _history_file.c_str(), "a" );
     if ( history_file != NULL )

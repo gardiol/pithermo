@@ -424,7 +424,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 				system_status = result;
 				if ( system_status.mode == "manual" ){
 					if ( firstStatusUpdate ) {
-						modeStack.selectChild( manualPane );
+						switchMode(system_status.mode);
 					}
 					autoBtn.set("disabled", false );
 					manualBtn.set("disabled", true );

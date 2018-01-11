@@ -80,6 +80,9 @@ private:
     uint8_t _gas_command_gpio;
     uint8_t _sensor_gpio;
 
+    uint32_t _num_history_points;
+    uint32_t _num_warnings;
+
     uint64_t _last_time;
     float _current_temp;
     float _current_humidity;
@@ -107,8 +110,6 @@ private:
     uint32_t _hour;
     uint32_t _half_hour;
     std::list<std::string> _messages;
-
-    static const uint32_t default_history_items = 100;
 };
 
 #endif // RUNNERTHREAD_H
