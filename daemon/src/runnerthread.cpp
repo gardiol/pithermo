@@ -23,7 +23,7 @@
 // 6 = quarto relé libero
 // 0 = gas
 // 2 = pellet
-// 3 = pellet feedback
+// 7 = pellet feedback
 RunnerThread::RunnerThread(const std::string &cfg,
                            const std::string &exchange_path,
                            const std::string &hst, Logger *l):
@@ -43,7 +43,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _sensor_timer(),
     _pellet_command_gpio(2),
     _pellet_minimum_gpio(5),
-    _pellet_feedback_gpio(3),
+    _pellet_feedback_gpio(7),
     _gas_command_gpio(0),
     _sensor_gpio(),
     _num_history_points(100),
@@ -129,7 +129,7 @@ void RunnerThread::appendCommand(Command *cmd)
 
 bool RunnerThread::checkGas()
 {
-    bool x = !readGpioBool( _gas_command_gpio );
+    bool x = !readGpioBool( _gas_command_gpio, OUTPUT );
     _logger->logDebug(std::string("Check Gas: ") + (x ? "on" : "off") );
     return x;
 }
@@ -148,7 +148,7 @@ void RunnerThread::gasOff()
 
 bool RunnerThread::checkPellet()
 {
-    bool x = !readGpioBool( _pellet_command_gpio );
+    bool x = !readGpioBool( _pellet_command_gpio, OUTPUT );
     _logger->logDebug(std::string("Check Pellet: ") + (x ? "on" : "off") );
     return x;
 }
@@ -167,7 +167,7 @@ void RunnerThread::pelletOff()
 
 bool RunnerThread::checkPelletMinimum()
 {
-    bool x = !readGpioBool( _pellet_minimum_gpio );
+    bool x = !readGpioBool( _pellet_minimum_gpio, OUTPUT );
     _logger->logDebug(std::string("Check PelletMinimum: ") + (x ? "on" : "off") );
     return x;
 }
@@ -184,7 +184,12 @@ void RunnerThread::pelletMinimum(bool m)
 bool RunnerThread::pelletFeedback()
 {   // HIGH: mandata fredda, termostato off, relé chiuso
     // LOW: mandata calda, termostato on, relé aperto
-    return !readGpioBool( _pellet_feedback_gpio );
+    bool fdb = !readGpioBool( _pellet_feedback_gpio, INPUT );
+    if ( fdb )
+        _logger->logDebug("Feedback termostato mandata pellet CALDO");
+    else
+        _logger->logDebug("Feedback termostato mandata pellet FREDDO");
+    return fdb;
 }
 
 bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
@@ -866,12 +871,12 @@ void RunnerThread::setGpioBool(uint8_t num, bool activate)
 #endif
 }
 
-bool RunnerThread::readGpioBool(uint8_t num)
+bool RunnerThread::readGpioBool(uint8_t num, int mode )
 {
 #ifdef NOPI
     return false;
 #else
-    pinMode( num, OUTPUT);
+    pinMode( num, mode);
     uint8_t pin = digitalRead( num );
     return pin == HIGH;
 #endif

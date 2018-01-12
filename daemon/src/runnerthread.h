@@ -55,7 +55,7 @@ private:
 
     bool readSensor(float &current_temp, float &current_humidity);
     void setGpioBool( uint8_t num, bool activate );
-    bool readGpioBool( uint8_t num );
+    bool readGpioBool(uint8_t num , int mode);
 
     std::vector<std::string> _status_json_template;
     std::string _config_file;
