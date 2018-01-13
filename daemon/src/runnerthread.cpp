@@ -15,6 +15,9 @@
 
 #ifndef NOPI
 #include <wiringPi.h>
+#else
+#define OUTPUT 0
+#define INPUT 1
 #endif
 
 // GPIO

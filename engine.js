@@ -1,4 +1,4 @@
-var system_status;
+var system_status = null;
 
 // History:
 var historyGraph;
@@ -25,8 +25,6 @@ var modeLabel;
 // For auto:
 var highlightCells;
 // For program:
-var prgResetBtn;
-var prgApplyBtn;
 var selectOff;
 var selectGas;
 var selectPellet;
@@ -40,6 +38,8 @@ var minTemp;
 var maxTemp;
 var tempResetBtn;
 var tempApplyBtn;
+var prgResetBtn;
+var prgApplyBtn;
 
 
 require(["dijit/form/Button", 
@@ -155,9 +155,9 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 	}
 	function autoRefresh(){
 		if ( dom.byId( "auto-table" ) ) {
-			var nd = system_status.now.d;
-			var nh = system_status.now.h;
-			var nf = system_status.now.f;
+			var nd = system_status ? system_status.now.d : 0;
+			var nh = system_status ? system_status.now.h : 0;
+			var nf = system_status ? system_status.now.f : 0;
 			if ( highlightCells )
 				highlightCells.forEach( function(i,x){
 						dclass.remove( i, "auto_now_h auto_now_c");
@@ -179,7 +179,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 							highlightCells.push( "auto-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
 						}
 						var i = "auto-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30");
-						var c = system_status.program[d][h*2+f];
+						var c = system_status ? system_status.program[d][h*2+f] : ' ';
 						var s = c==''?"":'<img src="images/';
 						if ( c == 'p' ) s+='pellet.png"/>';
 						if ( c == 'g' ) s+='gas.png"/>';
@@ -488,12 +488,45 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 					switchMode(system_status.mode);
 					firstStatusUpdate = false;
 				}
+				tempResetBtn.set("disabled", false );
+				tempApplyBtn.set("disabled", false );
+				prgResetBtn.set("disabled", false );
+				prgApplyBtn.set("disabled", false );
 				autoRefresh();
 				window.setTimeout( function(){ updateStatus(); }, 2000 );
 			}, 
 			function(err)
 			{
-				alert("Impossibile caricare lo stato del sistema: "+err);
+				system_status = null;
+				domConstruct.empty("messages-queue");
+				for ( var i = 0; i < system_status.warnings.messages.length; ++i ){
+					domConstruct.place(
+							"<li>" + system_status.warnings.messages[i] + "</li>",
+							"messages-queue","first");
+				}
+				//alert("Impossibile caricare lo stato del sistema: "+err);
+				autoBtn.set("disabled", true );
+				manualBtn.set("disabled", true );
+				gasOnBtn.set("disabled", true );
+				gasOffBtn.set("disabled", true );
+				pelletOnBtn.set("disabled", true );
+				pelletOffBtn.set("disabled", true );
+				pelletMinimumOnBtn.set("disabled", true );
+				pelletMinimumOffBtn.set("disabled", true );
+				html.set(modeLabel, "Connessione persa!");
+				attr.set("pellet-feedback-led", "src", "images/min-temp.png");
+				attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
+				attr.set("pellet-status-led", "src", "images/pellet-off.png");
+				attr.set("gas-status-led", "src", "images/gas-off.png");
+				domConstruct.empty("messages-queue");
+				domConstruct.place("<li>Connessione persa!</li>","messages-queue","first");
+				tempResetBtn.set("disabled", true );
+				tempApplyBtn.set("disabled", true );
+				prgResetBtn.set("disabled", true );
+				prgApplyBtn.set("disabled", true );
+				firstStatusUpdate = true;
+				autoRefresh();
+				window.setTimeout( function(){ updateStatus(); }, 2000 );
 			})
 
 	}
