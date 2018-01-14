@@ -276,7 +276,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 					for ( var f = 0; f < 2; f++ ){
 						if ( d == nd && h == nh && f == nf ){
 							dclass.add( "program-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30"), "auto_now_h" );
-							autoHighlightCells.push( "program-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
+							programHighlightCells.push( "program-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
 						}
 						var i = "program-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30");
 						var c = program_status ? program_status[d][h*2+f] : ' ';
@@ -381,6 +381,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 			}
 			program_linked = true;
 		}
+		window.setTimeout( function(){ programRefresh(); }, 10000 );
 	}
 	function tempReset() {
 		var dialog = new ConfirmDialog({
