@@ -35,9 +35,20 @@ Program::~Program()
 void Program::getProgram( int d, int h, int f,
                           bool& g, bool& p, bool &m )
 {
-    p = _pellet_program[d][h][f];
-    g = _gas_program[d][h][f];
-    m = _pellet_minimum_program[d][h][f];
+    if ( ( d >= 0 ) && ( d < 7 ) &&
+         ( h >= 0 ) && ( h < 24 ) &&
+         ( f >= 0 ) && ( f < 2 ) )
+    {
+        p = _pellet_program[d][h][f];
+        g = _gas_program[d][h][f];
+        m = _pellet_minimum_program[d][h][f];
+    }
+    else
+    {
+        p = false;
+        g = false;
+        m = false;
+    }
 }
 
 bool Program::change(const std::string &p)

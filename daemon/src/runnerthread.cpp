@@ -578,7 +578,7 @@ void RunnerThread::updateCurrentTime()
 {
     time_t now = (time_t)_last_time;
     struct tm *tm_struct = localtime(&now);
-    _day = (tm_struct->tm_wday-1)%7;
+    _day = (6+tm_struct->tm_wday)%7;
     _hour = tm_struct->tm_hour;
     _half_hour = tm_struct->tm_min >= 30 ? 1 : 0;
     _str_day = FrameworkUtils::tostring( _day );

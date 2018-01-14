@@ -106,9 +106,9 @@ private:
     std::string _str_f;
     std::string _str_pellet_off_warning;
     std::string _str_pellet_on_warning;
-    uint32_t _day;
-    uint32_t _hour;
-    uint32_t _half_hour;
+    int32_t _day;
+    int32_t _hour;
+    int32_t _half_hour;
     std::list<std::string> _messages;
 };
 
