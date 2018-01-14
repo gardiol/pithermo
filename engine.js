@@ -258,7 +258,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 				for ( var h = 0; h < 24; h++ ){
 					for ( var f = 0; f < 2; f++ ){
 						var i = "program-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30");
-						var c = program_status[d][h*2+f];
+						var c = program_status ? program_status[d][h*2+f] : ' ';
 						var s = c==' '?"":'<img src="images/';
 						if ( c == 'p' ) s+='pellet.png"/>';
 						if ( c == 'g' ) s+='gas.png"/>';
@@ -488,23 +488,20 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 					switchMode(system_status.mode);
 					firstStatusUpdate = false;
 				}
-				tempResetBtn.set("disabled", false );
-				tempApplyBtn.set("disabled", false );
-				prgResetBtn.set("disabled", false );
-				prgApplyBtn.set("disabled", false );
+				if ( tempResetBtn )
+					tempResetBtn.set("disabled", false );
+				if ( tempApplyBtn )
+					tempApplyBtn.set("disabled", false );
+				if ( prgResetBtn )
+					prgResetBtn.set("disabled", false );
+				if ( prgApplyBtn )
+					prgApplyBtn.set("disabled", false );
 				autoRefresh();
 				window.setTimeout( function(){ updateStatus(); }, 2000 );
 			}, 
 			function(err)
 			{
 				system_status = null;
-				domConstruct.empty("messages-queue");
-				for ( var i = 0; i < system_status.warnings.messages.length; ++i ){
-					domConstruct.place(
-							"<li>" + system_status.warnings.messages[i] + "</li>",
-							"messages-queue","first");
-				}
-				//alert("Impossibile caricare lo stato del sistema: "+err);
 				autoBtn.set("disabled", true );
 				manualBtn.set("disabled", true );
 				gasOnBtn.set("disabled", true );
@@ -520,10 +517,14 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 				attr.set("gas-status-led", "src", "images/gas-off.png");
 				domConstruct.empty("messages-queue");
 				domConstruct.place("<li>Connessione persa!</li>","messages-queue","first");
-				tempResetBtn.set("disabled", true );
-				tempApplyBtn.set("disabled", true );
-				prgResetBtn.set("disabled", true );
-				prgApplyBtn.set("disabled", true );
+				if ( tempResetBtn )
+					tempResetBtn.set("disabled", true );
+				if ( tempApplyBtn )
+					tempApplyBtn.set("disabled", true );
+				if ( prgResetBtn )
+					prgResetBtn.set("disabled", true );
+				if ( prgApplyBtn )
+					prgApplyBtn.set("disabled", true );
 				firstStatusUpdate = true;
 				autoRefresh();
 				window.setTimeout( function(){ updateStatus(); }, 2000 );
@@ -626,7 +627,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 					onClick: programApply
 				}, "program-apply");
 				prgApplyBtn.startup();
-				program_status = system_status.program;
+				program_status = system_status ? system_status.program : null;
 				programRefresh();
 				selectOff = dom.byId("select-off");
 				on( selectOff, "click", function(){selectType('o');});
