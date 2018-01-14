@@ -1,4 +1,7 @@
 #!/bin/bash
-echo "Content-type: application/json"
-echo ""
-cat _history
+if [ $(ps -Af | grep pithermo_daemon | wc -l) -gt 2 ]
+then
+	echo "Content-type: application/json"
+	echo ""
+	cat _history
+fi

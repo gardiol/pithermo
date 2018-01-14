@@ -23,7 +23,7 @@ var manualBtn;
 var autoBtn;
 var modeLabel;
 // For auto:
-var highlightCells;
+var autoHighlightCells;
 // For program:
 var selectOff;
 var selectGas;
@@ -40,6 +40,7 @@ var tempResetBtn;
 var tempApplyBtn;
 var prgResetBtn;
 var prgApplyBtn;
+var programHighlightCells;
 
 
 require(["dijit/form/Button", 
@@ -158,25 +159,25 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 			var nd = system_status ? system_status.now.d : 0;
 			var nh = system_status ? system_status.now.h : 0;
 			var nf = system_status ? system_status.now.f : 0;
-			if ( highlightCells )
-				highlightCells.forEach( function(i,x){
+			if ( autoHighlightCells )
+				autoHighlightCells.forEach( function(i,x){
 						dclass.remove( i, "auto_now_h auto_now_c");
 					});
-			highlightCells = [];
+			autoHighlightCells = [];
 			for ( var d = 0; d < 7; d++ ){
 				if ( d == nd ){
 					dclass.add( "auto-day-"+nd, "auto_now_h" );
-					highlightCells.push( "auto-day-"+nd );
+					autoHighlightCells.push( "auto-day-"+nd );
 				}
 				for ( var h = 0; h < 24; h++ ){
 					if ( d == nd && h == nh ){
 						dclass.add( "auto-header-"+(nh<10?"0":"")+nh, "auto_now_h" );
-						highlightCells.push( "auto-header-"+(nh<10?"0":"")+nh );
+						autoHighlightCells.push( "auto-header-"+(nh<10?"0":"")+nh );
 					}
 					for ( var f = 0; f < 2; f++ ){
 						if ( d == nd && h == nh && f == nf ){
 							dclass.add( "auto-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30"), "auto_now_h" );
-							highlightCells.push( "auto-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
+							autoHighlightCells.push( "auto-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
 						}
 						var i = "auto-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30");
 						var c = system_status ? system_status.program[d][h*2+f] : ' ';
@@ -189,13 +190,13 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 						html.set(n,s);
 						if ( (d == nd) && (h!=nh || f!=nf)  ){
 							dclass.add(n, "auto_now_c" );
-							highlightCells.push( n );
+							autoHighlightCells.push( n );
 						}else if ( (d != nd) && (h==nh && f == nf) ){
 							dclass.add( n, "auto_now_c" );
-							highlightCells.push( n );
+							autoHighlightCells.push( n );
 						}else if ( d == nd && h == nh && f == nf ){
 							dclass.add( "auto-cell-"+nd+"-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30"), "auto_now_h" );
-							highlightCells.push( "auto-cell-"+nd+"-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
+							autoHighlightCells.push( "auto-cell-"+nd+"-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
 						}
 					}
 				}
@@ -254,9 +255,29 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 	}
 	function programRefresh(){
 		if ( dom.byId( "program-table" ) ) {
+			var nd = system_status ? system_status.now.d : 0;
+			var nh = system_status ? system_status.now.h : 0;
+			var nf = system_status ? system_status.now.f : 0;
+			if ( programHighlightCells )
+				programHighlightCells.forEach( function(i,x){
+						dclass.remove( i, "auto_now_h auto_now_c");
+					});
+			programHighlightCells = [];
 			for ( var d = 0; d < 7; d++ ){
+				if ( d == nd ){
+					dclass.add( "program-day-"+nd, "auto_now_h" );
+					programHighlightCells.push( "program-day-"+nd );
+				}
 				for ( var h = 0; h < 24; h++ ){
+					if ( d == nd && h == nh ){
+						dclass.add( "program-header-"+(nh<10?"0":"")+nh, "auto_now_h" );
+						programHighlightCells.push( "program-header-"+(nh<10?"0":"")+nh );
+					}
 					for ( var f = 0; f < 2; f++ ){
+						if ( d == nd && h == nh && f == nf ){
+							dclass.add( "program-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30"), "auto_now_h" );
+							autoHighlightCells.push( "program-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
+						}
 						var i = "program-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30");
 						var c = program_status ? program_status[d][h*2+f] : ' ';
 						var s = c==' '?"":'<img src="images/';
@@ -266,6 +287,16 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 						if ( c == 'm' ) s+='pellet-min.png"/>';
 						var n = dom.byId(i);
 						html.set(n,s);
+						if ( (d == nd) && (h!=nh || f!=nf)  ){
+							dclass.add(n, "auto_now_c" );
+							programHighlightCells.push( n );
+						}else if ( (d != nd) && (h==nh && f == nf) ){
+							dclass.add( n, "auto_now_c" );
+							programHighlightCells.push( n );
+						}else if ( d == nd && h == nh && f == nf ){
+							dclass.add( "program-cell-"+nd+"-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30"), "auto_now_h" );
+							programHighlightCells.push( "program-cell-"+nd+"-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
+						}
 					}
 				}
 			}
@@ -542,7 +573,10 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
 			},
 			function(err){
-				alert("Impossibile caricare la storia: "+err);
+				historyGraph.updateSeries("Temperatura", [] );
+				historyGraph.updateSeries("Umidita", [] );
+				historyGraph.render();
+				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
 			});
 	}
 
