@@ -245,7 +245,7 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 				var ps = json.stringify(program_status);
        				request.post("/cgi-bin/program",{data:ps}).then(
 					function(result){
-						switchMode(system_status.mode);
+						switchMode(system_status ? system_status.mode : "status");
 					},
 					function(err){
 						alert("Command error: " + err );
