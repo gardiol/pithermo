@@ -1,5 +1,5 @@
 #!/bin/bash
-if [ $(ps -Af | grep pithermo_daemon | wc -l) -gt 2 ]
+if [ $(ps -Af | grep pithermo_daemon | wc -l) -ge 2 ]
 then
 	echo "Content-type: application/json"
 	echo ""
