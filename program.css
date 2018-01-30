@@ -70,3 +70,12 @@
 	height: 2em;
         vertical-align: middle;
 }
+
+.program_now_h {
+	background: green;
+	color: yellow;
+}
+.auto_now_c {
+	background: lightgreen;
+}
+

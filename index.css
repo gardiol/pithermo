@@ -1,38 +1,10 @@
 
 #modsel {
-	display: block;
 	width: 100%;
-	height: 2em;
-	text-align: justify;
 }
-
-div.modselected {
-	border-left: 1px solid black;
-	border-right: 1px solid black;
-	border-top: 1px solid black;
-	background: white;
-}
-
-div.modunselected {
-	border-bottom: 1px solid black;
-	background: lightgray;
-}
-
-#modsel > div {
-	width: 32%;
-	height: 100%;
-	float: left;
-	text-align: center;
-}
-
 
 div.clear {
 	clear: both;
-}
-
-#mode-stack {
-	height: 100%;
-	width: 100%;
 }
 
 #history-graph {

@@ -1,29 +1,21 @@
+// Status
 var system_status = null;
-
+var firstStatusUpdate = true;
 // History:
 var historyGraph;
-
 // For main are
-var modeStack;
-var autoPane;
+var modeTab;
 var manualPane;
 var programPane;
-var autoBtn;
-var manualBtn;
-var programBtn;
-var firstStatusUpdate = true;
 // For status
-var pelletOnBtn;
-var pelletMinimumOnBtn;
-var pelletOffBtn;
-var pelletMinimumOffBtn;
+var pltOnBtn;
+var pltMinBtn;
+var pltOffBtn;
+var pltModBtn;
 var gasOnBtn;
 var gasOffBtn;
 var manualBtn;
 var autoBtn;
-var modeLabel;
-// For auto:
-var autoHighlightCells;
 // For program:
 var selectOff;
 var selectGas;
@@ -32,7 +24,6 @@ var selectPelletMinimum;
 var selectPelletGas;
 var program_status;
 var selected_type;
-var program_linked;
 var prev_mode;
 var minTemp;
 var maxTemp;
@@ -40,36 +31,44 @@ var tempResetBtn;
 var tempApplyBtn;
 var prgResetBtn;
 var prgApplyBtn;
-var programHighlightCells;
+var p_str = [];
 
-
-require(["dijit/form/Button", 
-	 "dojo/request",
-	 "dojo/dom", 
-	 "dojo/dom-attr",
-	 "dojo/dom-class",
-	 "dojo/dom-style",
-	 "dojo/html",
-	 "dojo/query",
-	 "dojo/json",
-	 "dojo/dom-construct",
-	 "dijit/registry",
-	 "dijit/ConfirmDialog",
-	 "dijit/layout/ContentPane",
-	 "dijit/layout/StackContainer",
-	 "dijit/form/NumberSpinner",
-	 "dojox/charting/Chart",
-	 "dojox/charting/axis2d/Default", 
-	 "dojox/charting/plot2d/Lines",
-	 "dojox/charting/themes/Chris",
-	 "dojox/charting/plot2d/Areas",
-	 "dojox/charting/plot2d/Markers",
-	 "dojox/charting/action2d/MouseIndicator",
-	 "dojo/on",
-	 "dojo/domReady!"], 
-function(Button, request, dom, attr, dclass, style, html, query, json, domConstruct, registry, ConfirmDialog, ContentPane, StackContainer, NumberSpinner, Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator, on)
+require([
+    "dojo/request",
+    "dojo/dom", 
+    "dojo/dom-attr",
+    "dojo/dom-class",
+    "dojo/dom-style",
+    "dojo/dom-construct",
+    "dojo/html",
+    "dojo/query",
+    "dojo/json",
+    "dojo/on",
+    "dijit/registry",
+    "dijit/ConfirmDialog",
+    "dijit/layout/ContentPane",
+    "dijit/layout/TabContainer",
+    "dijit/form/Button", 
+    "dijit/form/NumberSpinner",
+    "dojox/charting/Chart",
+    "dojox/charting/axis2d/Default", 
+    "dojox/charting/plot2d/Lines",
+    "dojox/charting/themes/Chris",
+    "dojox/charting/plot2d/Areas",
+    "dojox/charting/plot2d/Markers",
+    "dojox/charting/action2d/MouseIndicator",
+    "dojo/domReady!"], 
+function( request, dom, attr, dclass, style, domConstruct, html, query, json, on,      // Dojo
+          registry, ConfirmDialog, ContentPane, TabContainer, Button, NumberSpinner, // Dijit
+          Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator )               // Charing
 {
-	function executeCommand(cmd) {
+    function execCmd(msg,ok,cmd){
+		var dialog = new ConfirmDialog({
+        		title: "Conferma comando...",
+        		content: msg});
+		dialog.set("buttonOk", ok);
+		dialog.set("buttonCancel", "Annulla");
+		dialog.on("execute", function(){
        		request.put("/cgi-bin/command", {data:cmd}).then(
 			function(result){
 				updateStatus();
@@ -77,132 +76,10 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 			function(err){
 				alert("Command error: " + err );
 			});
-	}
-
-	function pelletOn() {
-		var dialog = new ConfirmDialog({
-        		title: "ATTENZIONE!",
-        		content: "Accendo il PELLET?"});
-		dialog.set("buttonOk", "Accendi!");
-		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("pellet-on");});
+        });
 		dialog.show();
-	}
-	function pelletOff() {
-		var dialog = new ConfirmDialog({
-        		title: "ATTENZIONE!",
-        		content: "Spegno il PELLET?"});
-		dialog.set("buttonOk", "Spegni!");
-		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("pellet-off");});
-		dialog.show();
-	}
-	function pelletMinimumOn() {
-		var dialog = new ConfirmDialog({
-        		title: "ATTENZIONE!",
-        		content: "PELLET al  minimo?"});
-		dialog.set("buttonOk", "Minimo!");
-		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("pellet-minimum-on");});
-		dialog.show();
-	}
-	function pelletMinimumOff() {
-		var dialog = new ConfirmDialog({
-        		title: "ATTENZIONE!",
-        		content: "PELLET in mosulazione?"});
-		dialog.set("buttonOk", "Modula!");
-		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("pellet-minimum-off");});
-		dialog.show();
-	}
-	function gasOn() {
-		var dialog = new ConfirmDialog({
-        		title: "ATTENZIONE!",
-        		content: "Accendo il GAS?"});
-		dialog.set("buttonOk", "Accendi!");
-		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("gas-on");});
-		dialog.show();
-	}
-	function gasOff() {
-		var dialog = new ConfirmDialog({
-        		title: "ATTENZIONE!",
-        		content: "Spegno il GAS?"});
-		dialog.set("buttonOk", "Spegni!");
-		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("gas-off");});
-		dialog.show();
-	}
-	function setAutoMode() {
-		var cont = "Passare in automatico?";
-		if ( system_status.warnings.modeswitch != "" )
-			cont += "<p> ATTENZIONE: " + system_status.warnings.modeswitch+"</p>";
-		var dialog = new ConfirmDialog({
-        		title: "ATTENZIONE!",
-        		content: cont});
-		dialog.set("buttonOk", "Passa in auto");
-		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("auto");});
-		dialog.show();
-	}
-	function setManualMode() {
-		var dialog = new ConfirmDialog({
-        		title: "ATTENZIONE!",
-        		content: "Pssare in manuale?"});
-		dialog.set("buttonOk", "Passa in manuale");
-		dialog.set("buttonCancel", "Annulla");
-		dialog.on("execute", function(){executeCommand("manual");});
-		dialog.show();
-	}
-	function autoRefresh(){
-		if ( dom.byId( "auto-table" ) ) {
-			var nd = system_status ? system_status.now.d : 0;
-			var nh = system_status ? system_status.now.h : 0;
-			var nf = system_status ? system_status.now.f : 0;
-			if ( autoHighlightCells )
-				autoHighlightCells.forEach( function(i,x){
-						dclass.remove( i, "auto_now_h auto_now_c");
-					});
-			autoHighlightCells = [];
-			for ( var d = 0; d < 7; d++ ){
-				if ( d == nd ){
-					dclass.add( "auto-day-"+nd, "auto_now_h" );
-					autoHighlightCells.push( "auto-day-"+nd );
-				}
-				for ( var h = 0; h < 24; h++ ){
-					if ( d == nd && h == nh ){
-						dclass.add( "auto-header-"+(nh<10?"0":"")+nh, "auto_now_h" );
-						autoHighlightCells.push( "auto-header-"+(nh<10?"0":"")+nh );
-					}
-					for ( var f = 0; f < 2; f++ ){
-						if ( d == nd && h == nh && f == nf ){
-							dclass.add( "auto-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30"), "auto_now_h" );
-							autoHighlightCells.push( "auto-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
-						}
-						var i = "auto-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30");
-						var c = system_status ? system_status.program[d][h*2+f] : ' ';
-						var s = c==''?"":'<img src="images/';
-						if ( c == 'p' ) s+='pellet.png"/>';
-						if ( c == 'g' ) s+='gas.png"/>';
-						if ( c == 'x' ) s+='pellet-gas.png"/>';
-						if ( c == 'm' ) s+='pellet-min.png"/>';
-						var n = dom.byId(i);
-						html.set(n,s);
-						if ( (d == nd) && (h!=nh || f!=nf)  ){
-							dclass.add(n, "auto_now_c" );
-							autoHighlightCells.push( n );
-						}else if ( (d != nd) && (h==nh && f == nf) ){
-							dclass.add( n, "auto_now_c" );
-							autoHighlightCells.push( n );
-						}else if ( d == nd && h == nh && f == nf ){
-							dclass.add( "auto-cell-"+nd+"-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30"), "auto_now_h" );
-							autoHighlightCells.push( "auto-cell-"+nd+"-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
-						}
-					}
-				}
-			}
-		}
-	}
+    }
+         
 	function selectType(t){
 		selected_type = t;
 		dclass.remove(selectOff, "program-selected");
@@ -212,112 +89,209 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 		dclass.remove(selectPelletMinimum, "program-selected");
 		if ( t == 'o' ){
 			dclass.add(selectOff, "program-selected");
-		}else if ( t == 'g' ) {
+		}else if ( t == 'g' ){
 			dclass.add(selectGas, "program-selected");
-		}else if ( t == 'x' ) {
+		}else if ( t == 'x' ){
 			dclass.add(selectPelletGas, "program-selected");
-		}else if ( t == 'p' ) {
+		}else if ( t == 'p' ){
 			dclass.add(selectPellet, "program-selected");
-		}else if ( t == 'm' ) {
+		}else if ( t == 'm' ){
 			dclass.add(selectPelletMinimum, "program-selected");
 		}
 	}
-	function programReset() {
-		var dialog = new ConfirmDialog({
-        		title: "ATTENZIONE!",
-        		content: "Annullare le modifiche?"});
-		dialog.set("buttonOk", "Si, annulla");
-		dialog.set("buttonCancel", "No, continua");
-		dialog.on("execute", function() {
-						program_status = system_status.program;
-						programRefresh();
-					});
-		dialog.show();
-	}
-	function programApply() {
-		var dialog = new ConfirmDialog({
-        		title: "ATTENZIONE!",
-        		content: "Salvare le modifiche?"});
-		dialog.set("buttonOk", "Salva");
-		dialog.set("buttonCancel", "Continua a modificare");
-		dialog.on("execute", 
-			function() {
-				var ps = json.stringify(program_status);
-       				request.post("/cgi-bin/program",{data:ps}).then(
-					function(result){
-						switchMode(system_status ? system_status.mode : "status");
-					},
-					function(err){
-						alert("Command error: " + err );
-					});
-			});
-		dialog.show();
-	}
+
 	function programRefresh(){
-		if ( dom.byId( "program-table" ) ) {
-			var nd = system_status ? system_status.now.d : 0;
-			var nh = system_status ? system_status.now.h : 0;
-			var nf = system_status ? system_status.now.f : 0;
-			if ( programHighlightCells )
-				programHighlightCells.forEach( function(i,x){
-						dclass.remove( i, "auto_now_h auto_now_c");
-					});
-			programHighlightCells = [];
+		if ( dom.byId( "program-table" ) ){
+			var nd = system_status.now.d, nh = system_status.now.h, nf = system_status.now.f;
 			for ( var d = 0; d < 7; d++ ){
-				if ( d == nd ){
-					dclass.add( "program-day-"+nd, "auto_now_h" );
-					programHighlightCells.push( "program-day-"+nd );
-				}
+				dclass.remove( p_str[d][24], "program_now_h" );
 				for ( var h = 0; h < 24; h++ ){
-					if ( d == nd && h == nh ){
-						dclass.add( "program-header-"+(nh<10?"0":"")+nh, "auto_now_h" );
-						programHighlightCells.push( "program-header-"+(nh<10?"0":"")+nh );
-					}
+                    dclass.remove( p_str[d][h][2], "program_now_h" );
 					for ( var f = 0; f < 2; f++ ){
-						if ( d == nd && h == nh && f == nf ){
-							dclass.add( "program-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30"), "auto_now_h" );
-							programHighlightCells.push( "program-header-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
-						}
-						var i = "program-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30");
-						var c = program_status ? program_status[d][h*2+f] : ' ';
-						var s = c==' '?"":'<img src="images/';
-						if ( c == 'p' ) s+='pellet.png"/>';
-						if ( c == 'g' ) s+='gas.png"/>';
-						if ( c == 'x' ) s+='pellet-gas.png"/>';
-						if ( c == 'm' ) s+='pellet-min.png"/>';
-						var n = dom.byId(i);
-						html.set(n,s);
-						if ( (d == nd) && (h!=nh || f!=nf)  ){
-							dclass.add(n, "auto_now_c" );
-							programHighlightCells.push( n );
-						}else if ( (d != nd) && (h==nh && f == nf) ){
-							dclass.add( n, "auto_now_c" );
-							programHighlightCells.push( n );
-						}else if ( d == nd && h == nh && f == nf ){
-							dclass.add( "program-cell-"+nd+"-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30"), "auto_now_h" );
-							programHighlightCells.push( "program-cell-"+nd+"-"+(nh<10?"0":"")+nh+""+(nf==0?"00":"30") );
-						}
+						var c = program_status[d][h*2+f];
+                        var s = "";
+                        if ( c != ' ' && c != 'o' ){
+                            s = '<img src="images/';
+                            if ( c == 'p' ) s+='pellet.png"/>';
+                            else if ( c == 'g' ) s+='gas.png"/>';
+                            else if ( c == 'x' ) s+='pellet-gas.png"/>';
+                            else if ( c == 'm' ) s+='pellet-min.png"/>';
+                            html.set(p_str[d][h][f][0],s);
+                        }
+                        html.set(p_str[d][h][f][0],s);
+                        (d == nd || h == nh && f == nf) ? dclass.add(p_str[d][h][f][0], "auto_now_c" ) : dclass.remove(p_str[d][h][f][0], "auto_now_c" );
+						dclass.remove( p_str[d][h][f][1], "program_now_h" );
 					}
 				}
 			}
-			if ( !program_linked ){
-				query("#program-table > tbody > tr > td")
-					.on("click", 
+			dclass.add( p_str[nd][24], "program_now_h" );
+            dclass.add( p_str[nd][nh][2], "program_now_h" );
+			dclass.add( p_str[nd][nh][nf][1], "program_now_h" );
+		}
+	}
+
+	
+	function updateStatus(){
+        request("cgi-bin/status",{handleAs :"json"}).then(
+            function(result){
+                system_status = result;
+                [gasOnBtn,gasOffBtn,pltOnBtn,pltOffBtn,pltMinBtn,pltModBtn,manualBtn,autoBtn].forEach(
+                    function(o){
+                        o.set("disabled", true );
+                    });
+                if ( system_status.mode == "manual" ){
+                    autoBtn.set("disabled", false );
+                    html.set("mode-label", "Impianto in MANUALE");
+                    if ( system_status.pellet.command == "on" )
+                        pltOffBtn.set("disabled", false );
+                    else
+                        pltOnBtn.set("disabled", false );
+                    if ( system_status.pellet.minimum == "on" )
+                        pltModBtn.set("disabled", false );
+                    else
+                        pltMinBtn.set("disabled", false );
+                    if ( system_status.gas.command == "on" )
+                        gasOffBtn.set("disabled", false );
+                    else
+                        gasOnBtn.set("disabled", false );
+                }else{
+                    manualBtn.set("disabled", false );
+                    html.set("mode-label", "Impianto in AUTOMATICO");
+                }
+                attr.set("pellet-feedback-led", "src", system_status.pellet.status == "on" ? "images/max-temp.png":"images/min-temp.png");                
+                attr.set("pellet-minimum-status-led", "src", system_status.pellet.minimum == "on" ? "images/pellet-minimo.png":"images/pellet-modulazione.png");
+                attr.set("pellet-status-led", "src", system_status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
+                attr.set("gas-status-led", "src", system_status.gas.command == "on" ? "images/gas-on.png":"images/gas-off.png");                
+                domConstruct.empty("messages-queue");
+                for ( var i = 0; i < system_status.warnings.messages.length; ++i )
+                    domConstruct.place("<li>" + system_status.warnings.messages[i] + "</li>", "messages-queue","first");
+                programPane.set("disabled", false );
+                if (firstStatusUpdate) {
+                    modeTab.selectChild(system_status.mode == "auto" ? programPane : manualPane);
+                    firstStatusUpdate = false;
+                }
+                programRefresh();
+                window.setTimeout( function(){ updateStatus(); }, 2000 );
+            }, 
+            function(err){
+                system_status = null;
+                modeTab.selectChild(manualPane);
+                [autoBtn,manualBtn,gasOnBtn,gasOffBtn,pltOnBtn,pltOffBtn,
+                 pltMinBtn,pltModBtn,programPane].forEach(
+                    function(o){
+                        o.set("disabled", true );
+                    });
+                html.set("mode-label", "Connessione persa!");
+                attr.set("pellet-feedback-led", "src", "images/min-temp.png");
+                attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
+                attr.set("pellet-status-led", "src", "images/pellet-off.png");
+                attr.set("gas-status-led", "src", "images/gas-off.png");
+                domConstruct.empty("messages-queue");
+                domConstruct.place("<li>Connessione persa!</li>","messages-queue","first");
+                firstStatusUpdate = true;
+                window.setTimeout( function(){ updateStatus(); }, 2000 );
+            });
+	}
+
+	function updateHistory(){
+       		request("cgi-bin/history" , {handleAs :"json"}).then(
+			function(result){
+				historyGraph.updateSeries("Temperatura", result.temp );
+				historyGraph.updateSeries("Umidita", result.humidity );
+				historyGraph.render();
+				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
+			},
+			function(err){
+				historyGraph.updateSeries("Temperatura", [] );
+				historyGraph.updateSeries("Umidita", [] );
+				historyGraph.render();
+				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
+			});
+	}
+
+    // Initialize all widgets
+	manualPane = new ContentPane({
+        href: "status.html",
+        title: "Stato",
+		onLoad: function() {
+				manualBtn = new Button({
+					label: "Manuale",
+					disabled: true,
+					onClick: function(){execCmd("Passare in MANUALE?","Manuale!","manual");}
+				}, "manual-btn");
+				autoBtn = new Button({
+					label: "Automatico",
+					disabled: true,
+					onClick: function(){
+                                execCmd("Passare in AUTOMATICO?" + 
+                                        (system_status.warnings.modeswitch != "" ? "<p>ATTENZIONE: " + system_status.warnings.modeswitch+"</p>" : ""),
+                                        "Automatico!","auto");}
+				}, "auto-btn");
+				pltOnBtn = new Button({
+					label: "Accendi",
+					disabled: true,
+					onClick: function(){execCmd("Accendo il PELLET?","Accendi!","pellet-on");}
+				}, "pellet-on-btn");
+				pltOnBtn.startup();
+				pltMinBtn = new Button({
+					label: "minimo",
+					onClick: function(){execCmd("Pellet al MINIMO?","Minimo!","pellet-minimum-on");}
+				}, "pellet-minimum-on-btn");
+				pltMinBtn.startup();
+				pltOffBtn = new Button({
+					label: "Spegni",
+					disabled: true,
+					onClick: function(){execCmd("Spengo il PELLET?","Spegni!","pellet-off");}
+				}, "pellet-off-btn");
+				pltOffBtn.startup();
+				pltModBtn = new Button({
+					label: "modula",
+					onClick: function(){execCmd("Pellet in MODULAZIONE?","Modula!","pellet-minimum-off");}
+				}, "pellet-minimum-off-btn");
+				pltModBtn.startup();
+				gasOnBtn = new Button({
+					label: "Accendi",
+					disabled: true,
+					onClick: function(){execCmd("Accendo il GAS?","Accendi!","gas-on");}
+				}, "gas-on-btn");
+				gasOnBtn.startup();
+				gasOffBtn = new Button({
+					label: "Spegni",
+					disabled: true,
+					onClick: function(){execCmd("Spengo il GAS?","Spegni!","gas-off");}
+				}, "gas-off-btn");
+				gasOffBtn.startup();
+			}}, "manual-pane" );    
+	manualPane.startup();
+    
+	programPane = new ContentPane({
+		href: "program.html",
+        title: "Programma",
+		onLoad: function() {
+            	p_str = [];
+                for ( var d = 0; d < 7; d++ ){
+                    p_str[d] = [];
+                    for ( var h = 0; h < 24; h++ ){
+                        p_str[d][h] = [];
+                        for ( var f = 0; f < 2; f++ ){
+                            p_str[d][h][f] = [
+                                "program-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30"),
+                                "program-header-"+(h<10?"0":"")+h+""+(f==0?"00":"30")
+                            ];
+                        }
+                        p_str[d][h][2] = "program-header-"+(h<10?"0":"")+h;
+                    }
+                    p_str[d][24] = "program-day-"+d;
+                }
+                query("#program-table > tbody > tr > td").on("click", 
 					function(evt){ 
 						var id = evt.currentTarget.id ;
 						var d = id.substr(13,1);
-						var h1 = id.substr(15,2);
-						var h2 = id.substr(17,2);
-						var h = (+h1)*2+(h2=="30"?1:0);
-						if ( program_status[d][h] == selected_type ){
-							program_status[d][h] = 'o';
-						} else {
-							program_status[d][h] = selected_type;
-						}
+						var h = (+id.substr(15,2))*2+(id.substr(17,2)=="30"?1:0);
+                        program_status[d][h] = program_status[d][h] == selected_type ? 'o' : selected_type;
 						programRefresh();
 					});
-				query("#program-table > thead > tr:first-child > th")
-					.on("click",
+				query("#program-table > thead > tr:first-child > th").on("click",
 					function(evt){
 						var id = evt.currentTarget.id ;
 						var h = id.substr(15,2);
@@ -335,10 +309,9 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 								}
 								programRefresh();
 							});
-                				dialog.show();
+                        dialog.show();
 					});
-				query("#program-table > thead > tr:nth-child(2) > th")
-					.on("click",
+				query("#program-table > thead > tr:nth-child(2) > th").on("click",
 					function(evt){
 						var id = evt.currentTarget.id ;
 						var h = id.substr(15,2);
@@ -355,10 +328,9 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 								}
 								programRefresh();
 							});
-                				dialog.show();
+                		dialog.show();
 					});
-				query("#program-table > tbody > tr > th")
-					.on("click",
+				query("#program-table > tbody > tr > th").on("click",
 					function(evt){
 						var id = evt.currentTarget.id ;
 						var d = id.substr(12,1);
@@ -376,294 +348,51 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 								}
 								programRefresh();
 							});
-                				dialog.show();
+                		dialog.show();
 					});
-			}
-			program_linked = true;
-		}
-		window.setTimeout( function(){ programRefresh(); }, 10000 );
-	}
-	function tempReset() {
-		var dialog = new ConfirmDialog({
-        		title: "ATTENZIONE!",
-        		content: "Annullare le modifiche?"});
-		dialog.set("buttonOk", "Si, annulla");
-		dialog.set("buttonCancel", "No, continua");
-		dialog.on("execute", function() {
-						maxTemp.set("value", system_status.temp.max );				
-						minTemp.set("value", system_status.temp.min );				
-					});
-		dialog.show();
-	}
-	function tempApply() {
-		var dialog = new ConfirmDialog({
-        		title: "ATTENZIONE!",
-        		content: "Salvare le modifiche?"});
-		dialog.set("buttonOk", "Salva");
-		dialog.set("buttonCancel", "Continua a modificare");
-		dialog.on("execute", 
-			function() {
-       				request.post("/cgi-bin/set_min_temp",{data:minTemp.value}).then(
-					function(result){
-					},
-					function(err){
-						alert("Command error: " + err );
-					});
-       				request.post("/cgi-bin/set_max_temp",{data:maxTemp.value}).then(
-					function(result){
-					},
-					function(err){
-						alert("Command error: " + err );
-					});
-			});
-		dialog.show();
-	}
 
-	function switchMode(mode){
-		if ( mode == "auto" ){
-			dclass.add( "modsel-auto", "modselected" );
-			dclass.remove( "modsel-auto", "modunselected" );
-			dclass.remove("modsel-manual", "modselected" );
-			dclass.remove("modsel-program", "modselected" );
-			dclass.add( "modsel-manual", "modunselected" );
-			dclass.add( "modsel-program", "modunselected" );
-			modeStack.selectChild( autoPane );
-			autoRefresh();
-		}else if ( mode == "manual" ){
-			dclass.add( "modsel-manual", "modselected" );
-			dclass.remove( "modsel-manual", "modunselected" );
-			dclass.remove( "modsel-auto", "modselected" );
-			dclass.remove( "modsel-program", "modselected" );
-			dclass.add( "modsel-auto", "modunselected" );
-			dclass.add( "modsel-program", "modunselected" );
-			modeStack.selectChild( manualPane );
-		}else if ( mode == "program" ){
-			dclass.add( "modsel-program", "modselected" );
-			dclass.remove( "modsel-program", "modunselected" );
-			dclass.remove( "modsel-auto", "modselected" );
-			dclass.remove( "modsel-manual", "modselected" );
-			dclass.add( "modsel-auto", "modunselected" );
-			dclass.add( "modsel-manual", "modunselected" );
-			modeStack.selectChild( programPane );
-		}
-	}
-
-	function updateStatus()
-	{
-       		request("cgi-bin/status" , {handleAs :"json"}).then(
-			function(result)
-			{
-				system_status = result;
-				if ( system_status.mode == "manual" ){
-					autoBtn.set("disabled", false );
-					manualBtn.set("disabled", true );
-					html.set(modeLabel, "Impianto in MANUALE");
-					if ( system_status.pellet.command == "on" ){
-						pelletOnBtn.set("disabled", true );
-						pelletOffBtn.set("disabled", false );
-					} else {
-						pelletOnBtn.set("disabled", false );
-						pelletOffBtn.set("disabled", true );
-					}
-					if ( system_status.pellet.minimum == "on" ){
-						pelletMinimumOnBtn.set("disabled", true );
-						pelletMinimumOffBtn.set("disabled", false );
-					} else {
-						pelletMinimumOnBtn.set("disabled", false );
-						pelletMinimumOffBtn.set("disabled", true );
-					}
-					if ( system_status.gas.command == "on" ){
-						gasOnBtn.set("disabled", true );
-						gasOffBtn.set("disabled", false );
-					}else{
-						gasOnBtn.set("disabled", false );
-						gasOffBtn.set("disabled", true );
-					}
-				} else {
-					autoBtn.set("disabled", true );
-					manualBtn.set("disabled", false );
-					gasOnBtn.set("disabled", true );
-					gasOffBtn.set("disabled", true );
-					pelletOnBtn.set("disabled", true );
-					pelletOffBtn.set("disabled", true );
-					pelletMinimumOnBtn.set("disabled", true );
-					pelletMinimumOffBtn.set("disabled", true );
-					html.set(modeLabel, "Impianto in AUTOMATICO");
-				}
-				if ( system_status.pellet.status == "on" ){
-					attr.set("pellet-feedback-led", "src", "images/max-temp.png");
-				} else {
-					attr.set("pellet-feedback-led", "src", "images/min-temp.png");
-				}
-				if ( system_status.pellet.minimum == "on" ){
-					attr.set("pellet-minimum-status-led", "src", "images/pellet-minimo.png");
-				} else {
-					attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
-				}
-				if ( system_status.pellet.command == "on" ){
-					attr.set("pellet-status-led", "src", "images/pellet-on.png");
-				} else {
-					attr.set("pellet-status-led", "src", "images/pellet-off.png");
-				}
-				if ( system_status.gas.command == "on" ){
-					attr.set("gas-status-led", "src", "images/gas-on.png");
-				}else{
-					attr.set("gas-status-led", "src", "images/gas-off.png");
-				}
-				domConstruct.empty("messages-queue");
-				for ( var i = 0; i < system_status.warnings.messages.length; ++i ){
-					domConstruct.place(
-							"<li>" + system_status.warnings.messages[i] + "</li>",
-							"messages-queue","first");
-				}
-				if ( firstStatusUpdate ) {
-					switchMode(system_status.mode);
-					firstStatusUpdate = false;
-				}
-				if ( tempResetBtn )
-					tempResetBtn.set("disabled", false );
-				if ( tempApplyBtn )
-					tempApplyBtn.set("disabled", false );
-				if ( prgResetBtn )
-					prgResetBtn.set("disabled", false );
-				if ( prgApplyBtn )
-					prgApplyBtn.set("disabled", false );
-				autoRefresh();
-				window.setTimeout( function(){ updateStatus(); }, 2000 );
-			}, 
-			function(err)
-			{
-				system_status = null;
-				autoBtn.set("disabled", true );
-				manualBtn.set("disabled", true );
-				gasOnBtn.set("disabled", true );
-				gasOffBtn.set("disabled", true );
-				pelletOnBtn.set("disabled", true );
-				pelletOffBtn.set("disabled", true );
-				pelletMinimumOnBtn.set("disabled", true );
-				pelletMinimumOffBtn.set("disabled", true );
-				html.set(modeLabel, "Connessione persa!");
-				attr.set("pellet-feedback-led", "src", "images/min-temp.png");
-				attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
-				attr.set("pellet-status-led", "src", "images/pellet-off.png");
-				attr.set("gas-status-led", "src", "images/gas-off.png");
-				domConstruct.empty("messages-queue");
-				domConstruct.place("<li>Connessione persa!</li>","messages-queue","first");
-				if ( tempResetBtn )
-					tempResetBtn.set("disabled", true );
-				if ( tempApplyBtn )
-					tempApplyBtn.set("disabled", true );
-				if ( prgResetBtn )
-					prgResetBtn.set("disabled", true );
-				if ( prgApplyBtn )
-					prgApplyBtn.set("disabled", true );
-				firstStatusUpdate = true;
-				autoRefresh();
-				window.setTimeout( function(){ updateStatus(); }, 2000 );
-			})
-
-	}
-
-	function updateHistory()
-	{
-       		request("cgi-bin/history" , {handleAs :"json"}).then(
-			function(result){
-				historyGraph.updateSeries("Temperatura", result.temp );
-				historyGraph.updateSeries("Umidita", result.humidity );
-				historyGraph.render();
-				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
-			},
-			function(err){
-				historyGraph.updateSeries("Temperatura", [] );
-				historyGraph.updateSeries("Umidita", [] );
-				historyGraph.render();
-				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
-			});
-	}
-
-
-
-
-
-
-
-	modeStack = new StackContainer({}, 
-		"mode-stack");
-	autoPane = new ContentPane({
-		href: "auto.html",
-		onLoad: function() {
-				autoRefresh();
-			}
-		}, "auto-pane" );
-	autoPane.startup();
-	manualPane = new ContentPane({
-		href: "status.html",
-		onLoad: function() {
-				modeLabel = dom.byId( "mode-label" );
-				manualBtn = new Button({
-					label: "Manuale",
-					disabled: true,
-					onClick: setManualMode
-				}, "manual-btn");
-				autoBtn = new Button({
-					label: "Automatico",
-					disabled: true,
-					onClick: setAutoMode
-				}, "auto-btn");
-				pelletOnBtn = new Button({
-					label: "Accendi",
-					disabled: true,
-					onClick: pelletOn
-				}, "pellet-on-btn");
-				pelletOnBtn.startup();
-				pelletMinimumOnBtn = new Button({
-					label: "minimo",
-				//	disabled: true,
-					onClick: pelletMinimumOn
-				}, "pellet-minimum-on-btn");
-				pelletMinimumOnBtn.startup();
-				pelletOffBtn = new Button({
-					label: "Spegni",
-					disabled: true,
-					onClick: pelletOff
-				}, "pellet-off-btn");
-				pelletOffBtn.startup();
-				pelletMinimumOffBtn = new Button({
-					label: "modula",
-				//	disabled: true,
-					onClick: pelletMinimumOff
-				}, "pellet-minimum-off-btn");
-				pelletMinimumOffBtn.startup();
-				gasOnBtn = new Button({
-					label: "Accendi",
-					disabled: true,
-					onClick: gasOn
-				}, "gas-on-btn");
-				gasOnBtn.startup();
-				gasOffBtn = new Button({
-					label: "Spegni",
-					disabled: true,
-					onClick: gasOff
-				}, "gas-off-btn");
-				gasOffBtn.startup();
-			}
-		}, "manual-pane" );
-	manualPane.startup();
-	programPane = new ContentPane({
-		href: "program.html",
-		onLoad: function() {
 				prgResetBtn = new Button({
 					label: "Ripristina",
-					onClick: programReset
+					onClick: 
+                        function(){
+                            var dialog = new ConfirmDialog({
+                                    title: "ATTENZIONE!",
+                                    content: "Annullare le modifiche?"});
+                            dialog.set("buttonOk", "Si, annulla");
+                            dialog.set("buttonCancel", "No, continua");
+                            dialog.on("execute", function() {
+                                            program_status = system_status.program;
+                                            programRefresh();
+                                        });
+                            dialog.show();
+                        },
 				}, "program-reset");
 				prgResetBtn.startup();
 				prgApplyBtn = new Button({
 					label: "Applica",
-					onClick: programApply
+					onClick: 
+                        function(){
+                            var dialog = new ConfirmDialog({
+                                title: "ATTENZIONE!",
+                                content: "Salvare le modifiche?"});
+                                dialog.set("buttonOk", "Salva");
+                                dialog.set("buttonCancel", "Continua a modificare");
+                                dialog.on("execute", 
+                                    function() {
+                                        var ps = json.stringify(program_status);
+                                        request.post("/cgi-bin/program",{data:ps}).then(
+                                            function(result){
+                                                alert("Programma applicato");
+                                            },
+                                            function(err){
+                                                alert("Command error: " + err );
+                                            });
+                                    });
+                            dialog.show();
+                        },
 				}, "program-apply");
 				prgApplyBtn.startup();
 				program_status = system_status ? system_status.program : null;
-				programRefresh();
 				selectOff = dom.byId("select-off");
 				on( selectOff, "click", function(){selectType('o');});
 				selectGas = dom.byId("select-gas");
@@ -691,40 +420,63 @@ function(Button, request, dom, attr, dclass, style, html, query, json, domConstr
 				maxTemp.startup();
 				tempResetBtn = new Button({
 					label: "Ripristina",
-					onClick: tempReset
+					onClick: 	
+                        function(){
+                            var dialog = new ConfirmDialog({
+                                title: "ATTENZIONE!",
+                                content: "Annullare le modifiche?"});
+                            dialog.set("buttonOk", "Si, annulla");
+                            dialog.set("buttonCancel", "No, continua");
+                            dialog.on("execute", function() {
+                                            maxTemp.set("value", system_status.temp.max );				
+                                            minTemp.set("value", system_status.temp.min );				
+                                        });
+                            dialog.show();
+                        }
 				}, "temp-reset");
 				tempApplyBtn = new Button({
 					label: "Applica",
-					onClick: tempApply
+					onClick: 
+                        function(){
+                            var dialog = new ConfirmDialog({
+                                    title: "ATTENZIONE!",
+                                    content: "Salvare le modifiche?"});
+                            dialog.set("buttonOk", "Salva");
+                            dialog.set("buttonCancel", "Continua a modificare");
+                            dialog.on("execute", 
+                                function() {
+                                        request.post("/cgi-bin/set_min_temp",{data:minTemp.value}).then(
+                                        function(result){
+                                        },
+                                        function(err){
+                                            alert("Command error: " + err );
+                                        });
+                                        request.post("/cgi-bin/set_max_temp",{data:maxTemp.value}).then(
+                                        function(result){
+                                        },
+                                        function(err){
+                                            alert("Command error: " + err );
+                                        });
+                                });
+                            dialog.show();
+                        }
 				}, "temp-apply");
-			}
-		}, "program_pane" );
+                programRefresh();
+			}}, "program_pane" );
 	programPane.startup();
-	modeStack.addChild( autoPane );
-	modeStack.addChild( manualPane );
-	modeStack.addChild( programPane );
-	modeStack.selectChild( manualPane );
-	modeStack.startup();
-
-	manualBtn = new Button({
-		label: "Stato",
-		onClick: function(){switchMode("manual");}
-		}, "modsel-manual-btn");
-	manualBtn.startup();
-	autoBtn = new Button({
-		label: "Programma attivo",
-		onClick: function(){switchMode("auto");}
-		}, "modsel-auto-btn");
-	autoBtn.startup();
-	programBtn = new Button({
-		label: "Cambia programma",
-		onClick: function(){switchMode("program");}
-		}, "modsel-program-btn");
-	programBtn.startup();
-	switchMode("manual");
-	
-
+    
+	modeTab = new TabContainer({style: "height: 100%; width: 100%;"}, "mode-stack");
+	modeTab.addChild( manualPane );
+	modeTab.addChild( programPane );
+	modeTab.startup();        
+    modeTab.selectChild( manualPane );
+    
 	updateStatus();
+    
+    
+    
+    
+    
 	historyGraph =new Chart("history-graph",{ 
 							title: "Storico temperatura",
 							titlePos: "bottom",
