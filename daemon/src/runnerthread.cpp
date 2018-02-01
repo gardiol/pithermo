@@ -784,6 +784,11 @@ bool RunnerThread::readSensor( float & current_temp, float & current_humidity )
             current_temp = new_temp;
             ret = true;
         }
+
+        // Skip fake readings (will turn on anti-ice):
+        if ( (current_humidity == 0) && (current_temp == 0) && ret )
+            ret = false;
+
         _sensor_success_reads++;
     }
     else
