@@ -16,6 +16,14 @@ public:
     HistoryItem( uint64_t last_time, float last_temp, float last_humidity );
     HistoryItem( const HistoryItem& other );
 
+    bool getStrings( std::string& ti, std::string& te, std::string&h ) const
+    {
+        ti = _time_str;
+        te = _temp_str;
+        h = _humidity_str;
+        return _valid;
+    }
+
     void operator=(const HistoryItem& other );
 
     bool isValid() const

@@ -7,6 +7,25 @@ div.clear {
 	clear: both;
 }
 
+#history-area {
+	width: 100%;
+    overflow: visible;
+    background: cornsilk;
+}
+
+#history-controls {
+    border-bottom: 1px inset black;
+    vertical-align: middle;
+    text-align: center;
+    height: 5em;
+}
+
+#history-sel {
+    width: 10em;
+    display: inline-block;
+    vertical-align: middle;
+}
+
 #history-graph {
 	height: 24em;
 	width: 100%;

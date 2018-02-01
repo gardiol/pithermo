@@ -34,7 +34,6 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _logger(l),
     _config_file( cfg ),
     _exchange_path( exchange_path ),
-    _history_file( hst ),
     _commands_mutex("CommandsMutex"),
     _manual_mode(true),
     _anti_ice_active(false),
@@ -49,7 +48,6 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _pellet_feedback_gpio(7),
     _gas_command_gpio(0),
     _sensor_gpio(),
-    _num_history_points(100),
     _num_warnings(5),
     _last_time(0),
     _current_temp(0.0),
@@ -58,6 +56,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _program_pellet(false),
     _program_pellet_minimum(false),
     _gpio_error(false),
+    _history( hst, exchange_path ),
     _str_manual("manual"),
     _str_auto("auto"),
     _str_on("on"),
@@ -210,6 +209,21 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         _commands_list.pop_front();
         switch ( cmd->command() )
         {
+        case Command::SET_HISTORY:
+        {
+            _logger->logDebug("Change history received");
+            std::vector<std::string> hst = FrameworkUtils::string_split( cmd->getParam(),":" );
+            if ( hst.size() == 2 )
+            {
+                std::string mode = hst[0];
+                uint32_t len = FrameworkUtils::string_toi( hst[1] );
+                _history.setModeLen( mode, len );
+                _logger->logDebug("Change history, mode: " + mode);
+                _logger->logDebug("Change history, len: " + hst[1]);
+            }
+            break;
+        }
+
         case Command::PELLET_MINIMUM_ON:
             _logger->logDebug("Pellet Minimum ON received");
             if ( _manual_mode )
@@ -341,8 +355,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         updateProgram();
         if ( _sensor_success_reads > 0 )
         {
-            updateHistory( _current_temp, _current_humidity, _last_time );
-            writeHistoryJson();
+            _history.update( _current_temp, _current_humidity );
         }
         update_status = true;
         if ( !_manual_mode )
@@ -363,8 +376,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 update_status = true;
                 gasOff();
             }
-/*            else
-                appendMessage("programma: gas mantenuto acceso");*/
         }
         else
         {
@@ -374,8 +385,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 update_status = true;
                 gasOn();
             }
-/*            else
-                appendMessage("programma: gas mantenuto spento");*/
         }
         if ( checkPellet() )
         {
@@ -385,8 +394,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 update_status = true;
                 pelletOff();
             }
-/*            else
-                appendMessage("programma: pellet mantenuto acceso");*/
         }
         else
         {
@@ -396,8 +403,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 update_status = true;
                 pelletOn();
             }
-/*            else
-                appendMessage("programma: pellet mantenuto spento");*/
         }
         if ( checkPelletMinimum() )
         {
@@ -407,8 +412,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 update_status = true;
                 pelletMinimum(false);
             }
-/*            else
-                appendMessage("programma: pellet mantenuto al minimo");*/
         }
         else
         {
@@ -418,8 +421,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 update_status = true;
                 pelletMinimum(true);
             }
-/*            else
-                appendMessage("programma: pellet in mantenuto in modulazione");*/
         }
     }
 
@@ -514,6 +515,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
 
 bool RunnerThread::scheduleStart()
 {
+    uint32_t history_len = 1;
+    std::string history_mode = "day";
     std::string content;
     FrameworkUtils::file_to_str( _config_file, content );
     ConfigFile config("config", content );
@@ -526,7 +529,8 @@ bool RunnerThread::scheduleStart()
         _max_temp = FrameworkUtils::string_tof( config.getValue( "max_temp" ) );
         _str_max_t = FrameworkUtils::ftostring( _max_temp );
         _temp_correction = FrameworkUtils::string_tof( config.getValue( "temp_correction" ) );
-        _num_history_points = FrameworkUtils::string_toi( config.getValue("history_points") );
+        history_len = FrameworkUtils::string_toi( config.getValue("history_len") );
+        history_mode = FrameworkUtils::string_tolower( config.getValue( "history_mode" ) );
         _num_warnings = FrameworkUtils::string_toi( config.getValue("num_warnings") );
         _program.loadConfig( config.getSection( "program" ) );
     }
@@ -534,31 +538,13 @@ bool RunnerThread::scheduleStart()
         saveConfig();
 
     // Carica un log iniziale dell'history
-    FILE* history_file = fopen( _history_file.c_str(), "r" );
-    if ( history_file != NULL )
-    {
-        fseek( history_file, 0, SEEK_END );
-        uint32_t len = ftell(history_file);
-        uint32_t size = HistoryItem::getSize() * _num_history_points;
-        if ( size > len )
-            fseek( history_file, 0, SEEK_SET);
-        else
-            fseek( history_file, len - size, SEEK_SET);
-        for (uint32_t i = 0; !feof(history_file); ++i )
-        {
-            HistoryItem item(history_file);
-            if ( item.isValid() )
-                _th_history.push_back( item );
-        }
-        fclose(history_file);
-    }
+    _history.initialize( history_mode, history_len );
 
     _sensor_timer.setLoopTime( 8000 * 1000 );
     _last_time = FrameworkTimer::getTimeEpoc();
     updateCurrentTime();
     updateProgram();
 
-    writeHistoryJson();
     updateStatus( checkGas(),
                   checkPellet(),
                   checkPelletMinimum(),
@@ -596,7 +582,7 @@ void RunnerThread::updateProgram()
 
 void RunnerThread::appendMessage(const std::string &msg)
 {
-    time_t t = time(NULL);
+    time_t t = FrameworkTimer::getTimeEpoc();
     struct tm tm = *localtime(&t);
     std::string stamp = (tm.tm_mday < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_mday ) + "/" +
                         (tm.tm_mon < 10 ? "0" : "" ) +FrameworkUtils::tostring( tm.tm_mon+1 ) + "/" +
@@ -619,7 +605,8 @@ void RunnerThread::saveConfig()
     config.setValue( "min_temp", _str_min_t );
     config.setValue( "max_temp", _str_max_t );
     config.setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
-    config.setValue("history_points", FrameworkUtils::tostring( _num_history_points ) );
+    config.setValue("history_mode", _history.getMode() );
+    config.setValue("history_len", FrameworkUtils::tostring( _history.getLen() ) );
     config.setValue("num_warnings", FrameworkUtils::tostring( _num_warnings ) );
     config.setValueBool( "debug", _logger->getDebug() );
 
@@ -720,56 +707,6 @@ void RunnerThread::updateStatus( bool gas_on, bool pellet_on, bool pellet_minimu
 
         fwrite( "}", 1, 1, status_file );
         fclose( status_file );
-    }
-}
-
-void RunnerThread::updateHistory( float last_temp, float last_humidity, uint32_t last_time )
-{
-    _th_history.push_back( HistoryItem( last_time, last_temp, last_humidity ) );
-    while ( _th_history.size() > _num_history_points )
-        _th_history.pop_front();
-    FILE* history_file = fopen( _history_file.c_str(), "a" );
-    if ( history_file != NULL )
-    {
-        _th_history.back().writeToFile( history_file );
-        fclose(history_file);
-    }
-}
-
-void RunnerThread::writeHistoryJson()
-{
-    FILE* history_json = fopen( (_exchange_path+"/_history").c_str(), "w" );
-    if ( history_json )
-    {
-        fwrite("{\"temp\":[", 9, 1, history_json );
-        for ( std::list<HistoryItem>::iterator t = _th_history.begin(); t != _th_history.end(); ++t )
-        {
-            std::string temp_str = (*t).getTempStr();
-            std::string time_str = (*t).getTimeStr();
-            if ( t != _th_history.begin() )
-                fwrite( ",", 1, 1, history_json );
-            fwrite( "{\"x\":", 5, 1, history_json );
-            fwrite( time_str.c_str(), time_str.length(), 1, history_json );
-            fwrite( ",\"y\":", 5, 1, history_json );
-            fwrite( temp_str.c_str(), temp_str.length(), 1, history_json );
-            fwrite( "}", 1, 1, history_json );
-        }
-
-        fwrite( "],\"humidity\":[", 14, 1, history_json );
-        for ( std::list<HistoryItem>::iterator t = _th_history.begin(); t != _th_history.end(); ++t )
-        {
-            std::string humidity_str = (*t).getHumidityStr();
-            std::string time_str = (*t).getTimeStr();
-            if ( t != _th_history.begin() )
-                fwrite( ",", 1, 1, history_json );
-            fwrite( "{\"x\":", 5, 1, history_json );
-            fwrite( time_str.c_str(), time_str.length(), 1, history_json );
-            fwrite( ",\"y\":", 5, 1, history_json );
-            fwrite( humidity_str.c_str(), humidity_str.length(), 1, history_json );
-            fwrite( "}", 1, 1, history_json );
-        }
-        fwrite( "]}", 2, 1, history_json );
-        fclose( history_json );
     }
 }
 

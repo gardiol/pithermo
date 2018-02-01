@@ -1,5 +1,5 @@
-WiringOP-Zero/wiringPi/wiringPi.c
-WiringOP-Zero/wiringPi/wiringPi.h
+#WiringOP-Zero/wiringPi/wiringPi.c
+#WiringOP-Zero/wiringPi/wiringPi.h
 framework/basecomminterface.cpp
 framework/basecomminterface.h
 framework/basemutex.cpp
@@ -55,6 +55,8 @@ framework/variantstatic.cpp
 framework/variantstatic.h
 src/command.cpp
 src/command.h
+src/history.cpp
+src/history.h
 src/historyitem.cpp
 src/historyitem.h
 src/logger.cpp

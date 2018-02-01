@@ -8,7 +8,26 @@
 	<script src="js/dojo/dojo.js" data-dojo-config="async: true"></script>
 </head>
 <body style="width: 100%; height: 100%;" class="claro">
-	<div id="history-graph">
+	<div id="history-area">
+		<div id="history-graph">
+		</div>
+		<div id="history-controls">
+			<select id="history-unit">
+				<option value="h" selected="selected">Ore</option>
+				<option value="d">Giorni</option>
+				<option value="w">Settimane</option>
+			</select>
+			<select id="history-len">
+				<option value="1" selected="selected">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+				<option value="6">6</option>
+				<option value="7">7</option>
+			</select>
+			<span id="history-sel"></span>
+		</div>
 	</div>
 	<div id="modsel">
 		<div class="clear" id="mode-stack">

@@ -1,5 +1,7 @@
 #include "historyitem.h"
 
+#include <endian.h>
+
 #include <frameworkutils.h>
 
 using namespace FrameworkLibrary;
@@ -14,9 +16,9 @@ HistoryItem::HistoryItem():
     _temp(0.0),
     _humidity(0.0),
     _valid(false),
-    _time_str(),
-    _temp_str(),
-    _humidity_str()
+    _time_str("0"),
+    _temp_str("0"),
+    _humidity_str("0")
 {
 }
 
@@ -25,9 +27,9 @@ HistoryItem::HistoryItem(FILE *file):
     _temp(0.0),
     _humidity(0.0),
     _valid(false),
-    _time_str(),
-    _temp_str(),
-    _humidity_str()
+    _time_str("0"),
+    _temp_str("0"),
+    _humidity_str("0")
 {
     if ( file != NULL )
     {
@@ -39,6 +41,11 @@ HistoryItem::HistoryItem(FILE *file):
         {
             if ( fread( &_humidity, sizeof(_humidity), 1, file ) == 1 )
             {
+                _time = le64toh( _time );
+                uint32_t t32 = le32toh( ((uint32_t*)(&_temp))[0] );
+                _temp = ((float*)(&t32))[0];
+                t32 = le32toh( ((uint32_t*)(&_humidity))[0] );
+                _humidity = ((float*)(&t32))[0];
                 _time_str = FrameworkUtils::tostring( _time );
                 _temp_str = FrameworkUtils::ftostring( _temp );
                 _humidity_str = FrameworkUtils::ftostring( _humidity );
@@ -85,8 +92,11 @@ void HistoryItem::writeToFile(FILE *file)
 {
     if ( file != NULL )
     {
-        fwrite( &_time, sizeof(_time), 1, file );
-        fwrite( &_temp, sizeof(_temp), 1, file );
-        fwrite( &_humidity, sizeof(_humidity), 1, file );
+        uint64_t t64 = htole64( _time );
+        fwrite( &t64, sizeof(t64), 1, file );
+        uint32_t t32 = htole32( ((uint32_t*)(&_temp))[0] );
+        fwrite( &t32, sizeof(t32), 1, file );
+        t32 = htole32( ((uint32_t*)(&_humidity))[0] );
+        fwrite( &t32, sizeof(t32), 1, file );
     }
 }

@@ -7,7 +7,7 @@
 #include "scheduledthread.h"
 
 #include "program.h"
-#include "historyitem.h"
+#include "history.h"
 #include "logger.h"
 
 using namespace FrameworkLibrary;
@@ -50,8 +50,6 @@ private:
 
     void saveConfig();
     void updateStatus(bool gas_on, bool pellet_on, bool pellet_minimum, bool pellet_feedback);
-    void updateHistory(float last_temp, float last_humidity, uint32_t last_time);
-    void writeHistoryJson();
 
     bool readSensor(float &current_temp, float &current_humidity);
     void setGpioBool( uint8_t num, bool activate );
@@ -60,7 +58,6 @@ private:
     std::vector<std::string> _status_json_template;
     std::string _config_file;
     std::string _exchange_path;
-    std::string _history_file;
 
     std::list<Command*> _commands_list;
     BaseMutex _commands_mutex;
@@ -80,7 +77,6 @@ private:
     uint8_t _gas_command_gpio;
     uint8_t _sensor_gpio;
 
-    uint32_t _num_history_points;
     uint32_t _num_warnings;
 
     uint64_t _last_time;
@@ -94,7 +90,8 @@ private:
 
     bool _gpio_error;
 
-    std::list<HistoryItem> _th_history;
+    History _history;
+//    std::list<HistoryItem> _th_history;
     std::string _str_manual;
     std::string _str_auto;
     std::string _str_on;

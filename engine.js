@@ -2,7 +2,12 @@
 var system_status = null;
 var firstStatusUpdate = true;
 // History:
-var historyGraph;
+var hstGraph;
+var hstUnit;
+var hstLen;
+var hstData = null;
+var hstSel;
+var hstTimer;
 // For main are
 var modeTab;
 var manualPane;
@@ -50,6 +55,8 @@ require([
     "dijit/layout/TabContainer",
     "dijit/form/Button", 
     "dijit/form/NumberSpinner",
+    "dijit/form/Select",
+    "dijit/form/HorizontalSlider",
     "dojox/charting/Chart",
     "dojox/charting/axis2d/Default", 
     "dojox/charting/plot2d/Lines",
@@ -59,10 +66,10 @@ require([
     "dojox/charting/action2d/MouseIndicator",
     "dojo/domReady!"], 
 function( request, dom, attr, dclass, style, domConstruct, html, query, json, on,      // Dojo
-          registry, ConfirmDialog, ContentPane, TabContainer, Button, NumberSpinner, // Dijit
+          registry, ConfirmDialog, ContentPane, TabContainer, Button, NumberSpinner, Select, HorizontalSlider, // Dijit
           Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator )               // Charing
 {
-    function execCmd(msg,ok,cmd){
+    function confirmCmd(msg,ok,cmd){
 		var dialog = new ConfirmDialog({
         		title: "Conferma comando...",
         		content: msg});
@@ -80,13 +87,23 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 		dialog.show();
     }
          
+    function setHistory(){
+        var prm = hstUnit.get("value") + ":" + hstLen.get("value");
+        request.post("/cgi-bin/set_history",{data:prm}).then(
+            function(result){
+                updateHistory();
+            },
+            function(err){
+                alert("Command error: " + err );
+            });
+    }
+
 	function selectType(t){
 		selected_type = t;
-		dclass.remove(selectOff, "program-selected");
-		dclass.remove(selectGas, "program-selected");
-		dclass.remove(selectPelletGas, "program-selected");
-		dclass.remove(selectPellet, "program-selected");
-		dclass.remove(selectPelletMinimum, "program-selected");
+        [selectOff, selectGas, selectPelletGas, selectPellet, selectPelletMinimum].forEach( 
+            function(o){
+                dclass.remove(o, "program-selected");
+            });
 		if ( t == 'o' ){
 			dclass.add(selectOff, "program-selected");
 		}else if ( t == 'g' ){
@@ -130,7 +147,6 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 		}
 	}
 
-	
 	function updateStatus(){
         request("cgi-bin/status",{handleAs :"json"}).then(
             function(result){
@@ -193,19 +209,41 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             });
 	}
 
+	function historySetData(){
+        var v = hstSel.get("value")-1;
+        var t = hstData ? hstData[v].temp : [];
+        var h = hstData ? hstData[v].humidity : [];
+        hstGraph.updateSeries("Temperatura", t.length == 0 ? [{x:0,y:0}] : t );
+        hstGraph.updateSeries("Umidita", h.length == 0 ? [{x:0,y:0}] : h );
+        hstGraph.render();        
+    }
+    
 	function updateHistory(){
+            if ( hstTimer ){
+                window.clearTimeout( hstTimer );
+                hstTimer = null;
+            }
        		request("cgi-bin/history" , {handleAs :"json"}).then(
 			function(result){
-				historyGraph.updateSeries("Temperatura", result.temp );
-				historyGraph.updateSeries("Umidita", result.humidity );
-				historyGraph.render();
-				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
+                hstData = result.data;
+                if ( hstUnit.get("value") != result.mode )
+                    hstUnit.set("value", result.mode);
+                if ( hstLen.get("value") != result.len )
+                    hstLen.set("value", result.len);
+                if ( hstSel.get("value") > result.len )
+                    hstSel.set("value", result.len);                        
+                hstSel.set("maximum", result.len );
+                hstSel.set("discreteValues", result.len );
+                
+                historySetData();                                
+				hstTimer = window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
 			},
 			function(err){
-				historyGraph.updateSeries("Temperatura", [] );
-				historyGraph.updateSeries("Umidita", [] );
-				historyGraph.render();
-				window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
+                hstData = null;
+                hstGraph.updateSeries("Temperatura", [] );
+                hstGraph.updateSeries("Umidita", [] );
+                hstGraph.render();
+				hstTimer = window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
 			});
 	}
 
@@ -217,48 +255,48 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 				manualBtn = new Button({
 					label: "Manuale",
 					disabled: true,
-					onClick: function(){execCmd("Passare in MANUALE?","Manuale!","manual");}
+					onClick: function(){confirmCmd("Passare in MANUALE?","Manuale!","manual");}
 				}, "manual-btn");
 				autoBtn = new Button({
 					label: "Automatico",
 					disabled: true,
 					onClick: function(){
-                                execCmd("Passare in AUTOMATICO?" + 
+                                confirmCmd("Passare in AUTOMATICO?" + 
                                         (system_status.warnings.modeswitch != "" ? "<p>ATTENZIONE: " + system_status.warnings.modeswitch+"</p>" : ""),
                                         "Automatico!","auto");}
 				}, "auto-btn");
 				pltOnBtn = new Button({
 					label: "Accendi",
 					disabled: true,
-					onClick: function(){execCmd("Accendo il PELLET?","Accendi!","pellet-on");}
+					onClick: function(){confirmCmd("Accendo il PELLET?","Accendi!","pellet-on");}
 				}, "pellet-on-btn");
 				pltOnBtn.startup();
 				pltMinBtn = new Button({
 					label: "minimo",
-					onClick: function(){execCmd("Pellet al MINIMO?","Minimo!","pellet-minimum-on");}
+					onClick: function(){confirmCmd("Pellet al MINIMO?","Minimo!","pellet-minimum-on");}
 				}, "pellet-minimum-on-btn");
 				pltMinBtn.startup();
 				pltOffBtn = new Button({
 					label: "Spegni",
 					disabled: true,
-					onClick: function(){execCmd("Spengo il PELLET?","Spegni!","pellet-off");}
+					onClick: function(){confirmCmd("Spengo il PELLET?","Spegni!","pellet-off");}
 				}, "pellet-off-btn");
 				pltOffBtn.startup();
 				pltModBtn = new Button({
 					label: "modula",
-					onClick: function(){execCmd("Pellet in MODULAZIONE?","Modula!","pellet-minimum-off");}
+					onClick: function(){confirmCmd("Pellet in MODULAZIONE?","Modula!","pellet-minimum-off");}
 				}, "pellet-minimum-off-btn");
 				pltModBtn.startup();
 				gasOnBtn = new Button({
 					label: "Accendi",
 					disabled: true,
-					onClick: function(){execCmd("Accendo il GAS?","Accendi!","gas-on");}
+					onClick: function(){confirmCmd("Accendo il GAS?","Accendi!","gas-on");}
 				}, "gas-on-btn");
 				gasOnBtn.startup();
 				gasOffBtn = new Button({
 					label: "Spegni",
 					disabled: true,
-					onClick: function(){execCmd("Spengo il GAS?","Spegni!","gas-off");}
+					onClick: function(){confirmCmd("Spengo il GAS?","Spegni!","gas-off");}
 				}, "gas-off-btn");
 				gasOffBtn.startup();
 			}}, "manual-pane" );    
@@ -382,7 +420,6 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                                         var ps = json.stringify(program_status);
                                         request.post("/cgi-bin/program",{data:ps}).then(
                                             function(result){
-                                                alert("Programma applicato");
                                             },
                                             function(err){
                                                 alert("Command error: " + err );
@@ -473,101 +510,76 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     
 	updateStatus();
     
+    hstUnit = new Select({},"history-unit");
+    hstUnit.on("change", setHistory);
+    hstUnit.startup();
     
+    hstLen = new Select({},"history-len");
+    hstLen.on("change", setHistory);
+    hstLen.startup();
+
+    hstSel = new HorizontalSlider({
+        value:1, minimum: 1, maximum:1,
+        intermediateChanges: false, discreteValues: 1,
+        onChange: historySetData,
+        },"history-sel");
+    hstSel.startup();
     
-    
-    
-	historyGraph =new Chart("history-graph",{ 
-							title: "Storico temperatura",
-							titlePos: "bottom",
-							titleGap: 25
-						});
-	historyGraph.setTheme(Chris);
-	historyGraph.addPlot("tempPlot",{
-						type: Lines,
-						lines: true, 
-						areas: false, 
-						markers: false,
-						tension: "X",
-						stroke: {
-								color: "red", 
-								width: 1
-							}
-					});
-	historyGraph.addAxis("x", 	{
-						plot:"tempPlot", 
-						majorTickStep: 60,
-						majorTicks: true,
-						majorLabels: true,
-						minorTicks: false,
-						minorLabels: false,
-						microTicks: false,
-						labelFunc:function(text,value,prec){
-							return new Date(parseInt(value)*1000).toLocaleTimeString();
-						}
-					});
-	historyGraph.addAxis("y", 	{
-						plot:"tempPlot", 
-						vertical: true, 
-						dropLabels: false,
-						majorTickStep: 10,
-						majorTicks: true,
-						majorLabels: true,
-						minorTickStep: 1,
-						minorTicks: true,
-						minorLabels: true,
-						microTickStep: 0.1,
-						microTicks: true,
-						fixLower: "major", 
-						fixUpper: "major"
-					});
-	historyGraph.addSeries("Temperatura",
-				[],
-				{
-					plot: "tempPlot"
-				});
-	historyGraph.addPlot("humiPlot",{
-						type: Lines,
-						lines: true, 
-						areas: false, 
-						markers: false,
-						tension: "X",
-						hAxis: "x",
-						vAxis: "h",
-						stroke: {
-								color: "yellow", 
-								width: 1
-							}
-					});
-	historyGraph.addAxis("h", 	{
-						plot:"humiPlot", 
-						vertical: true, 
-						leftBottom: false,
-						majorTickStep: 10,
-						minorTickStep: 1,
-						fixLower: "major", 
-						fixUpper: "major"
-					});
-	historyGraph.addSeries("Umidita",
-				[],
-				{
-					plot: "humiPlot"
-				});
-	new MouseIndicator(historyGraph, "humiPlot",	{ 
-							series: "Umidita",
-							start: true,
-							mouseOver: true,
-    							labelFunc: function(v){
-      								return "H: "+v.y+"";
-    							}
-						});
-	new MouseIndicator(historyGraph, "tempPlot",	{ 
-							series: "Temperatura",
-							mouseOver: true,
-    							labelFunc: function(v){
-      								return "T: "+v.y+"";
-    							}
-						});
-	historyGraph.render();
+    hstGraph = new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25});
+    hstGraph.setTheme(Chris);
+    hstGraph.addPlot("tempPlot",{
+                        type: Lines,lines: true, areas: false, markers: false,
+                        tension: "X",
+                        stroke: {color: "red",  width: 1}
+                    });
+    hstGraph.addAxis("x", 	{
+                        plot:"tempPlot", 
+//                        majorTickStep: 60, majorTicks: true, majorLabels: true,
+                        minorTicks: false,minorLabels: false,
+                        microTicks: false,
+                        labelFunc:function(text,value,prec){
+                            if ( hstUnit.get("value") == "w" )
+                                return new Date(parseInt(value)*1000).toLocaleString();
+                            else
+                                return new Date(parseInt(value)*1000).toLocaleTimeString();
+                        }
+                    });
+    hstGraph.addAxis("y", 	{
+                        plot:"tempPlot", 
+                        vertical: true, 
+                        dropLabels: false,
+                        majorTickStep: 10, majorTicks: true, majorLabels: true,
+                        minorTickStep: 1, minorTicks: true, minorLabels: true,
+                        microTickStep: 0.1, microTicks: true,
+                        fixLower: "major",  fixUpper: "major"
+                    });
+    hstGraph.addSeries("Temperatura", [],{ plot: "tempPlot"});
+    hstGraph.addPlot("humiPlot",{
+                        type: Lines,lines: true, areas: false, markers: false,
+                        tension: "X",
+                        hAxis: "x",vAxis: "h",
+                        stroke: {color: "yellow", width: 1	}
+                    });
+    hstGraph.addAxis("h", 	{
+                        plot:"humiPlot", 
+                        vertical: true, leftBottom: false,
+                        majorTickStep: 10, 
+                            minorTickStep: 1,
+                        fixLower: "major", fixUpper: "major"
+                    });
+    hstGraph.addSeries("Umidita",[],{plot: "humiPlot"});
+    new MouseIndicator(hstGraph, "humiPlot",{ 
+                        series: "Umidita", start: true, mouseOver: true,
+                        labelFunc: function(v){
+                            return "H: "+v.y+"";
+                        }
+                        });
+    new MouseIndicator(hstGraph, "tempPlot",{ 
+                        series: "Temperatura",mouseOver: true,
+                        labelFunc: function(v){
+                            return "T: "+v.y+"";
+                        }
+                        });                    
 	updateHistory();
+    
 });
