@@ -141,20 +141,20 @@ void History::setModeLen(const std::string &mode, uint32_t len)
     _num_lines = len;
     if ( _num_lines == 0 )
         _num_lines = 1;
-    if ( _num_lines > 7 ) // 7, because the smallest is DAYS in a week
-        _num_lines = 7;
+    if ( _num_lines > num_weeks ) // Cannot use a number bigger than NUM WEEKS here
+        _num_lines = num_weeks;   // Or it WILL crash badly! (see _writeJson)
 
     _points_per_line = 60; // 1h
     _skip_minutes = 1; // Mark 1min
     if ( mode == "d" ) // 24 hours
     {
-        _points_per_line = 96;
+        _points_per_line = 24*4; // This MUST match to cover the FULL day
         _skip_minutes = 15; // mark 1/4 hour
         _mode = 'd';
     }
     else if ( mode == "w" ) // 7 days
     {
-        _points_per_line = 24*7;
+        _points_per_line = 24*7; // This MUST match to cover the FULL week
         _skip_minutes = 60; // Mark 1h
         _mode = 'w';
     }
@@ -187,30 +187,91 @@ void History::_writeJson()
     FILE* history_json = fopen( (_exchange_path+"/_history").c_str(), "w" );
     if ( history_json )
     {
+        uint32_t jHour = _now_hour;
+        uint32_t jDay = _now_day;
+        uint32_t jWweek = 0;
+        uint32_t jMin = 0;
         for ( uint32_t l=0; l < _num_lines; l++ )
         {
-            uint32_t m = 0;
-            for ( uint32_t p = 0; p < _points_per_line; ++p )
+            switch (_mode)
             {
-                std::string ti, te, hu;
-                switch (_mode)
+            case 'h':
+                jMin = 0;
+                for ( uint32_t p = 0; p < _points_per_line; ++p )
                 {
-                case 'h':
-                    _valid_ptr[l][p] = _history_cache[0][0][l][m].getStrings( ti, te, hu );
-                    break;
-
-                case 'd':
-                    _valid_ptr[l][p] = _history_cache[0][l][(m/60)%24][m%60].getStrings( ti, te, hu );
-                    break;
-
-                case 'w':
-                    _valid_ptr[l][p] = _history_cache[l][(m/(60*24))%7][(m/60)%24][m%60].getStrings( ti, te, hu );
-                    break;
+                    std::string ti, te, hu;
+                    _valid_ptr[l][p] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu );
+                    _time_strs[l][p] = ti;
+                    _temp_strs[l][p] = te;
+                    _humi_strs[l][p] = hu;
+                    jMin += _skip_minutes;
                 }
-                _time_strs[l][p] = ti;
-                _temp_strs[l][p] = te;
-                _humi_strs[l][p] = hu;
-                m += _skip_minutes;
+                if ( jHour > 0 )
+                    jHour--;
+                else
+                {
+                    jHour = num_hours-1;
+                    if ( jDay > 0 )
+                        jDay--;
+                    else
+                    {
+                        jDay = num_days-1;
+                        jWweek++; // Since max lines is < num_weeks this will not be an issue of overflow.
+                    }
+                }
+                break;
+
+            case 'd':
+                jMin = 0;
+                jHour = 0;
+                for ( uint32_t p = 0; p < _points_per_line; ++p )
+                {
+                    std::string ti, te, hu;
+                    _valid_ptr[l][p] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu );
+                    _time_strs[l][p] = ti;
+                    _temp_strs[l][p] = te;
+                    _humi_strs[l][p] = hu;
+                    jMin += _skip_minutes;
+                    if ( jMin >= num_mins )
+                    {
+                        jMin = 0;
+                        jHour++; // If num_points is calculated correctly, this will not overflow
+                    }
+                }
+                if ( jDay > 0 )
+                    jDay--;
+                else
+                {
+                    jDay = num_days-1;
+                    jWweek++; // Since max lines is < num_weeks this will not be an issue of overflow.
+                }
+                break;
+
+            case 'w':
+                jMin = 0;
+                jHour = 0;
+                jDay = 0;
+                for ( uint32_t p = 0; p < _points_per_line; ++p )
+                {
+                    std::string ti, te, hu;
+                    _valid_ptr[l][p] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu );
+                    _time_strs[l][p] = ti;
+                    _temp_strs[l][p] = te;
+                    _humi_strs[l][p] = hu;
+                    jMin += _skip_minutes;
+                    if ( jMin >= num_mins )
+                    {
+                        jMin = 0;
+                        jHour++;
+                        if ( jHour >= num_hours )
+                        {
+                            jHour = 0;
+                            jDay++; // If num_points is correct, this will not overflow
+                         }
+                    }
+                }
+                jWweek++; // Since max lines is < num_weeks this will not be an issue of overflow.
+                break;
             }
         }
 
