@@ -128,7 +128,7 @@ bool History::update(float last_temp, float last_humidity)
     _readNow();
     HistoryItem new_item( _now, last_temp, last_humidity );
     //              w    d    h
-    _history_cache[ 0 ][ 0 ][ 0 ][ _now_min ] = new_item;
+    _history_cache[ 0 ][ _now_day ][ _now_hour ][ _now_min ] = new_item;
     _writeJson();
 
     _history_file = fopen( _history_filename.c_str(), "a" );
