@@ -355,7 +355,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         updateProgram();
         if ( _sensor_success_reads > 0 )
         {
-            _history.update( _current_temp, _current_humidity );
+            if ( !_history.update( _current_temp, _current_humidity ) )
+                _logger->logDebug("Unable to write to history file");
         }
         update_status = true;
         if ( !_manual_mode )

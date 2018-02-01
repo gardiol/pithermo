@@ -14,7 +14,7 @@ public:
     ~History();
 
     void initialize( const std::string& mode, uint32_t len );
-    void update( float last_temp, float last_humidity );
+    bool update( float last_temp, float last_humidity );
 
     void setModeLen( const std::string& mode, uint32_t len );
     std::string getMode() const

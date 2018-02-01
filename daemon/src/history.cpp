@@ -84,7 +84,6 @@ void History::initialize(const std::string &mode, uint32_t len)
         }
     }
     _readNow();
-    _history_file = fopen( _history_filename.c_str(), "a" );
     FILE* read_file = fopen( _history_filename.c_str(), "r" );
     if ( read_file != NULL )
     {
@@ -124,14 +123,22 @@ void History::initialize(const std::string &mode, uint32_t len)
     setModeLen( mode, len );
 }
 
-void History::update(float last_temp, float last_humidity)
+bool History::update(float last_temp, float last_humidity)
 {
     _readNow();
     HistoryItem new_item( _now, last_temp, last_humidity );
-    new_item.writeToFile( _history_file );
     //              w    d    h
     _history_cache[ 0 ][ 0 ][ 0 ][ _now_min ] = new_item;
     _writeJson();
+
+    _history_file = fopen( _history_filename.c_str(), "a" );
+    if ( _history_file != NULL )
+    {
+        new_item.writeToFile( _history_file );
+        fclose(_history_file);
+        return false;
+    }
+    return true;
 }
 
 void History::setModeLen(const std::string &mode, uint32_t len)
