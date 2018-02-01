@@ -136,8 +136,9 @@ bool History::update(float last_temp, float last_humidity)
     {
         new_item.writeToFile( _history_file );
         fclose(_history_file);
-        return false;
     }
+    else
+        return false;
     return true;
 }
 
