@@ -231,6 +231,11 @@ void History::_writeJson()
                         }
                     }
                 }
+                else // Invalidate this part for the first line (it's in the future!)
+                {
+                    for ( jMin = _now_min+1; jMin < num_mins; jMin++ )
+                        _valid_ptr[l][jMin] = false;
+                }
                 // Fill first part:
                 for ( jMin = 0; jMin <= _now_min; ++jMin )
                 {
