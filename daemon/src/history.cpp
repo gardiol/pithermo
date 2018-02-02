@@ -205,30 +205,26 @@ void History::_writeJson()
             switch (_mode)
             {
             case 'h':
-                for ( uint32_t p = 0; p < _points_per_line; ++p )
+                for ( jMin = 0; jMin < num_mins; ++jMin )
                 {
                     std::string ti, te, hu;
-                    _valid_ptr[l][p] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu );
-                    _time_strs[l][p] = ti;
-                    _temp_strs[l][p] = te;
-                    _humi_strs[l][p] = hu;
-                    jMin++;
-                    if ( jMin > num_mins )
-                    {   // Switch to previous hour
-                        jMin = 0;
-                        if ( jHour > 0 )
-                            jHour--;
-                        else
-                        {
-                            jHour = num_hours-1;
-                            if ( jDay > 0 )
-                                jDay--;
-                            else
-                            {
-                                jDay = num_days-1;
-                                jWweek++; // Since max lines is < num_weeks this will not be an issue of overflow.
-                            }
-                        }
+                    _valid_ptr[l][jMin] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu );
+                    _time_strs[l][jMin] = ti;
+                    _temp_strs[l][jMin] = te;
+                    _humi_strs[l][jMin] = hu;
+                }
+                jMin = 0;
+                if ( jHour > 0 )
+                    jHour--;
+                else
+                {
+                    jHour = num_hours-1;
+                    if ( jDay > 0 )
+                        jDay--;
+                    else
+                    {
+                        jDay = num_days-1;
+                        jWweek++; // Since max lines is < num_weeks this will not be an issue of overflow.
                     }
                 }
                 break;
