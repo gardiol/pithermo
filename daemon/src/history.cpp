@@ -205,38 +205,28 @@ void History::_writeJson()
             switch (_mode)
             {
             case 'h':
-                // "current" hour goes in the second part (from now_min):
-                if ( l > 0 )
+                for ( jMin = _now_min+1; jMin < num_mins; jMin++ )
                 {
-                    for ( jMin = _now_min+1; jMin < num_mins; jMin++ )
-                    {
-                        std::string ti, te, hu;
-                        _valid_ptr[l][jMin] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu );
-                        _time_strs[l][jMin] = ti;
-                        _temp_strs[l][jMin] = te;
-                        _humi_strs[l][jMin] = hu;
-                    }
-                    // Now, switch to previous hour to fill first part:
-                    if ( jHour > 0 )
-                        jHour--;
+                    std::string ti, te, hu;
+                    _valid_ptr[l][jMin] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu );
+                    _time_strs[l][jMin] = ti;
+                    _temp_strs[l][jMin] = te;
+                    _humi_strs[l][jMin] = hu;
+                }
+                // Now, switch to previous hour to fill first part:
+                if ( jHour > 0 )
+                    jHour--;
+                else
+                {
+                    jHour = num_hours-1;
+                    if ( jDay > 0 )
+                        jDay--;
                     else
                     {
-                        jHour = num_hours-1;
-                        if ( jDay > 0 )
-                            jDay--;
-                        else
-                        {
-                            jDay = num_days-1;
-                            jWweek++; // Since max lines is < num_weeks this will not be an issue of overflow.
-                        }
+                        jDay = num_days-1;
+                        jWweek++; // Since max lines is < num_weeks this will not be an issue of overflow.
                     }
                 }
-                else // Invalidate this part for the first line (it's in the future!)
-                {
-                    for ( jMin = _now_min+1; jMin < num_mins; jMin++ )
-                        _valid_ptr[l][jMin] = false;
-                }
-                // Fill first part:
                 for ( jMin = 0; jMin <= _now_min; ++jMin )
                 {
                     std::string ti, te, hu;
@@ -295,7 +285,7 @@ void History::_writeJson()
                         {
                             jHour = 0;
                             jDay++; // If num_points is correct, this will not overflow
-                         }
+                        }
                     }
                 }
                 jWweek++; // Since max lines is < num_weeks this will not be an issue of overflow.
