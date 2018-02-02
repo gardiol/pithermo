@@ -11,7 +11,7 @@ using namespace FrameworkLibrary;
 
 History::History(const std::string &history_file, const std::string& exchange_path):
     _skip_minutes(0),
-    _num_lines(1),
+    _num_lines(20),
     _points_per_line(60),
     _now(0),
     _now_min(0),
@@ -71,6 +71,12 @@ void History::_readNow()
 
 void History::initialize(const std::string &mode, uint32_t len)
 {
+    _num_lines = len;
+    if ( len < 1 )
+        len = 1;
+    if ( len > num_weeks )
+        len = num_weeks;
+
     _history_cache.clear();
     _history_cache.resize(num_weeks);
     for ( int w = 0; w < num_weeks; ++w )
@@ -88,15 +94,15 @@ void History::initialize(const std::string &mode, uint32_t len)
     if ( read_file != NULL )
     {
         fseek( read_file, 0, SEEK_END );
-        uint32_t len = ftell(read_file);
+        uint32_t flen = ftell(read_file);
         // The MAXIMUM number of points to read is:
         uint32_t max_points = num_weeks * num_days * num_hours * num_mins;
         // Oldest accepted time:
         uint32_t size = HistoryItem::getSize() * max_points;
-        if ( size > len )
+        if ( size > flen )
             fseek( read_file, 0, SEEK_SET);
         else
-            fseek( read_file, len - size, SEEK_SET);
+            fseek( read_file, flen - size, SEEK_SET);
         for (uint32_t i = 0; !feof(read_file); ++i )
         {
             HistoryItem item(read_file);
@@ -120,7 +126,7 @@ void History::initialize(const std::string &mode, uint32_t len)
         }
         fclose(read_file);
     }
-    setModeLen( mode, len );
+    setMode( mode );
 }
 
 bool History::update(float last_temp, float last_humidity)
@@ -142,15 +148,10 @@ bool History::update(float last_temp, float last_humidity)
     return true;
 }
 
-void History::setModeLen(const std::string &mode, uint32_t len)
+void History::setMode(const std::string &mode)
 {
     // default is for hour
     _mode = 'h';
-    _num_lines = len;
-    if ( _num_lines == 0 )
-        _num_lines = 1;
-    if ( _num_lines > num_weeks ) // Cannot use a number bigger than NUM WEEKS here
-        _num_lines = num_weeks;   // Or it WILL crash badly! (see _writeJson)
 
     _points_per_line = 60; // 1h
     _skip_minutes = 1; // Mark 1min
@@ -204,29 +205,43 @@ void History::_writeJson()
             switch (_mode)
             {
             case 'h':
-                jMin = 0;
-                for ( uint32_t p = 0; p < _points_per_line; ++p )
+                // "current" hour goes in the second part (from now_min):
+                if ( l > 0 )
                 {
-                    std::string ti, te, hu;
-                    _valid_ptr[l][p] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu );
-                    _time_strs[l][p] = ti;
-                    _temp_strs[l][p] = te;
-                    _humi_strs[l][p] = hu;
-                    jMin += _skip_minutes;
-                }
-                if ( jHour > 0 )
-                    jHour--;
-                else
-                {
-                    jHour = num_hours-1;
-                    if ( jDay > 0 )
-                        jDay--;
+                    for ( jMin = _now_min+1; jMin < num_mins; jMin++ )
+                    {
+                        std::string ti, te, hu;
+                        _valid_ptr[l][jMin] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu );
+                        _time_strs[l][jMin] = ti;
+                        _temp_strs[l][jMin] = te;
+                        _humi_strs[l][jMin] = hu;
+                    }
+                    // Now, switch to previous hour to fill first part:
+                    if ( jHour > 0 )
+                        jHour--;
                     else
                     {
-                        jDay = num_days-1;
-                        jWweek++; // Since max lines is < num_weeks this will not be an issue of overflow.
+                        jHour = num_hours-1;
+                        if ( jDay > 0 )
+                            jDay--;
+                        else
+                        {
+                            jDay = num_days-1;
+                            jWweek++; // Since max lines is < num_weeks this will not be an issue of overflow.
+                        }
                     }
                 }
+                // Fill first part:
+                for ( jMin = 0; jMin <= _now_min; ++jMin )
+                {
+                    std::string ti, te, hu;
+                    _valid_ptr[l][jMin] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu );
+                    _time_strs[l][jMin] = ti;
+                    _temp_strs[l][jMin] = te;
+                    _humi_strs[l][jMin] = hu;
+                }
+                // IMPORTANT NOTE: For this to work, the num_points MUST
+                //                 be equal to num_mins.
                 break;
 
             case 'd':

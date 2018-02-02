@@ -4,7 +4,6 @@ var firstStatusUpdate = true;
 // History:
 var hstGraph;
 var hstUnit;
-var hstLen;
 var hstData = null;
 var hstSel;
 var hstTimer;
@@ -87,9 +86,8 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 		dialog.show();
     }
          
-    function setHistory(){
-        var prm = hstUnit.get("value") + ":" + hstLen.get("value");
-        request.post("/cgi-bin/set_history",{data:prm}).then(
+    function changeHistory(){
+        request.post("/cgi-bin/set_history",{data:hstUnit.get("value")}).then(
             function(result){
                 updateHistory();
             },
@@ -210,11 +208,24 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 	}
 
 	function historySetData(){
-        var v = hstSel.get("value")-1;
-        var t = hstData ? hstData[v].temp : [];
-        var h = hstData ? hstData[v].humidity : [];
+        var t = [], h = [];
+        var s = hstSel.get("value");
+        if ( hstData ){
+            for ( var v = s; v > 0; v-- ){
+                t = t.concat( hstData[v-1].temp );
+                h = h.concat( hstData[v-1].humidity );
+            }
+        }        
+        html.set("history-label", s);
         hstGraph.updateSeries("Temperatura", t.length == 0 ? [{x:0,y:0}] : t );
         hstGraph.updateSeries("Umidita", h.length == 0 ? [{x:0,y:0}] : h );
+        var ts = 60; // 1 min
+        if ( t.length > 0 )
+        {
+            var d = t[ t.length-1 ].x - t[0].x;
+            ts = Math.floor( ( d / Math.min(10, t.length) ) / (15*60) +1 ) * 15*60;
+        }
+        hstGraph.getAxis("x").opt.majorTickStep = ts;
         hstGraph.render();        
     }
     
@@ -228,14 +239,13 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 hstData = result.data;
                 if ( hstUnit.get("value") != result.mode )
                     hstUnit.set("value", result.mode);
-                if ( hstLen.get("value") != result.len )
-                    hstLen.set("value", result.len);
                 if ( hstSel.get("value") > result.len )
                     hstSel.set("value", result.len);                        
                 hstSel.set("maximum", result.len );
                 hstSel.set("discreteValues", result.len );
                 
                 historySetData();                                
+                html.set("history-label",  hstSel.get("value"));
 				hstTimer = window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
 			},
 			function(err){
@@ -243,6 +253,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 hstGraph.updateSeries("Temperatura", [] );
                 hstGraph.updateSeries("Umidita", [] );
                 hstGraph.render();
+                html.set("history-label", "--");
 				hstTimer = window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
 			});
 	}
@@ -511,13 +522,9 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 	updateStatus();
     
     hstUnit = new Select({},"history-unit");
-    hstUnit.on("change", setHistory);
+    hstUnit.on("change", changeHistory);
     hstUnit.startup();
     
-    hstLen = new Select({},"history-len");
-    hstLen.on("change", setHistory);
-    hstLen.startup();
-
     hstSel = new HorizontalSlider({
         value:1, minimum: 1, maximum:1,
         intermediateChanges: false, discreteValues: 1,
@@ -534,11 +541,11 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     });
     hstGraph.addAxis("x", 	{
                         plot:"tempPlot", 
-//                        majorTickStep: 60, majorTicks: true, majorLabels: true,
+                        majorTicks: true, majorLabels: true,
                         minorTicks: false,minorLabels: false,
                         microTicks: false,
                         labelFunc:function(text,value,prec){
-                            if ( hstUnit.get("value") == "w" )
+                            if ( hstUnit.get("value") != "h" )
                                 return new Date(parseInt(value)*1000).toLocaleString();
                             else
                                 return new Date(parseInt(value)*1000).toLocaleTimeString();
@@ -571,13 +578,13 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     new MouseIndicator(hstGraph, "humiPlot",{ 
                         series: "Umidita", start: true, mouseOver: true,
                         labelFunc: function(v){
-                            return "H: "+v.y+"";
+                            return "H: "+v.y;
                         }
                         });
     new MouseIndicator(hstGraph, "tempPlot",{ 
                         series: "Temperatura",mouseOver: true,
                         labelFunc: function(v){
-                            return "T: "+v.y+"";
+                            return "T: "+v.y+" (" + (new Date(v.x*1000).toLocaleString())+")";
                         }
                         });                    
 	updateHistory();

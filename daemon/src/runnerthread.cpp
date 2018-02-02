@@ -210,19 +210,10 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         switch ( cmd->command() )
         {
         case Command::SET_HISTORY:
-        {
             _logger->logDebug("Change history received");
-            std::vector<std::string> hst = FrameworkUtils::string_split( cmd->getParam(),":" );
-            if ( hst.size() == 2 )
-            {
-                std::string mode = hst[0];
-                uint32_t len = FrameworkUtils::string_toi( hst[1] );
-                _history.setModeLen( mode, len );
-                _logger->logDebug("Change history, mode: " + mode);
-                _logger->logDebug("Change history, len: " + hst[1]);
-            }
+            _history.setMode( cmd->getParam() );
+            _logger->logDebug("Change history, mode: " + cmd->getParam());
             break;
-        }
 
         case Command::PELLET_MINIMUM_ON:
             _logger->logDebug("Pellet Minimum ON received");

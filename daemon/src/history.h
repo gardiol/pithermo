@@ -16,7 +16,7 @@ public:
     void initialize( const std::string& mode, uint32_t len );
     bool update( float last_temp, float last_humidity );
 
-    void setModeLen( const std::string& mode, uint32_t len );
+    void setMode(const std::string& mode);
     std::string getMode() const
     {
         return std::string(&_mode, 1);
