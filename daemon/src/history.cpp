@@ -205,7 +205,7 @@ void History::_writeJson()
             switch (_mode)
             {
             case 'h':
-                for ( jMin = _now_min+1; jMin < num_mins; jMin++ )
+                for ( jMin = 0; jMin < num_mins; ++jMin )
                 {
                     std::string ti, te, hu;
                     _valid_ptr[l][jMin] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu );
@@ -213,7 +213,6 @@ void History::_writeJson()
                     _temp_strs[l][jMin] = te;
                     _humi_strs[l][jMin] = hu;
                 }
-                // Now, switch to previous hour to fill first part:
                 if ( jHour > 0 )
                     jHour--;
                 else
@@ -226,14 +225,6 @@ void History::_writeJson()
                         jDay = num_days-1;
                         jWweek++; // Since max lines is < num_weeks this will not be an issue of overflow.
                     }
-                }
-                for ( jMin = 0; jMin <= _now_min; ++jMin )
-                {
-                    std::string ti, te, hu;
-                    _valid_ptr[l][jMin] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu );
-                    _time_strs[l][jMin] = ti;
-                    _temp_strs[l][jMin] = te;
-                    _humi_strs[l][jMin] = hu;
                 }
                 // IMPORTANT NOTE: For this to work, the num_points MUST
                 //                 be equal to num_mins.
