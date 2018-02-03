@@ -211,9 +211,13 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         var t = [], h = [];
         var s = hstSel.get("value");
         if ( hstData ){
-            for ( var v = s; v > 0; v-- ){
-                t = t.concat( hstData[v-1].temp );
-                h = h.concat( hstData[v-1].humidity );
+            for ( var v = 0; (v < s) || (t.length < 15); v++ ){
+		if ( hstData[v] ){
+                	t = hstData[v].temp.concat(t);
+                	h = hstData[v].humidity.concat(h);
+		} else {
+			break;
+		}
             }
         }        
         html.set("history-label", s);
