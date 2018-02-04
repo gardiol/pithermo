@@ -21,6 +21,7 @@ var gasOffBtn;
 var manualBtn;
 var autoBtn;
 // For program:
+var copyInProgress = null;
 var selectOff;
 var selectGas;
 var selectPellet;
@@ -119,6 +120,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 		if ( dom.byId( "program-table" ) ){
 			var nd = system_status.now.d, nh = system_status.now.h, nf = system_status.now.f;
 			for ( var d = 0; d < 7; d++ ){
+			   var n_g = 0, n_p = 0, n_P = 0;
 				dclass.remove( p_str[d][24], "program_now_h" );
 				for ( var h = 0; h < 24; h++ ){
                     dclass.remove( p_str[d][h][2], "program_now_h" );
@@ -127,17 +129,32 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         var s = "";
                         if ( c != ' ' && c != 'o' ){
                             s = '<img src="images/';
-                            if ( c == 'p' ) s+='pellet.png"/>';
-                            else if ( c == 'g' ) s+='gas.png"/>';
-                            else if ( c == 'x' ) s+='pellet-gas.png"/>';
-                            else if ( c == 'm' ) s+='pellet-min.png"/>';
-                            html.set(p_str[d][h][f][0],s);
+                            if ( c == 'p' ){
+				 s+='pellet.png"/>';
+				n_P++;
+                            }
+                            else if ( c == 'g' ){ 
+				s+='gas.png"/>';
+				n_g++;
+			    } else if ( c == 'x' ){
+                                s+='pellet-gas.png"/>';
+				n_g++;
+				n_P++;
+                            } else if ( c == 'm' ) {
+                                s+='pellet-min.png"/>';
+                                n_p++;
+                            }
                         }
                         html.set(p_str[d][h][f][0],s);
                         (d == nd || h == nh && f == nf) ? dclass.add(p_str[d][h][f][0], "auto_now_c" ) : dclass.remove(p_str[d][h][f][0], "auto_now_c" );
 						dclass.remove( p_str[d][h][f][1], "program_now_h" );
+					if ( d == copyInProgress )
+						dclass.add( p_str[d][h][f][0], "copy_source");
+					else
+						dclass.remove( p_str[d][h][f][0], "copy_source");
 					}
 				}
+                        html.set("program-status-"+d, "<p>g: "+(n_g/2)+"</p><p>P: "+(n_P/2)+"</p><p>p: "+(n_p/2)+"</p>");
 			}
 			dclass.add( p_str[nd][24], "program_now_h" );
             dclass.add( p_str[nd][nh][2], "program_now_h" );
@@ -403,6 +420,27 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 							});
                 		dialog.show();
 					});
+
+
+			["copy0","copy1","copy2","copy3","copy4","copy5","copy6"].forEach(
+				function(i){
+					query("#"+i).on("click", 
+						function(evt){
+							if ( !copyInProgress ){
+								copyInProgress = i.substr(4,1);
+								for ( var x = 0; x < 7; x++ )
+									attr.set("copy"+x, "src", (x == copyInProgress) ? "images/cancel_copy.png" : "images/paste.png");
+							} else {
+								var dest =  i.substr(4,1);
+								program_status[dest] = program_status[copyInProgress]; 	
+								for ( var x = 0; x < 7; x++ )
+									attr.set("copy"+x, "src", "images/copy.png");
+								copyInProgress = null;
+							}	
+							programRefresh();
+						});
+				});
+
 
 				prgResetBtn = new Button({
 					label: "Ripristina",

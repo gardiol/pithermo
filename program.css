@@ -25,6 +25,12 @@
 	background: green;
 	color: yellow;
 }
+
+.copy_source {
+	background: yellow;
+	color: black;
+}
+
 .program_now_c {
 	background: lightgreen;
 }
@@ -79,3 +85,6 @@
 	background: lightgreen;
 }
 
+#copy0 #copy1 #copy2 #copy3 #copy4 #copy5 #copy6 {
+	width: 1.5em;
+}
