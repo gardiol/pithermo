@@ -157,7 +157,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         }
 					}
 				}
-                html.set("program-status-"+d, "gas on: "+(n_g/2)+" Pellet Modulazione: "+(n_P/2)+" Pellet Minimo: "+(n_p/2)+"");
+                 //Stima: al minimo 10h/1 sacco - modulazione: 5h/1 sacco
+                var bags = (n_P/(2*5) + n_P/(2*8));
+                var warn = (bags > 1.8) ? "<b>OCCHIO AL CONSUMO PELLET!</b>" : "";
+                html.set("program-status-"+d, "Uso gas: "+(n_g/2)+"h -- Pellet: "+(n_P/2)+"h modulazione + "+(n_p/2)+" minimo -- Totale " + bags.toFixed(1) + " sacchi " + warn);
                 if ( d == copyInProgress ){
                     dclass.add( "program-copy-"+d, "copy_source");
                     dclass.add( "program-status-"+d, "copy_source");
@@ -166,7 +169,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     dclass.remove( "program-copy-"+d, "copy_source");
                     dclass.remove( "program-status-"+d, "copy_source");
                 }
-                var l = program_status.length;
+                var l = program_status[d].length;
                 while ( (l > 0) && eq )
                 {
                     if ( program_status[d][l] != system_status.program[d][l] )
@@ -177,7 +180,13 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 			dclass.add( p_str[nd][24], "program_now_h" );
             dclass.add( p_str[nd][nh][2], "program_now_h" );
 			dclass.add( p_str[nd][nh][nf][1], "program_now_h" );
-            eq ? dclass.remove(dom.byId("program-changed"), "program-changed") : dclass.add(dom.byId("program-changed"), "program-changed");
+            if ( eq ) {
+               dclass.remove(dom.byId("program-change"), "program-changed");
+               html.set("program-change", "");
+            } else {
+               dclass.add(dom.byId("program-change"), "program-changed");
+               html.set("program-change", "Programma modificato!");
+            }
 		}                
 	}
 
@@ -377,8 +386,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 						var id = evt.currentTarget.id ;
 						var d = id.substr(13,1);
 						var h = (+id.substr(15,2))*2+(id.substr(17,2)=="30"?1:0);
-                        program_status[d][h] = program_status[d][h] == selected_type ? 'o' : selected_type;
-						programRefresh();
+						if ( (d>=0 && d < 7) && (h>=0 && h < 48) ){
+                                                    program_status[d][h] = program_status[d][h] == selected_type ? 'o' : selected_type;
+						    programRefresh();
+                                                }
 					});
                 ["program-header-00","program-header-01","program-header-02","program-header-03","program-header-04","program-header-05",
                  "program-header-06","program-header-07","program-header-08","program-header-09","program-header-10","program-header-11",

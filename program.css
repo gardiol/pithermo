@@ -18,15 +18,15 @@
     border-bottom: 2px solid black;
 }
 
-#program-changed {
+#program-change {
     width: 100%;
     height: 1em;
     padding: 0.2em;
-    background: blue;
+    text-align: center;
 }
 
 .program-changed {
-    background: yellow;
+    background: yellow !important;
 }
 
 #program-table td img {
