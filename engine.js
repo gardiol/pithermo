@@ -281,17 +281,18 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             }
        		request("cgi-bin/history" , {handleAs :"json"}).then(
 			function(result){
-                hstData = result.data;
-                if ( hstUnit.get("value") != result.mode )
-                    hstUnit.set("value", result.mode);
-                if ( hstSel.get("value") > result.len )
-                    hstSel.set("value", result.len);                        
-                hstSel.set("maximum", result.len );
-                hstSel.set("discreteValues", result.len );
-                
-                historySetData();                                
-                html.set("history-label",  hstSel.get("value"));
-				hstTimer = window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
+                if ( result ) {
+                    hstData = result.data;
+                    if ( hstUnit.get("value") != result.mode )
+                        hstUnit.set("value", result.mode);
+                    if ( hstSel.get("value") > result.len )
+                        hstSel.set("value", result.len);                        
+                    hstSel.set("maximum", result.len );
+                    hstSel.set("discreteValues", result.len );
+                    historySetData();                                
+                    html.set("history-label",  hstSel.get("value"));
+                    hstTimer = window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
+                }
 			},
 			function(err){
                 hstData = null;
