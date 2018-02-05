@@ -134,8 +134,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                             if ( c == 'p' ){
                                 s+='pellet.png"/>';
                                 n_P++;
-                                if ( !prev_pellet_on )
+                                if ( !prev_pellet_on ){
+                                    prev_pellet_on = true;
                                     n_Pon++;
+                                }
                             }else if( c == 'g' ){ 
                                 s+='gas.png"/>';
                                 n_g++;
@@ -144,13 +146,17 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                                 s+='pellet-gas.png"/>';
                                 n_g++;
                                 n_P++;
-                                if ( !prev_pellet_on )
+                                if ( !prev_pellet_on ){
+                                    prev_pellet_on = true;
                                     n_Pon++;
+                                }
                             }else if( c == 'm' ) {
                                 s+='pellet-min.png"/>';
                                 n_p++;
-                                if ( !prev_pellet_on )
+                                if ( !prev_pellet_on ){
+                                    prev_pellet_on = true;
                                     n_Pon++;
+                                }
                             }
                         }else{
                             prev_pellet_on = false;
