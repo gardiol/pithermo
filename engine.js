@@ -133,15 +133,14 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                             if ( c == 'p' ){
                                 s+='pellet.png"/>';
                                 n_P++;
-                            }
-                            else if ( c == 'g' ){ 
+                            }else if( c == 'g' ){ 
                                 s+='gas.png"/>';
                                 n_g++;
-                            } else if ( c == 'x' ){
+                            }else if( c == 'x' ){
                                 s+='pellet-gas.png"/>';
                                 n_g++;
                                 n_P++;
-                            } else if ( c == 'm' ) {
+                            }else if( c == 'm' ) {
                                 s+='pellet-min.png"/>';
                                 n_p++;
                             }
@@ -151,8 +150,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 						dclass.remove( p_str[d][h][f][1], "program_now_h" );
                         if ( d == copyInProgress ){
                             dclass.add( p_str[d][h][f][0], "copy_source");
-                        }
-                        else{                        
+                        }else{                        
                             dclass.remove( p_str[d][h][f][0], "copy_source");
                         }
 					}
@@ -164,14 +162,12 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 if ( d == copyInProgress ){
                     dclass.add( "program-copy-"+d, "copy_source");
                     dclass.add( "program-status-"+d, "copy_source");
-                }
-                else{
+                }else{
                     dclass.remove( "program-copy-"+d, "copy_source");
                     dclass.remove( "program-status-"+d, "copy_source");
                 }
                 var l = program_status[d].length;
-                while ( (l > 0) && eq )
-                {
+                while ( (l > 0) && eq ){
                     if ( program_status[d][l] != system_status.program[d][l] )
                         eq = false;
                     --l;
@@ -180,10 +176,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 			dclass.add( p_str[nd][24], "program_now_h" );
             dclass.add( p_str[nd][nh][2], "program_now_h" );
 			dclass.add( p_str[nd][nh][nf][1], "program_now_h" );
-            if ( eq ) {
+            if ( eq ){
                dclass.remove(dom.byId("program-change"), "program-changed");
                html.set("program-change", "");
-            } else {
+            }else{
                dclass.add(dom.byId("program-change"), "program-changed");
                html.set("program-change", "Programma modificato!");
             }
