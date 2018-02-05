@@ -117,11 +117,12 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 	}
 
 	function programRefresh(){
-        var eq = true;
 		if ( dom.byId( "program-table" ) ){
+            var eq = true;
+            var prev_pellet_on = false;
 			var nd = system_status.now.d, nh = system_status.now.h, nf = system_status.now.f;
 			for ( var d = 0; d < 7; d++ ){
-			   var n_g = 0, n_p = 0, n_P = 0;
+			   var n_g = 0, n_p = 0, n_P = 0, n_Pon = 0;
 				dclass.remove( p_str[d][24], "program_now_h" );
 				for ( var h = 0; h < 24; h++ ){
                     dclass.remove( p_str[d][h][2], "program_now_h" );
@@ -133,17 +134,26 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                             if ( c == 'p' ){
                                 s+='pellet.png"/>';
                                 n_P++;
+                                if ( !prev_pellet_on )
+                                    n_Pon++;
                             }else if( c == 'g' ){ 
                                 s+='gas.png"/>';
                                 n_g++;
+                                prev_pellet_on = false;
                             }else if( c == 'x' ){
                                 s+='pellet-gas.png"/>';
                                 n_g++;
                                 n_P++;
+                                if ( !prev_pellet_on )
+                                    n_Pon++;
                             }else if( c == 'm' ) {
                                 s+='pellet-min.png"/>';
                                 n_p++;
+                                if ( !prev_pellet_on )
+                                    n_Pon++;
                             }
+                        }else{
+                            prev_pellet_on = false;
                         }
                         html.set(p_str[d][h][f][0],s);
                         (d == nd || h == nh && f == nf) ? dclass.add(p_str[d][h][f][0], "auto_now_c" ) : dclass.remove(p_str[d][h][f][0], "auto_now_c" );
@@ -158,7 +168,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                  //Stima: al minimo 10h/1 sacco - modulazione: 5h/1 sacco
                 var bags = (n_P/(2*5) + n_P/(2*8));
                 var warn = (bags > 1.8) ? "<b>OCCHIO AL CONSUMO PELLET!</b>" : "";
-                html.set("program-status-"+d, "Uso gas: "+(n_g/2)+"h -- Pellet: "+(n_P/2)+"h modulazione + "+(n_p/2)+" minimo -- Totale " + bags.toFixed(1) + " sacchi " + warn);
+                html.set("program-status-"+d, "Uso gas: "+(n_g/2)+"h -- Pellet: "+(n_P/2)+"h modulazione + "+(n_p/2)+" minimo -- Accensioni: " + n_Pon + " + bags.toFixed(1) + " sacchi " + warn);
                 if ( d == copyInProgress ){
                     dclass.add( "program-copy-"+d, "copy_source");
                     dclass.add( "program-status-"+d, "copy_source");
