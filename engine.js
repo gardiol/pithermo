@@ -173,8 +173,14 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 				}
                  //Stima: al minimo 10h/1 sacco - modulazione: 5h/1 sacco
                 var bags = (n_P/(2*5) + n_P/(2*8));
-                var warn = (bags > 1.8) ? "<b>OCCHIO AL CONSUMO PELLET!</b>" : "";
-                html.set("program-status-"+d, "Uso gas: "+(n_g/2)+"h -- Pellet: "+(n_P/2)+"h modulazione + "+(n_p/2)+" minimo -- Accensioni: " + n_Pon + " -- " + bags.toFixed(1) + " sacchi " + warn);
+                var status = "Uso gas: "+(n_g/2)+"h -- Pellet: "+(n_P/2)+"h modulazione + "+(n_p/2)+" minimo -- ";
+                if ( n_Pon > 2 ) status += "<b>";
+                status += "" + n_Pon + " accensioni";
+                if ( n_Pon > 2 ) status += "</b>";
+                status += " -- " + bags.toFixed(1) + " sacchi. ";
+                if ( bags > 1.8 )
+                    status += "<b>OCCHIO AL CONSUMO PELLET!</b>";                
+                html.set("program-status-"+d, status );
                 if ( d == copyInProgress ){
                     dclass.add( "program-copy-"+d, "copy_source");
                     dclass.add( "program-status-"+d, "copy_source");
