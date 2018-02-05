@@ -117,6 +117,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 	}
 
 	function programRefresh(){
+        var eq = true;
 		if ( dom.byId( "program-table" ) ){
 			var nd = system_status.now.d, nh = system_status.now.h, nf = system_status.now.f;
 			for ( var d = 0; d < 7; d++ ){
@@ -130,16 +131,16 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         if ( c != ' ' && c != 'o' ){
                             s = '<img src="images/';
                             if ( c == 'p' ){
-				 s+='pellet.png"/>';
-				n_P++;
+                                s+='pellet.png"/>';
+                                n_P++;
                             }
                             else if ( c == 'g' ){ 
-				s+='gas.png"/>';
-				n_g++;
-			    } else if ( c == 'x' ){
+                                s+='gas.png"/>';
+                                n_g++;
+                            } else if ( c == 'x' ){
                                 s+='pellet-gas.png"/>';
-				n_g++;
-				n_P++;
+                                n_g++;
+                                n_P++;
                             } else if ( c == 'm' ) {
                                 s+='pellet-min.png"/>';
                                 n_p++;
@@ -148,18 +149,36 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         html.set(p_str[d][h][f][0],s);
                         (d == nd || h == nh && f == nf) ? dclass.add(p_str[d][h][f][0], "auto_now_c" ) : dclass.remove(p_str[d][h][f][0], "auto_now_c" );
 						dclass.remove( p_str[d][h][f][1], "program_now_h" );
-					if ( d == copyInProgress )
-						dclass.add( p_str[d][h][f][0], "copy_source");
-					else
-						dclass.remove( p_str[d][h][f][0], "copy_source");
+                        if ( d == copyInProgress ){
+                            dclass.add( p_str[d][h][f][0], "copy_source");
+                        }
+                        else{                        
+                            dclass.remove( p_str[d][h][f][0], "copy_source");
+                        }
 					}
 				}
-                        html.set("program-status-"+d, "<p>g: "+(n_g/2)+"</p><p>P: "+(n_P/2)+"</p><p>p: "+(n_p/2)+"</p>");
+                html.set("program-status-"+d, "gas on: "+(n_g/2)+" Pellet Modulazione: "+(n_P/2)+" Pellet Minimo: "+(n_p/2)+"");
+                if ( d == copyInProgress ){
+                    dclass.add( "program-copy-"+d, "copy_source");
+                    dclass.add( "program-status-"+d, "copy_source");
+                }
+                else{
+                    dclass.remove( "program-copy-"+d, "copy_source");
+                    dclass.remove( "program-status-"+d, "copy_source");
+                }
+                var l = program_status.length;
+                while ( (l > 0) && eq )
+                {
+                    if ( program_status[d][l] != system_status.program[d][l] )
+                        eq = false;
+                    --l;
+                }
 			}
 			dclass.add( p_str[nd][24], "program_now_h" );
             dclass.add( p_str[nd][nh][2], "program_now_h" );
 			dclass.add( p_str[nd][nh][nf][1], "program_now_h" );
-		}
+            eq ? dclass.remove(dom.byId("program-changed"), "program-changed") : dclass.add(dom.byId("program-changed"), "program-changed");
+		}                
 	}
 
 	function updateStatus(){
@@ -361,65 +380,82 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         program_status[d][h] = program_status[d][h] == selected_type ? 'o' : selected_type;
 						programRefresh();
 					});
-				query("#program-table > thead > tr:first-child > th").on("click",
-					function(evt){
-						var id = evt.currentTarget.id ;
-						var h = id.substr(15,2);
-						var dialog = new ConfirmDialog({
-                        						title: "Imposta ora intera",
-                        						content: "Imposto l'intera ora su tutta la settimana?"});
-                				dialog.set("buttonOk", "Si");
-                				dialog.set("buttonCancel", "Annulla");
-                				dialog.on("execute",
-                        				function() {
-								for ( var d = 0; d < 7; d++ ){
-									for ( var f = 0; f < 2; f++ ){
-										program_status[d][h*2+f] = selected_type;
-									}
-								}
-								programRefresh();
-							});
-                        dialog.show();
-					});
-				query("#program-table > thead > tr:nth-child(2) > th").on("click",
-					function(evt){
-						var id = evt.currentTarget.id ;
-						var h = id.substr(15,2);
-						var f = id.substr(17,2) == "00" ? 0 : 1;
-						var dialog = new ConfirmDialog({
+                ["program-header-00","program-header-01","program-header-02","program-header-03","program-header-04","program-header-05",
+                 "program-header-06","program-header-07","program-header-08","program-header-09","program-header-10","program-header-11",
+                 "program-header-12","program-header-13","program-header-14","program-header-15","program-header-16","program-header-17",
+                 "program-header-18","program-header-19","program-header-20","program-header-21","program-header-22","program-header-23"]
+                .forEach( 
+                    function(i){
+                        on(dom.byId(i), "click", function(evt){
+                            var h = evt.currentTarget.id.substr(15,2);
+                            var dialog = new ConfirmDialog({
+                                                            title: "Imposta ora intera",
+                                                            content: "Imposto l'intera ora su tutta la settimana?"
+                                                            });
+                            dialog.set("buttonOk", "Si");
+                            dialog.set("buttonCancel", "Annulla");
+                            dialog.on("execute",
+                                function() {
+                                    for ( var d = 0; d < 7; d++ ){
+                                        for ( var f = 0; f < 2; f++ ){
+                                            program_status[d][h*2+f] = selected_type;
+                                        }
+                                    }
+                                    programRefresh();
+                                });
+                            dialog.show();
+                        });
+                    });
+                ["program-header-0000","program-header-0100","program-header-0200","program-header-0300","program-header-0400","program-header-0500",
+                 "program-header-0600","program-header-0700","program-header-0800","program-header-0900","program-header-1000","program-header-1100",
+                 "program-header-1200","program-header-1300","program-header-1400","program-header-1500","program-header-1600","program-header-1700",
+                 "program-header-1800","program-header-1900","program-header-2000","program-header-2100","program-header-2200","program-header-2300",
+                 "program-header-0030","program-header-0130","program-header-0230","program-header-0330","program-header-0430","program-header-0530",
+                 "program-header-0630","program-header-0730","program-header-0830","program-header-0930","program-header-1030","program-header-1130",
+                 "program-header-1230","program-header-1330","program-header-1430","program-header-1530","program-header-1630","program-header-1730",
+                 "program-header-1830","program-header-1930","program-header-2030","program-header-2130","program-header-2230","program-header-2330"]
+                .forEach( 
+                    function(i){
+                        on(dom.byId(i), "click", function(evt){
+                            var id = evt.currentTarget.id;
+                            var h = id.substr(15,2);
+                            var f = id.substr(17,2) == "00" ? 0 : 1;
+                            var dialog = new ConfirmDialog({
                         						title: "Imposta mezz'ora",
                         						content: "Imposto la mezz'ora su tutta la settimana?"});
-                				dialog.set("buttonOk", "Si");
-                				dialog.set("buttonCancel", "Annulla");
-                				dialog.on("execute",
-                        				function() {
+                            dialog.set("buttonOk", "Si");
+                            dialog.set("buttonCancel", "Annulla");
+                            dialog.on("execute",
+                                    function() {
 								for ( var d = 0; d < 7; d++ ){
 									program_status[d][h*2+f] = selected_type;
 								}
 								programRefresh();
 							});
-                		dialog.show();
-					});
-				query("#program-table > tbody > tr > th").on("click",
-					function(evt){
-						var id = evt.currentTarget.id ;
-						var d = id.substr(12,1);
-						var dialog = new ConfirmDialog({
+                            dialog.show();
+                        });
+                    });
+                ["program-day-0","program-day-1","program-day-2","program-day-3","program-day-4","program-day-5","program-day-6"].forEach( 
+                    function(i){
+                        on(dom.byId(i), "click", function(evt){
+                            var d = evt.currentTarget.id.substr(12,1);
+                            var dialog = new ConfirmDialog({
                         						title: "Imposta giornata",
                         						content: "Imposto l'intero giorno?"});
-                				dialog.set("buttonOk", "Si");
-                				dialog.set("buttonCancel", "Annulla");
-                				dialog.on("execute",
-                        				function() {
-								for ( var h = 0; h < 24; h++ ){
-									for ( var f = 0; f < 2; f++ ){
-										program_status[d][h*2+f] = selected_type;
-									}
-								}
-								programRefresh();
-							});
-                		dialog.show();
-					});
+                            dialog.set("buttonOk", "Si");
+                            dialog.set("buttonCancel", "Annulla");
+                            dialog.on("execute",
+                                    function() {
+                            for ( var h = 0; h < 24; h++ ){
+                                for ( var f = 0; f < 2; f++ ){
+                                    program_status[d][h*2+f] = selected_type;
+                                }
+                            }
+                            programRefresh();
+                            });
+                            dialog.show();
+                        });
+                    });
 
 
 			["copy0","copy1","copy2","copy3","copy4","copy5","copy6"].forEach(
