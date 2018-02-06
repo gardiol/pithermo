@@ -172,7 +172,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 					}
 				}
                  //Stima: al minimo 10h/1 sacco - modulazione: 5h/1 sacco
-                var bags = (n_P/(2*5) + n_p/(2*8));
+                var bags = (n_P/(2*5) + n_p/(2*10));
                 var status = "Uso gas: "+(n_g/2)+"h -- Pellet: "+(n_P/2)+"h modulazione + "+(n_p/2)+" minimo -- ";
                 if ( n_Pon > 2 ) status += "<b>";
                 status += "" + n_Pon + " accensioni";
