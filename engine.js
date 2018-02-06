@@ -498,7 +498,8 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 									attr.set("copy"+x, "src", (x == copyInProgress) ? "images/cancel_copy.png" : "images/paste.png");
 							} else {
 								var dest =  i.substr(4,1);
-								program_status[dest] = program_status[copyInProgress]; 	
+								for ( var n = 0; n < program_status[dest].length; n++ )
+									program_status[dest][n] = program_status[copyInProgress][n]; 	
 								for ( var x = 0; x < 7; x++ )
 									attr.set("copy"+x, "src", "images/copy.png");
 								copyInProgress = null;
