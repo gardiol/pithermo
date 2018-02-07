@@ -37,6 +37,9 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _commands_mutex("CommandsMutex"),
     _manual_mode(true),
     _anti_ice_active(false),
+    _over_temp(false),
+    _under_temp(false),
+    _gas_was_on_before_over(false),
     _min_temp(16.0),
     _max_temp(17.0),
     _temp_correction(1.0),
@@ -336,6 +339,97 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     }
     _commands_mutex.unlock();
 
+    // Cerca di leggere il sensore di temperatura
+    if ( !_sensor_timer.isRunning() || _sensor_timer.elapsedLoop() )
+    {
+        if ( readSensor( _current_temp, _current_humidity ) )
+            _logger->logTemp( _current_temp, _current_humidity );
+        _sensor_timer.reset();
+    }
+
+    // Applica i constraint di temperatura se abbiamo almeno una lettura valida dal sensore
+    if ( _sensor_success_reads > 0 )
+    {   // Anti-ice ha sempre la priorità
+        if ( _current_temp <= 5.0 )
+        {
+            if ( !_anti_ice_active )
+            {
+                appendMessage("Anti-ice attivato!");
+                _logger->logEvent("Anti-ice ON");
+                gasOn();
+                update_status = true;
+                _anti_ice_active = true;
+            }
+        }
+        else if ( _anti_ice_active )
+        {
+            appendMessage("Anti-ice disattivato!");
+            _logger->logEvent("Anti-ice OFF");
+            gasOff();
+            update_status = true;
+            _anti_ice_active = false;
+        }
+        else // Se non siamo a rischio congelamento...
+        {
+            if ( !_over_temp && (_current_temp >= _max_temp) )
+            {   // Superato il massimo, spegnamo:
+                _over_temp = true;
+                appendMessage("Max temp superata");
+                _logger->logEvent("over temp start");
+                _gas_was_on_before_over = checkGas();
+                if ( _gas_was_on_before_over )
+                    gasOff();
+                if ( checkPellet() )
+                    pelletMinimum(true);
+                update_status = true;
+            }
+            else if ( _over_temp && (_current_temp < _max_temp) )
+            {   // Rientrati dall'over-temperatura:
+                _over_temp = false;
+                appendMessage("Max temp rientrata");
+                _logger->logEvent("over temp end");
+                if ( _manual_mode )
+                {
+                    if ( _gas_was_on_before_over )
+                        gasOn();
+                    if ( checkPellet() )
+                        pelletMinimum(false);
+                    _gas_was_on_before_over = false;
+                    update_status = true;
+                }
+                else
+                    check_program = true;
+            }
+
+            if ( !_under_temp && (_current_temp < _min_temp) )
+            {   // Siamo sotto il minimo! Accendiamo qualcosa:
+                _under_temp = true;
+                appendMessage("Sotto la min temp");
+                _logger->logEvent("under min temp start");
+                if ( checkPellet() )
+                    pelletMinimum( false );
+                else
+                    gasOn();
+            }
+            else if ( _under_temp && (_current_temp >= _min_temp) )
+            {   // Siamo tornati "sopra" la temperatura minima:
+                _under_temp = false;
+                appendMessage("Min temp rientrata");
+                _logger->logEvent("under min temp end");
+                if ( _manual_mode )
+                {   // Spegnamo:
+                    if ( checkGas() )
+                        gasOff();
+                    if ( checkPellet() )
+                        pelletMinimum(true);
+                    update_status = true;
+                }
+                else
+                    check_program = true;
+            }
+        }
+    }
+
     // Aggiorna tempo, history e programma
     uint64_t current_time = FrameworkTimer::getTimeEpoc();
     if ( (_last_time+60) <= current_time )
@@ -354,7 +448,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             check_program = true;
     }
 
-    if ( ( (cycle == 0) && !_manual_mode ) || check_program )
+    if ( !(_under_temp || _over_temp || _anti_ice_active ) && // Skip program under extraordinary circumstances
+         ( ( (cycle == 0) && !_manual_mode ) || check_program ) )
     {
         _logger->logDebug("(in auto mode) Check program...");
         _logger->logDebug( std::string("program gas ") + (_program_gas ? "on" : "off"));
@@ -414,84 +509,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 pelletMinimum(true);
             }
         }
-    }
-
-    // Applica i constraint di temperatura
-    if ( !_sensor_timer.isRunning() || _sensor_timer.elapsedLoop() )
-    {
-        if ( readSensor( _current_temp, _current_humidity ) )
-        {
-            _logger->logTemp( _current_temp, _current_humidity );
-            if ( _current_temp <= 5.0 )
-            {
-                if ( !_anti_ice_active )
-                {
-                    appendMessage("Anti-ice attivato!");
-                    _logger->logEvent("Anti-ice ON");
-                    gasOn();
-                    update_status = true;
-                    _anti_ice_active = true;
-                }
-            }
-            else if ( _anti_ice_active )
-            {
-                appendMessage("Anti-ice disattivato!");
-                _logger->logEvent("Anti-ice OFF");
-                gasOff();
-                update_status = true;
-                _anti_ice_active = false;
-            }
-            else if ( _current_temp > _max_temp )
-            {
-                if ( _manual_mode )
-                {
-                    appendMessage("Max temp superata in manuale");
-                    _logger->logEvent("Max temp reached - manual mode");
-                    if ( checkGas() )
-                        gasOff();
-                    if ( checkPellet() )
-                        pelletMinimum(true);
-                    update_status = true;
-                }
-                else
-                {
-                    appendMessage("Max temp superata in programma");
-                    _logger->logEvent("Max temp reached - program mode");
-                    if ( _program_gas )
-                        gasOff();
-                    if ( _program_pellet )
-                        pelletMinimum(true);
-                }
-            }
-            else if ( _current_temp < _min_temp )
-            {
-                if ( _manual_mode )
-                {
-                    appendMessage("Sotto la min temp in manuale");
-                    _logger->logEvent("Min temp reached - manual mode");
-                    if ( checkPellet() )
-                        pelletMinimum( false );
-                    else
-                        gasOn();
-                }
-                else
-                {
-                    appendMessage("Sotto la min temp in programma");
-                    _logger->logEvent("Min temp reached - program mode");
-                    if ( _program_gas )
-                        gasOn();
-                    if ( _program_pellet )
-                    {
-                        pelletOn();
-                        if ( _program_pellet_minimum )
-                            pelletMinimum(true);
-                        else
-                            pelletMinimum(false);
-                    }
-                }
-            }
-        }
-        _sensor_timer.reset();
     }
 
     if ( save_config )
@@ -577,11 +594,11 @@ void RunnerThread::appendMessage(const std::string &msg)
     time_t t = FrameworkTimer::getTimeEpoc();
     struct tm tm = *localtime(&t);
     std::string stamp = (tm.tm_mday < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_mday ) + "/" +
-                        (tm.tm_mon < 10 ? "0" : "" ) +FrameworkUtils::tostring( tm.tm_mon+1 ) + "/" +
-                        FrameworkUtils::tostring( tm.tm_year+1900 ) + " " +
-                        (tm.tm_hour < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_hour ) + ":" +
-                        (tm.tm_min < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_min ) + "." +
-                        (tm.tm_sec < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_sec );
+            (tm.tm_mon < 10 ? "0" : "" ) +FrameworkUtils::tostring( tm.tm_mon+1 ) + "/" +
+            FrameworkUtils::tostring( tm.tm_year+1900 ) + " " +
+            (tm.tm_hour < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_hour ) + ":" +
+            (tm.tm_min < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_min ) + "." +
+            (tm.tm_sec < 10 ? "0" : "" ) + FrameworkUtils::tostring( tm.tm_sec );
 
     _messages.push_back( stamp + " - " + msg );
     while ( _messages.size() > _num_warnings )
@@ -761,7 +778,7 @@ bool RunnerThread::readSensor( float & current_temp, float & current_humidity )
              ( (new_humidity > 0.0) &&    // dato valido?
                (new_humidity < 95.0) &&   // dato valido?
                (fabs(current_humidity-new_humidity)<10.0) // delta ragionevole?
-             ) )
+               ) )
         {
             current_humidity = new_humidity;
             ret = true;
@@ -770,7 +787,7 @@ bool RunnerThread::readSensor( float & current_temp, float & current_humidity )
              ( ( new_temp > -60.0 ) && // dato valido?
                ( new_temp < 60.0 ) &&  // dato valido?
                (fabs(current_temp-new_temp)<2.0) // delta ragionevole?
-             ) )
+               ) )
         {
             current_temp = new_temp;
             ret = true;

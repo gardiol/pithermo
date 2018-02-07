@@ -64,6 +64,9 @@ private:
 
     bool _manual_mode;
     bool _anti_ice_active;
+    bool _over_temp;
+    bool _under_temp;
+    bool _gas_was_on_before_over;
     float _min_temp;
     float _max_temp;
     float _temp_correction;
