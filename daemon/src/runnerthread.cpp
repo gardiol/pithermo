@@ -206,7 +206,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     bool check_program = false;
     bool save_config = false;
     bool ret = true;
-    bool current_pellet_feedback = pelletFeedback();
 
     // Processa comandi
     _commands_mutex.lock();
@@ -445,28 +444,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         }
     }
 
-    if ( !_pellet_flameout && // we where not in flameout
-         (checkPellet() && // pellet is on
-          !current_pellet_feedback && // and pellet temp was HOT
-          _prev_pellet_feedback) ) // but now it's not anymore...
-    {   // Pellet has shut off for some reasons! (no more fuel?)
-        _pellet_flameout = true;
-        appendMessage("Pellet flameout! ");
-        _logger->logEvent("pellet flameout start");
-        if ( !checkGas() ) // Force gas on
-            gasOn();
-    }
-    else if ( _pellet_flameout &&   // we are in flameout...
-              current_pellet_feedback ) // but now pellet is back HOT...
-    {
-        _pellet_flameout = false;
-        appendMessage("Pellet flameout annullato! ");
-        _logger->logEvent("pellet flameout end");
-        if ( !_manual_mode )
-            check_program = true;
-        else if ( checkGas() ) // This we can do anyway, since gas will be cut off by the feedback thermostat.
-            gasOff();
-    }
 
     // Aggiorna tempo, history e programma
     uint64_t current_time = FrameworkTimer::getTimeEpoc();
@@ -482,8 +459,32 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 _logger->logDebug("Unable to write to history file");
         }
         update_status = true;
+    	bool current_pellet_feedback = pelletFeedback();
         if ( !_manual_mode )
             check_program = true;
+    	if ( !_pellet_flameout && // we where not in flameout
+    	     (checkPellet() && // pellet is on
+    	      !current_pellet_feedback && // and pellet temp was HOT
+    	      _prev_pellet_feedback) ) // but now it's not anymore...
+    	{   // Pellet has shut off for some reasons! (no more fuel?)
+    	    _pellet_flameout = true;
+    	    appendMessage("Pellet flameout! ");
+    	    _logger->logEvent("pellet flameout start");
+    	    if ( !checkGas() ) // Force gas on
+        	    gasOn();
+    	}
+    	else if ( _pellet_flameout &&   // we are in flameout...
+    	          current_pellet_feedback ) // but now pellet is back HOT...
+    	{
+    	    _pellet_flameout = false;
+    	    appendMessage("Pellet flameout annullato! ");
+    	    _logger->logEvent("pellet flameout end");
+    	    if ( !_manual_mode )
+    	        check_program = true;
+    	    else if ( checkGas() ) // This we can do anyway, since gas will be cut off by the feedback thermostat.
+    	        gasOff();
+    	}
+    	_prev_pellet_feedback = current_pellet_feedback;
     }
 
     if ( !(_under_temp || _over_temp || _anti_ice_active ) && // Skip program under extraordinary circumstances
@@ -566,10 +567,9 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         updateStatus( checkGas(),
                       checkPellet(),
                       checkPelletMinimum(),
-                      current_pellet_feedback,
+                      pelletFeedback(),
                       _pellet_flameout );
 
-    _prev_pellet_feedback = current_pellet_feedback;
     return ret;
 }
 
@@ -739,10 +739,10 @@ void RunnerThread::updateStatus( bool gas_on, bool pellet_on, bool pellet_minimu
                     fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
                 break;
             case 7:
-                if ( pellet_flameout )
+//                if ( pellet_flameout )
                     fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
-                else
-                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
+//                else
+//                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
                 break;
             case 8:
                 if ( gas_on )

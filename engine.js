@@ -20,6 +20,7 @@ var gasOnBtn;
 var gasOffBtn;
 var manualBtn;
 var autoBtn;
+var flameoutBtn;
 // For program:
 var copyInProgress = null;
 var selectOff;
@@ -239,6 +240,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 attr.set("pellet-minimum-status-led", "src", system_status.pellet.minimum == "on" ? "images/pellet-minimo.png":"images/pellet-modulazione.png");
                 attr.set("pellet-status-led", "src", system_status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
                 attr.set("gas-status-led", "src", system_status.gas.command == "on" ? "images/gas-on.png":"images/gas-off.png");                
+		style.set(flameoutBtn.domNode, 'display', system_status.pellet.flameout == "on" ? 'inline' : 'none' );		
                 domConstruct.empty("messages-queue");
                 for ( var i = 0; i < system_status.warnings.messages.length; ++i )
                     domConstruct.place("<li>" + system_status.warnings.messages[i] + "</li>", "messages-queue","first");
@@ -263,6 +265,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
                 attr.set("pellet-status-led", "src", "images/pellet-off.png");
                 attr.set("gas-status-led", "src", "images/gas-off.png");
+		style.set(flameoutBtn.domNode, 'display', 'none');		
                 domConstruct.empty("messages-queue");
                 domConstruct.place("<li>Connessione persa!</li>","messages-queue","first");
                 firstStatusUpdate = true;
@@ -331,6 +334,13 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         href: "status.html",
         title: "Stato",
 		onLoad: function() {
+				flameoutBtn = new Button({
+					label: "RESET FLAMEOUT!",
+					disabled: false,
+					onClick: function(){
+                                confirmCmd("Reset pellet FLAMEOUT?", "reset flameout?","reset-flameout");}
+				}, "pellet-flameout-reset-btn");
+				style.set(flameoutBtn.domNode, 'display', 'none');		
 				manualBtn = new Button({
 					label: "Manuale",
 					disabled: true,
