@@ -739,10 +739,10 @@ void RunnerThread::updateStatus( bool gas_on, bool pellet_on, bool pellet_minimu
                     fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
                 break;
             case 7:
-//                if ( pellet_flameout )
+                if ( pellet_flameout )
                     fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
-//                else
-//                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
+                else
+                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
                 break;
             case 8:
                 if ( gas_on )
