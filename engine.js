@@ -664,7 +664,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         plot:"tempPlot", 
                         vertical: true, 
                         dropLabels: false,
-                        majorTickStep: 10, majorTicks: true, majorLabels: true,
+                        majorTickStep: 5, majorTicks: true, majorLabels: true,
                         minorTickStep: 1, minorTicks: true, minorLabels: true,
                         microTickStep: 0.1, microTicks: true,
                         fixLower: "major",  fixUpper: "major"
@@ -679,8 +679,8 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     hstGraph.addAxis("h", 	{
                         plot:"humiPlot", 
                         vertical: true, leftBottom: false,
-                        majorTickStep: 10, 
-                            minorTickStep: 1,
+                        majorTickStep: 5, 
+                        minorTickStep: 1,
                         fixLower: "major", fixUpper: "major"
                     });
     hstGraph.addSeries("Umidita",[],{plot: "humiPlot"});
