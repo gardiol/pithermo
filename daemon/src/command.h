@@ -22,6 +22,7 @@ public:
                    SET_MIN_TEMP,
                    SET_MAX_TEMP,
                    SET_HISTORY,
+                   FLAMEOUT_RESET,
                    PROGRAM,
                    AUTO};
 

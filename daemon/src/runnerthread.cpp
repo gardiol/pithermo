@@ -40,6 +40,8 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _over_temp(false),
     _under_temp(false),
     _gas_was_on_before_over(false),
+    _pellet_flameout(false),
+    _prev_pellet_feedback(false),
     _min_temp(16.0),
     _max_temp(17.0),
     _temp_correction(1.0),
@@ -82,6 +84,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _status_json_template.push_back("]},\"pellet\":{\"command\":\"");
     _status_json_template.push_back("\",\"status\":\"");
     _status_json_template.push_back("\",\"minimum\":\"");
+    _status_json_template.push_back("\",\"flameout\":\"");
     _status_json_template.push_back("\"},\"gas\":{\"command\":\"");
     _status_json_template.push_back("\",\"status\":\"off\"},\"temp\":{\"min\":");
     _status_json_template.push_back(",\"max\":");
@@ -203,6 +206,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     bool check_program = false;
     bool save_config = false;
     bool ret = true;
+    bool current_pellet_feedback = pelletFeedback();
 
     // Processa comandi
     _commands_mutex.lock();
@@ -212,6 +216,17 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         _commands_list.pop_front();
         switch ( cmd->command() )
         {
+        case Command::FLAMEOUT_RESET:
+            if ( _pellet_flameout )
+            {
+                _pellet_flameout = false;
+                _logger->logDebug("Flameout cancelled");
+                appendMessage("Flameout cancellato!");
+                if ( !_manual_mode )
+                    check_program = true;
+            }
+            break;
+
         case Command::SET_HISTORY:
             _logger->logDebug("Change history received");
             _history.setMode( cmd->getParam() );
@@ -390,7 +405,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 _logger->logEvent("over temp end");
                 if ( _manual_mode )
                 {
-                    if ( _gas_was_on_before_over )
+                    if ( _gas_was_on_before_over || _pellet_flameout )
                         gasOn();
                     if ( checkPellet() )
                         pelletMinimum(false);
@@ -406,7 +421,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 _under_temp = true;
                 appendMessage("Sotto la min temp");
                 _logger->logEvent("under min temp start");
-                if ( checkPellet() )
+                if ( checkPellet() && !_pellet_flameout )
                     pelletMinimum( false );
                 else
                     gasOn();
@@ -428,6 +443,29 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                     check_program = true;
             }
         }
+    }
+
+    if ( !_pellet_flameout && // we where not in flameout
+         (checkPellet() && // pellet is on
+          !current_pellet_feedback && // and pellet temp was HOT
+          _prev_pellet_feedback) ) // but now it's not anymore...
+    {   // Pellet has shut off for some reasons! (no more fuel?)
+        _pellet_flameout = true;
+        appendMessage("Pellet flameout! ");
+        _logger->logEvent("pellet flameout start");
+        if ( !checkGas() ) // Force gas on
+            gasOn();
+    }
+    else if ( _pellet_flameout &&   // we are in flameout...
+              current_pellet_feedback ) // but now pellet is back HOT...
+    {
+        _pellet_flameout = false;
+        appendMessage("Pellet flameout annullato! ");
+        _logger->logEvent("pellet flameout end");
+        if ( !_manual_mode )
+            check_program = true;
+        else if ( checkGas() ) // This we can do anyway, since gas will be cut off by the feedback thermostat.
+            gasOff();
     }
 
     // Aggiorna tempo, history e programma
@@ -452,9 +490,20 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
          ( ( (cycle == 0) && !_manual_mode ) || check_program ) )
     {
         _logger->logDebug("(in auto mode) Check program...");
-        _logger->logDebug( std::string("program gas ") + (_program_gas ? "on" : "off"));
-        _logger->logDebug( std::string("program pellet ") + (_program_pellet ? "on" : "off"));
-        _logger->logDebug( std::string("program pellet minimum ") + (_program_pellet_minimum ? "on" : "off"));
+        if ( _pellet_flameout && _program_pellet && !_program_pellet_minimum )
+        {
+            _program_gas = true;
+            _program_pellet_minimum = true;
+            _logger->logDebug( "program gas FORZATO: PELLET FLAMEOUT" );
+            _logger->logDebug( "program pellet flameout" );
+            _logger->logDebug( "program pellet minimum forzato per flamout" );
+        }
+        else
+        {
+            _logger->logDebug( std::string("program gas ") + (_program_gas ? "on" : "off"));
+            _logger->logDebug( std::string("program pellet ") + (_program_pellet ? "on" : "off"));
+            _logger->logDebug( std::string("program pellet minimum ") + (_program_pellet_minimum ? "on" : "off"));
+        }
         if ( checkGas() )
         {
             if ( !_program_gas )
@@ -517,8 +566,10 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         updateStatus( checkGas(),
                       checkPellet(),
                       checkPelletMinimum(),
-                      pelletFeedback() );
+                      current_pellet_feedback,
+                      _pellet_flameout );
 
+    _prev_pellet_feedback = current_pellet_feedback;
     return ret;
 }
 
@@ -557,7 +608,8 @@ bool RunnerThread::scheduleStart()
     updateStatus( checkGas(),
                   checkPellet(),
                   checkPelletMinimum(),
-                  pelletFeedback() );
+                  pelletFeedback(),
+                  _pellet_flameout);
 
     return !_gpio_error;
 }
@@ -627,7 +679,7 @@ void RunnerThread::saveConfig()
         debugPrintError() << "Unable to save file " << _config_file << "\n";
 }
 
-void RunnerThread::updateStatus( bool gas_on, bool pellet_on, bool pellet_minimum, bool pellet_feedback )
+void RunnerThread::updateStatus( bool gas_on, bool pellet_on, bool pellet_minimum, bool pellet_feedback, bool pellet_flameout )
 {
     FILE* status_file = fopen( (_exchange_path+"/_status").c_str(), "w" );
     if ( status_file )
@@ -687,27 +739,33 @@ void RunnerThread::updateStatus( bool gas_on, bool pellet_on, bool pellet_minimu
                     fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
                 break;
             case 7:
-                if ( gas_on )
+                if ( pellet_flameout )
                     fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
                 else
                     fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
                 break;
             case 8:
-                fwrite( _str_min_t.c_str(), _str_min_t.length(), 1, status_file);
+                if ( gas_on )
+                    fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+                else
+                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
                 break;
             case 9:
-                fwrite( _str_max_t.c_str(), _str_max_t.length(), 1, status_file);
+                fwrite( _str_min_t.c_str(), _str_min_t.length(), 1, status_file);
                 break;
             case 10:
-                fwrite( _str_day.c_str(), _str_day.length(), 1, status_file);
+                fwrite( _str_max_t.c_str(), _str_max_t.length(), 1, status_file);
                 break;
             case 11:
-                fwrite( _str_h.c_str(), _str_h.length(), 1, status_file);
+                fwrite( _str_day.c_str(), _str_day.length(), 1, status_file);
                 break;
             case 12:
-                fwrite( _str_f.c_str(), _str_f.length(), 1, status_file);
+                fwrite( _str_h.c_str(), _str_h.length(), 1, status_file);
                 break;
             case 13:
+                fwrite( _str_f.c_str(), _str_f.length(), 1, status_file);
+                break;
+            case 14:
                 break;
             }
         }

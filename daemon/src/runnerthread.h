@@ -49,7 +49,7 @@ private:
     void appendMessage( const std::string& msg );
 
     void saveConfig();
-    void updateStatus(bool gas_on, bool pellet_on, bool pellet_minimum, bool pellet_feedback);
+    void updateStatus(bool gas_on, bool pellet_on, bool pellet_minimum, bool pellet_feedback, bool pellet_flameout);
 
     bool readSensor(float &current_temp, float &current_humidity);
     void setGpioBool( uint8_t num, bool activate );
@@ -67,6 +67,8 @@ private:
     bool _over_temp;
     bool _under_temp;
     bool _gas_was_on_before_over;
+    bool _pellet_flameout;
+    bool _prev_pellet_feedback;
     float _min_temp;
     float _max_temp;
     float _temp_correction;
@@ -94,7 +96,6 @@ private:
     bool _gpio_error;
 
     History _history;
-//    std::list<HistoryItem> _th_history;
     std::string _str_manual;
     std::string _str_auto;
     std::string _str_on;
