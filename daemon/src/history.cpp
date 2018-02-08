@@ -20,15 +20,12 @@ History::History(const std::string &history_file, const std::string& exchange_pa
     _now_week(0),
     _history_filename( history_file ),
     _exchange_path( exchange_path ),
-    _history_file(NULL),
     _mode( 'h' )
 {
 }
 
 History::~History()
 {
-    if ( _history_file != NULL )
-        fclose(_history_file);
 }
 
 void History::_splitTime(uint64_t t, uint32_t &w, uint32_t &d, uint32_t &h, uint32_t &m)
@@ -137,11 +134,11 @@ bool History::update(float last_temp, float last_humidity)
     _history_cache[ 0 ][ _now_day ][ _now_hour ][ _now_min ] = new_item;
     _writeJson();
 
-    _history_file = fopen( _history_filename.c_str(), "a" );
-    if ( _history_file != NULL )
+    FILE* history_file = fopen( _history_filename.c_str(), "a" );
+    if ( history_file != NULL )
     {
-        new_item.writeToFile( _history_file );
-        fclose(_history_file);
+        new_item.writeToFile( history_file );
+        fclose(history_file);
     }
     else
         return false;
