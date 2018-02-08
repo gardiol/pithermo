@@ -128,6 +128,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 				for ( var h = 0; h < 24; h++ ){
                     dclass.remove( p_str[d][h][2], "program_now_h" );
 					for ( var f = 0; f < 2; f++ ){
+                        dclass.remove(p_str[d][h][f][0], "auto_now_c" )
 						var c = program_status[d][h*2+f];
                         var s = "";
                         if ( c != ' ' && c != 'o' ){
@@ -163,6 +164,14 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                             prev_pellet_on = false;
                         }
                         html.set(p_str[d][h][f][0],s);
+                        if ( d == nd ){
+                            dclass.add(p_str[d][h][f][0], "auto_now_c" )
+                            if ( h == nh && f == nf ) {
+                                dclass.add(p_str[d][h][f][0], "auto_now_now" )
+                            }
+                        }else if ( h == nh && f == nf ) {
+                            dclass.add(p_str[d][h][f][0], "auto_now_c" )
+                        }
                         (d == nd || h == nh && f == nf) ? dclass.add(p_str[d][h][f][0], "auto_now_c" ) : dclass.remove(p_str[d][h][f][0], "auto_now_c" );
 						dclass.remove( p_str[d][h][f][1], "program_now_h" );
                         if ( d == copyInProgress ){

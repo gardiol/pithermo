@@ -97,6 +97,9 @@
 .auto_now_c {
 	background: lightgreen;
 }
+.auto_now_now {
+	background: green;
+}
 
 .copy_icon {
 	width: 1em;
