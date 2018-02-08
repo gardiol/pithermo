@@ -130,7 +130,8 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     dclass.remove( p_str[d][h][2], "program_now_h" );
 					for ( var f = 0; f < 2; f++ ){
                         dclass.remove(p_str[d][h][f][0], "auto_now_c" )
-						var c = program_status[d][h*2+f];
+                        dclass.remove(p_str[d][h][f][0], "auto_now_now" )
+			var c = program_status[d][h*2+f];
                         var s = "";
                         if ( c != ' ' && c != 'o' ){
                             s = '<img src="images/';
