@@ -7,6 +7,7 @@ var hstUnit;
 var hstData = null;
 var hstSel;
 var hstTimer;
+var hstSmall = true;
 // For main are
 var modeTab;
 var manualPane;
@@ -249,7 +250,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 attr.set("pellet-minimum-status-led", "src", system_status.pellet.minimum == "on" ? "images/pellet-minimo.png":"images/pellet-modulazione.png");
                 attr.set("pellet-status-led", "src", system_status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
                 attr.set("gas-status-led", "src", system_status.gas.command == "on" ? "images/gas-on.png":"images/gas-off.png");                
-		style.set(flameoutBtn.domNode, 'display', system_status.pellet.flameout == "on" ? 'inline' : 'none' );		
+                style.set(flameoutBtn.domNode, 'display', system_status.pellet.flameout == "on" ? 'inline' : 'none' );		
                 domConstruct.empty("messages-queue");
                 for ( var i = 0; i < system_status.warnings.messages.length; ++i )
                     domConstruct.place("<li>" + system_status.warnings.messages[i] + "</li>", "messages-queue","first");
@@ -274,7 +275,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
                 attr.set("pellet-status-led", "src", "images/pellet-off.png");
                 attr.set("gas-status-led", "src", "images/gas-off.png");
-		style.set(flameoutBtn.domNode, 'display', 'none');		
+                style.set(flameoutBtn.domNode, 'display', 'none');		
                 domConstruct.empty("messages-queue");
                 domConstruct.place("<li>Connessione persa!</li>","messages-queue","first");
                 firstStatusUpdate = true;
@@ -659,6 +660,18 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         onChange: historySetData,
         },"history-sel");
     hstSel.startup();
+    
+    query("#history-size").on("click", 
+        function() {
+            if ( hstSmall ){
+                style.set("history-graph", "height", "32em");
+                hstGraph.resize();   
+            } else {
+                style.set("history-graph", "height", "16em");
+                hstGraph.resize();   
+            }
+            hstSmall = !hstSmall;
+        });
     
     hstGraph = new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25});
     hstGraph.setTheme(Chris);

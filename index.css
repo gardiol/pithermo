@@ -34,3 +34,10 @@ div.clear {
 	margin-top: 0px;
 	margin-right: -5em;
 }
+
+#history-size {
+    height: 2em;
+    width: 2em;
+    vertical-align: middle;
+    margin-left: 2em;
+}
