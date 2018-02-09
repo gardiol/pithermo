@@ -291,7 +291,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         var s = hstSel.get("value");
         if ( hstData ){
             var te = [], ex = [], hu = [], ti = [];
-            for ( var v = 0; (v < s) || (t.length < 15); v++ ){
+            for ( var v = 0; (v < s) || (ti.length < 15); v++ ){
                 if ( hstData[v] ){
                     te = hstData[v].temp.concat(te);
                     ex = hstData[v].ext_temp.concat(ex);
