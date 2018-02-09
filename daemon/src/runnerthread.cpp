@@ -438,7 +438,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             {   // Siamo sotto il minimo! Accendiamo qualcosa:
                 _under_temp = true;
                 _logger->logEvent("under min temp start");
-                if ( checkPellet() && !_pellet_flameout )
+                if ( checkPellet() && // If pellet is on, do not turn gas on
+                     pelletFeedback() )  // but still turn gas on until feedback is hot! (this covers also flameout situation)
                 {
                     pelletMinimum( false );
                     appendMessage("Sotto la temperatura minima, pellet in modulazione");
