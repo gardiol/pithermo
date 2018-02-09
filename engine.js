@@ -287,6 +287,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 
 	function historySetData(){
         extTempData = {};
+        var ext_zeros = 0;
         var t = [], h = [], x = [];
         var s = hstSel.get("value");
         if ( hstData ){
@@ -306,12 +307,16 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 t.push( {x:ti[p], y:te[p] } );
                 h.push( {x:ti[p], y:hu[p] } );
                 x.push( {x:ti[p], y:ex[p] } );
+                if ( ex[p] == 0 ) ext_zeros++;
                 extTempData[ti[p]] = ex[p];
             }            
         }
         html.set("history-label", s);
         hstGraph.updateSeries("Temperatura", t.length == 0 ? [{x:0,y:0}] : t );
-        hstGraph.updateSeries("Esterna", x.length == 0 ? [{x:0,y:0}] : x );
+        if ( ext_zeros != x.length )
+            hstGraph.updateSeries("Esterna", x.length == 0 ? [{x:0,y:0}] : x );
+        else
+            hstGraph.updateSeries("Esterna", [] );
         hstGraph.updateSeries("Umidita", h.length == 0 ? [{x:0,y:0}] : h );
         var ts = 60; // 1 min
         if ( t.length > 0 ){
@@ -740,7 +745,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     new MouseIndicator(hstGraph, "tempPlot",{ 
                         series: "Temperatura",mouseOver: true,
                         labelFunc: function(v){
-                            return "T: "+v.y.toFixed(1)+"/" + (extTempData[v.x] ? extTempData[v.x].toFixed(1) : "-");
+                            return "T: "+v.y.toFixed(1)+"/" + ((extTempData[v.x] != null) ? extTempData[v.x].toFixed(1) : "-");
                         }
                         });                    
 	updateHistory();
