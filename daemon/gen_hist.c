@@ -17,19 +17,24 @@ int main(int argc, char** argv)
 	uint64_t t = time(NULL) - 3600*24*365;
 	float te = 11.0;
 	float hu = 20.0;
-	for ( uint32_t x = 0; x < 60*24*365; ++x )
+    float ex = 11.0;
+    for ( uint32_t x = 0; x < 60*24*365; ++x )
 	{
 		fwrite( &t, sizeof(t), 1, hf );
 		fwrite( &te, sizeof(te), 1, hf );
-		fwrite( &hu, sizeof(hu), 1, hf );
-		printf("(%d) %lu / %f / %f\n", x, t, te, hu );
+        fwrite( &ex, sizeof(ex), 1, hf );
+        fwrite( &hu, sizeof(hu), 1, hf );
+        printf("(%d) %lu / %f (%f) / %f\n", x, t, te, ex, hu );
 		t+=60;
 		te += 0.1;
+        ex -= 0.1;
 		hu += 0.5;
 		if ( te > 35.0 )
 			te = 11.0;
 		if ( hu > 90 )
 			hu = 20.0;
+        if ( ex < -5 )
+            ex = 11;
 	}
 	fclose(hf);
 

@@ -56,6 +56,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _num_warnings(10),
     _last_time(0),
     _current_temp(0.0),
+    _current_ext_temp(0.0),
     _current_humidity(50.0),
     _program_gas(false),
     _program_pellet(false),
@@ -215,6 +216,11 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         _commands_list.pop_front();
         switch ( cmd->command() )
         {
+        case Command::EXT_TEMP:
+            _logger->logDebug("New EXT TEMP received: " + cmd->getParam());
+            _current_ext_temp = FrameworkUtils::string_tof( cmd->getParam() );
+            break;
+
         case Command::FLAMEOUT_RESET:
             if ( _pellet_flameout )
             {
@@ -306,7 +312,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         {
             _logger->logDebug("New MIN TEMP received: " + cmd->getParam());
             float tmp_temp = FrameworkUtils::string_tof( cmd->getParam() );
-            if ( tmp_temp != _min_temp )
+            if ( (tmp_temp != _min_temp) && (tmp_temp < _max_temp) )
             {
                 _logger->logEvent("Changed min temp to " + cmd->getParam() );
                 _min_temp = tmp_temp;
@@ -321,7 +327,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         {
             _logger->logDebug("New MAX TEMP received: " + cmd->getParam());
             float tmp_temp = FrameworkUtils::string_tof( cmd->getParam() );
-            if ( tmp_temp != _max_temp )
+            if ( (tmp_temp != _max_temp) && (tmp_temp > _min_temp) )
             {
                 _logger->logEvent("Changed max temp to " + cmd->getParam() );
                 _max_temp = tmp_temp;
@@ -357,7 +363,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
     if ( !_sensor_timer.isRunning() || _sensor_timer.elapsedLoop() )
     {
         if ( readSensor( _current_temp, _current_humidity ) )
-            _logger->logTemp( _current_temp, _current_humidity );
+            _logger->logTemp( _current_temp, _current_humidity, _current_ext_temp );
         _sensor_timer.reset();
     }
 
@@ -368,7 +374,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         {
             if ( !_anti_ice_active )
             {
-                appendMessage("Anti-ice attivato!");
+                appendMessage("Anti-ice attivato! (gas acceso)");
                 _logger->logEvent("Anti-ice ON");
                 gasOn();
                 update_status = true;
@@ -378,7 +384,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         else if ( _anti_ice_active )
         {
             appendMessage("Anti-ice disattivato!");
-            _logger->logEvent("Anti-ice OFF");
+            _logger->logEvent("Anti-ice OFF (gas spento)");
             gasOff();
             update_status = true;
             _anti_ice_active = false;
@@ -388,58 +394,84 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             if ( !_over_temp && (_current_temp >= _max_temp) )
             {   // Superato il massimo, spegnamo:
                 _over_temp = true;
-                appendMessage("Max temp superata");
                 _logger->logEvent("over temp start");
                 _gas_was_on_before_over = checkGas();
                 if ( _gas_was_on_before_over )
+                {
                     gasOff();
+                    appendMessage("Max temp superata, gas spento");
+                }
                 if ( checkPellet() )
+                {
                     pelletMinimum(true);
+                    appendMessage("Max temp superata, pellet al minimo");
+                }
                 update_status = true;
             }
             else if ( _over_temp && (_current_temp < _max_temp) )
             {   // Rientrati dall'over-temperatura:
                 _over_temp = false;
-                appendMessage("Max temp rientrata");
                 _logger->logEvent("over temp end");
                 if ( _manual_mode )
                 {
                     if ( _gas_was_on_before_over || _pellet_flameout )
+                    {
                         gasOn();
+                        appendMessage("Max temp rientrata, gas riacceso");
+                    }
                     if ( checkPellet() )
+                    {
                         pelletMinimum(false);
+                        appendMessage("Max temp rientrata, pellet in modulazione");
+                    }
                     _gas_was_on_before_over = false;
                     update_status = true;
                 }
                 else
+                {
                     check_program = true;
+                    appendMessage("Max temp rientrata, ritorno al programma");
+                }
             }
 
             if ( !_under_temp && (_current_temp < _min_temp) )
             {   // Siamo sotto il minimo! Accendiamo qualcosa:
                 _under_temp = true;
-                appendMessage("Sotto la min temp");
                 _logger->logEvent("under min temp start");
                 if ( checkPellet() && !_pellet_flameout )
+                {
                     pelletMinimum( false );
+                    appendMessage("Sotto la temperatura minima, pellet in modulazione");
+                }
                 else
+                {
                     gasOn();
+                    appendMessage("Sotto la temperatura minima, gas acceso");
+                }
             }
             else if ( _under_temp && (_current_temp >= _min_temp) )
             {   // Siamo tornati "sopra" la temperatura minima:
                 _under_temp = false;
-                appendMessage("Min temp rientrata");
                 _logger->logEvent("under min temp end");
                 if ( _manual_mode )
                 {   // Spegnamo:
                     if ( checkGas() )
+                    {
                         gasOff();
+                        appendMessage("Recuperata la temperatura minima, gas spento");
+                    }
                     if ( checkPellet() )
+                    {
                         pelletMinimum(true);
+                        appendMessage("Recuperata la temperatura minima, pellet al minimo");
+                    }
                     update_status = true;
                 }
                 else
+                {
+                    appendMessage("Recuperata la temperatura minima, ritorno al programma");
                     check_program = true;
+                }
             }
         }
     }
@@ -455,7 +487,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         updateProgram();
         if ( _sensor_success_reads > 0 )
         {
-            if ( !_history.update( _current_temp, _current_humidity ) )
+            if ( !_history.update( _current_temp, _current_humidity, _current_ext_temp ) )
                 _logger->logDebug("Unable to write to history file");
         }
         update_status = true;

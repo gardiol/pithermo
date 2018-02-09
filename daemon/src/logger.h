@@ -22,7 +22,7 @@ public:
 
     void logEvent( const std::string& event );
     void logDebug( const std::string& str );
-    void logTemp( float t, float h );
+    void logTemp(float t, float h , float x);
 
     bool isValid() const
     {

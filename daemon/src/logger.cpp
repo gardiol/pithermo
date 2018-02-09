@@ -44,12 +44,12 @@ void Logger::logDebug(const std::string &str)
     }
 }
 
-void Logger::logTemp(float t, float h)
+void Logger::logTemp(float t, float h, float x)
 {
     if ( _log_file != NULL )
     {
         printStamp();
-        fprintf(_log_file, " -- Temp: %f Humidity: %f\n", t, h );
+        fprintf(_log_file, " -- Temp: %f (ext: %f) Humidity: %f\n", t, x, h );
         fflush(_log_file);
     }
 }

@@ -86,6 +86,7 @@ private:
 
     uint64_t _last_time;
     float _current_temp;
+    float _current_ext_temp;
     float _current_humidity;
 
     Program _program;

@@ -8,6 +8,7 @@ var hstData = null;
 var hstSel;
 var hstTimer;
 var hstSmall = true;
+var extTempData = {};
 // For main are
 var modeTab;
 var manualPane;
@@ -285,24 +286,35 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 	}
 
 	function historySetData(){
-        var t = [], h = [];
+        extTempData = {};
+        var t = [], h = [], x = [];
         var s = hstSel.get("value");
         if ( hstData ){
+            var te = [], ex = [], hu = [], ti = [];
             for ( var v = 0; (v < s) || (t.length < 15); v++ ){
-		if ( hstData[v] ){
-                	t = hstData[v].temp.concat(t);
-                	h = hstData[v].humidity.concat(h);
-		} else {
-			break;
-		}
+                if ( hstData[v] ){
+                    te = hstData[v].temp.concat(te);
+                    ex = hstData[v].ext_temp.concat(ex);
+                    hu = hstData[v].humidity.concat(hu);
+                    ti = hstData[v].time.concat(ti);
+                } else {
+                    break;
+                }
             }
-        }        
+            var n_pts = ti.length;
+            for ( p = 0; p < n_pts; p++ ){
+                t.push( {x:ti[p], y:te[p] } );
+                h.push( {x:ti[p], y:hu[p] } );
+                x.push( {x:ti[p], y:ex[p] } );
+                extTempData[ti[p]] = ex[p];
+            }            
+        }
         html.set("history-label", s);
         hstGraph.updateSeries("Temperatura", t.length == 0 ? [{x:0,y:0}] : t );
+        hstGraph.updateSeries("Esterna", x.length == 0 ? [{x:0,y:0}] : x );
         hstGraph.updateSeries("Umidita", h.length == 0 ? [{x:0,y:0}] : h );
         var ts = 60; // 1 min
-        if ( t.length > 0 )
-        {
+        if ( t.length > 0 ){
             var d = t[ t.length-1 ].x - t[0].x;
             ts = Math.floor( ( d / Math.min(10, t.length) ) / (15*60) +1 ) * 15*60;
         }
@@ -333,6 +345,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 			function(err){
                 hstData = null;
                 hstGraph.updateSeries("Temperatura", [] );
+                hstGraph.updateSeries("Esterna", [] );
                 hstGraph.updateSeries("Umidita", [] );
                 hstGraph.render();
                 html.set("history-label", "--");
@@ -698,11 +711,12 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         vertical: true, 
                         dropLabels: false,
                         majorTickStep: 5, majorTicks: true, majorLabels: true,
-                        minorTickStep: 1, minorTicks: true, minorLabels: true,
-                        microTickStep: 0.1, microTicks: true,
+                        minorTickStep: 1, minorTicks: true, minorLabels: false,
+                        microTickStep: 0.1, microTicks: false,
                         fixLower: "major",  fixUpper: "major"
                     });
     hstGraph.addSeries("Temperatura", [],{ plot: "tempPlot"});
+    hstGraph.addSeries("Esterna", [],{ plot: "tempPlot", stroke: {color:"blue"} });
     hstGraph.addPlot("humiPlot",{
                         type: Lines,lines: true, areas: false, markers: false,
                         tension: "X",
@@ -720,13 +734,13 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     new MouseIndicator(hstGraph, "humiPlot",{ 
                         series: "Umidita", start: true, mouseOver: true,
                         labelFunc: function(v){
-                            return "H: "+v.y;
+                            return "H: "+v.y.toFixed(1)+" (" + (new Date(v.x*1000).toLocaleString())+")";
                         }
                         });
     new MouseIndicator(hstGraph, "tempPlot",{ 
                         series: "Temperatura",mouseOver: true,
                         labelFunc: function(v){
-                            return "T: "+v.y+" (" + (new Date(v.x*1000).toLocaleString())+")";
+                            return "T: "+v.y.toFixed(1)+"/" + (extTempData[v.x] ? extTempData[v.x].toFixed(1) : "-");
                         }
                         });                    
 	updateHistory();

@@ -24,6 +24,7 @@ public:
                    SET_HISTORY,
                    FLAMEOUT_RESET,
                    PROGRAM,
+                   EXT_TEMP,
                    AUTO};
 
     Command( const char* buffer, uint32_t size );

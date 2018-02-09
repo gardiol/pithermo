@@ -19,13 +19,15 @@ int main(int argc, char** argv)
 		uint64_t a;
 		float b;
 		float c;
+        float d;
 		if ( fread( &a, sizeof(a), 1, f ) == 1 )
 			if ( fread( &b, sizeof(b), 1, f ) == 1 )
-				if ( fread( &c, sizeof(c), 1, f ) == 1 )
-				{
-					printf("(%d) %lu / %f / %f\n", count, a, b, c  );
-					count++;
-				}
+                if ( fread( &c, sizeof(c), 1, f ) == 1 )
+                    if ( fread( &d, sizeof(d), 1, f ) == 1 )
+                    {
+                        printf("(%d) %lu / %f (%f) / %f\n", count, a, b, c, d  );
+                        count++;
+                    }
 	}
 	fclose(f);
 

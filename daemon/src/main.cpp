@@ -135,7 +135,7 @@ int main(int argc, char** argv)
                 SigHandler sig_handler;
                 FrameworkSigHandler::setHandler( &sig_handler, FrameworkSigHandler::SIGINT_SIGNAL );
 
-                UdpSocket command_server("CommandServer","", "127.0.0.1",0,5555);
+                UdpSocket command_server("CommandServer","", "",0,5555);
                 if ( command_server.activateInterface() )
                 {
                     RunnerThread runner(config_file, exchange_path, history_file, &logger);
