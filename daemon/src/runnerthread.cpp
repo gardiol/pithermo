@@ -391,7 +391,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         }
         else // Se non siamo a rischio congelamento...
         {
-            if ( !_over_temp && (_current_temp >= _max_temp) )
+            if ( !_over_temp && (_current_temp >= (_max_temp+0.1)) )
             {   // Superato il massimo, spegnamo:
                 _over_temp = true;
                 _logger->logEvent("over temp start");
@@ -408,7 +408,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 }
                 update_status = true;
             }
-            else if ( _over_temp && (_current_temp < _max_temp) )
+            else if ( _over_temp && (_current_temp < (_max_temp-0.1)) )
             {   // Rientrati dall'over-temperatura:
                 _over_temp = false;
                 _logger->logEvent("over temp end");

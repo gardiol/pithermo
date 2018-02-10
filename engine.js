@@ -79,7 +79,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 		dialog.set("buttonOk", ok);
 		dialog.set("buttonCancel", "Annulla");
 		dialog.on("execute", function(){
-       		request.put("/cgi-bin/command", {data:cmd}).then(
+       		request.put("cgi-bin/command", {data:cmd}).then(
 			function(result){
 				updateStatus();
 			},
@@ -91,7 +91,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     }
          
     function changeHistory(){
-        request.post("/cgi-bin/set_history",{data:hstUnit.get("value")}).then(
+        request.post("cgi-bin/set_history",{data:hstUnit.get("value")}).then(
             function(result){
                 updateHistory();
             },
@@ -577,7 +577,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                                 dialog.on("execute", 
                                     function() {
                                         var ps = json.stringify(program_status);
-                                        request.post("/cgi-bin/program",{data:ps}).then(
+                                        request.post("cgi-bin/program",{data:ps}).then(
                                             function(result){
                                             },
                                             function(err){
@@ -641,13 +641,13 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                             dialog.set("buttonCancel", "Continua a modificare");
                             dialog.on("execute", 
                                 function() {
-                                        request.post("/cgi-bin/set_min_temp",{data:minTemp.value}).then(
+                                        request.post("cgi-bin/set_min_temp",{data:minTemp.value}).then(
                                         function(result){
                                         },
                                         function(err){
                                             alert("Command error: " + err );
                                         });
-                                        request.post("/cgi-bin/set_max_temp",{data:maxTemp.value}).then(
+                                        request.post("cgi-bin/set_max_temp",{data:maxTemp.value}).then(
                                         function(result){
                                         },
                                         function(err){
