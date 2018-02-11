@@ -395,88 +395,96 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             {   // Superato il massimo, spegnamo:
                 _over_temp = true;
                 _logger->logEvent("over temp start");
+                appendMessage("Max temp superata!");
                 _gas_was_on_before_over = checkGas();
-                if ( _gas_was_on_before_over )
+                if ( _manual_mode )
                 {
-                    gasOff();
-                    appendMessage("Max temp superata, gas spento");
+                    if ( _gas_was_on_before_over )
+                    {
+                        gasOff();
+                        appendMessage("Manual override: gas spento");
+                    }
+                    if ( checkPellet() )
+                    {
+                        pelletMinimum(true);
+                        appendMessage("Manual override: pellet al minimo");
+                    }
                 }
-                if ( checkPellet() )
-                {
-                    pelletMinimum(true);
-                    appendMessage("Max temp superata, pellet al minimo");
-                }
+                else
+                    check_program = true;
                 update_status = true;
             }
             else if ( _over_temp && (_current_temp < _max_temp) )
             {   // Rientrati dall'over-temperatura:
                 _over_temp = false;
                 _logger->logEvent("over temp end");
+                appendMessage("Max temp rientrata.");
                 if ( _manual_mode )
                 {
                     if ( _gas_was_on_before_over || _pellet_flameout )
                     {
                         gasOn();
-                        appendMessage("Max temp rientrata, gas riacceso");
+                        appendMessage("Manual override: gas riacceso");
                     }
                     if ( checkPellet() )
                     {
                         pelletMinimum(false);
-                        appendMessage("Max temp rientrata, pellet in modulazione");
+                        appendMessage("Manual override: pellet in modulazione");
                     }
-                    _gas_was_on_before_over = false;
-                    update_status = true;
                 }
                 else
-                {
                     check_program = true;
-                    appendMessage("Max temp rientrata, ritorno al programma");
-                }
+                _gas_was_on_before_over = false;
+                update_status = true;
             }
 
             if ( !_under_temp && (_current_temp < _min_temp) )
             {   // Siamo sotto il minimo! Accendiamo qualcosa:
                 _under_temp = true;
                 _logger->logEvent("under min temp start");
-                if ( checkPellet() && // If pellet is on, do not turn gas on
-                     pelletFeedback() )  // but still turn gas on until feedback is hot! (this covers also flameout situation)
+                appendMessage("Sotto la temperatura minima!");
+                if ( _manual_mode )
                 {
-                    pelletMinimum( false );
-                    appendMessage("Sotto la temperatura minima, pellet in modulazione");
+                    if ( checkPellet() && // If pellet is on, do not turn gas on
+                         pelletFeedback() )  // but still turn gas on until feedback is hot! (this covers also flameout situation)
+                    {
+                        pelletMinimum( false );
+                        appendMessage("Manual override: pellet in modulazione");
+                    }
+                    else
+                    {
+                        gasOn();
+                        appendMessage("Manual override: gas acceso");
+                    }
                 }
                 else
-                {
-                    gasOn();
-                    appendMessage("Sotto la temperatura minima, gas acceso");
-                }
+                    check_program = true;
+                update_status = true;
             }
             else if ( _under_temp && (_current_temp >= _min_temp) )
             {   // Siamo tornati "sopra" la temperatura minima:
                 _under_temp = false;
                 _logger->logEvent("under min temp end");
+                appendMessage("Recuperata la temperatura minima.");
                 if ( _manual_mode )
                 {   // Spegnamo:
                     if ( checkGas() )
                     {
                         gasOff();
-                        appendMessage("Recuperata la temperatura minima, gas spento");
+                        appendMessage("Manual override: gas spento");
                     }
                     if ( checkPellet() )
                     {
                         pelletMinimum(true);
-                        appendMessage("Recuperata la temperatura minima, pellet al minimo");
+                        appendMessage("MAnual override: pellet al minimo");
                     }
-                    update_status = true;
                 }
                 else
-                {
-                    appendMessage("Recuperata la temperatura minima, ritorno al programma");
                     check_program = true;
-                }
+                update_status = true;
             }
         }
     }
-
 
     // Aggiorna tempo, history e programma
     uint64_t current_time = FrameworkTimer::getTimeEpoc();
@@ -492,55 +500,85 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 _logger->logDebug("Unable to write to history file");
         }
         update_status = true;
-    	bool current_pellet_feedback = pelletFeedback();
+        bool current_pellet_feedback = pelletFeedback();
         if ( !_manual_mode )
             check_program = true;
-    	if ( !_pellet_flameout && // we where not in flameout
-    	     (checkPellet() && // pellet is on
-    	      !current_pellet_feedback && // and pellet temp was HOT
-    	      _prev_pellet_feedback) ) // but now it's not anymore...
-    	{   // Pellet has shut off for some reasons! (no more fuel?)
-    	    _pellet_flameout = true;
-    	    appendMessage("Pellet flameout! ");
-    	    _logger->logEvent("pellet flameout start");
-    	    if ( !checkGas() ) // Force gas on
-        	    gasOn();
-    	}
-    	else if ( _pellet_flameout &&   // we are in flameout...
-    	          current_pellet_feedback ) // but now pellet is back HOT...
-    	{
-    	    _pellet_flameout = false;
-    	    appendMessage("Pellet flameout annullato! ");
-    	    _logger->logEvent("pellet flameout end");
-    	    if ( !_manual_mode )
-    	        check_program = true;
-    	    else if ( checkGas() ) // This we can do anyway, since gas will be cut off by the feedback thermostat.
-    	        gasOff();
-    	}
-    	_prev_pellet_feedback = current_pellet_feedback;
+        if ( !_pellet_flameout && // we where not in flameout
+             (checkPellet() && // pellet is on
+              !current_pellet_feedback && // and pellet temp was HOT
+              _prev_pellet_feedback) ) // but now it's not anymore...
+        {   // Pellet has shut off for some reasons! (no more fuel?)
+            _pellet_flameout = true;
+            appendMessage("Pellet flameout! ");
+            _logger->logEvent("pellet flameout start");
+            if ( !checkGas() ) // Force gas on
+                gasOn();
+        }
+        else if ( _pellet_flameout &&   // we are in flameout...
+                  current_pellet_feedback ) // but now pellet is back HOT...
+        {
+            _pellet_flameout = false;
+            appendMessage("Pellet flameout annullato! ");
+            _logger->logEvent("pellet flameout end");
+            if ( !_manual_mode )
+                check_program = true;
+            else if ( checkGas() ) // This we can do anyway, since gas will be cut off by the feedback thermostat.
+                gasOff();
+        }
+        _prev_pellet_feedback = current_pellet_feedback;
     }
 
-    if ( !(_under_temp || _over_temp || _anti_ice_active ) && // Skip program under extraordinary circumstances
+    if ( !( _anti_ice_active ) && // Skip program under extraordinary circumstances
          ( ( (cycle == 0) && !_manual_mode ) || check_program ) )
     {
+        bool use_gas = _program_gas;
+        bool use_pellet = _program_pellet;
+        bool pellet_minimum = _program_pellet_minimum;
         _logger->logDebug("(in auto mode) Check program...");
-        if ( _pellet_flameout && _program_pellet && !_program_pellet_minimum )
+        // flameout is the most critical: switch to gas first
+        if ( _pellet_flameout )
         {
-            _program_gas = true;
-            _program_pellet_minimum = true;
-            _logger->logDebug( "program gas FORZATO: PELLET FLAMEOUT" );
-            _logger->logDebug( "program pellet flameout" );
-            _logger->logDebug( "program pellet minimum forzato per flamout" );
+            if ( use_pellet && !pellet_minimum )
+            {
+                use_gas = true;
+                pellet_minimum = true;
+                _logger->logDebug( "program gas FORCED: PELLET FLAMEOUT" );
+            }
         }
-        else
+        // OVer temp: stop heating
+        if ( _over_temp )
         {
-            _logger->logDebug( std::string("program gas ") + (_program_gas ? "on" : "off"));
-            _logger->logDebug( std::string("program pellet ") + (_program_pellet ? "on" : "off"));
-            _logger->logDebug( std::string("program pellet minimum ") + (_program_pellet_minimum ? "on" : "off"));
+            if ( use_gas )
+            {
+                use_gas = false;
+                _logger->logDebug( "program over temp! Gas off" );
+            }
+            if ( use_pellet )
+            {
+                pellet_minimum = true;
+                _logger->logDebug( "program over temp! Pellet to minimum" );
+            }
         }
+        // Under temp: start heating now
+        if ( _under_temp )
+        {
+            if ( use_pellet ) // in case of flameout, gas is already on here
+            {
+                pellet_minimum = false;
+                _logger->logDebug( "program under temp! Pellet in modulation" );
+            }
+            else
+            {
+                use_gas = true;
+                _logger->logDebug( "program under temp! Gas on" );
+            }
+        }
+        _logger->logDebug( std::string("program gas ") + (use_gas ? "on" : "off"));
+        _logger->logDebug( std::string("program pellet ") + (use_pellet ? "on" : "off"));
+        _logger->logDebug( std::string("program pellet minimum ") + (pellet_minimum ? "on" : "off"));
         if ( checkGas() )
         {
-            if ( !_program_gas )
+            if ( !use_gas )
             {
                 appendMessage("programma: gas spento");
                 update_status = true;
@@ -549,7 +587,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         }
         else
         {
-            if ( _program_gas )
+            if ( use_gas )
             {
                 appendMessage("programma: gas acceso");
                 update_status = true;
@@ -558,7 +596,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         }
         if ( checkPellet() )
         {
-            if ( !_program_pellet )
+            if ( !use_pellet )
             {
                 appendMessage("programma: pellet spento");
                 update_status = true;
@@ -567,7 +605,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         }
         else
         {
-            if ( _program_pellet )
+            if ( use_pellet )
             {
                 appendMessage("programma: pellet acceso");
                 update_status = true;
@@ -576,7 +614,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         }
         if ( checkPelletMinimum() )
         {
-            if ( _program_pellet && !_program_pellet_minimum )
+            if ( use_pellet && !pellet_minimum )
             {
                 appendMessage("programma: pellet in modulazione");
                 update_status = true;
@@ -585,7 +623,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         }
         else
         {
-            if ( _program_pellet && _program_pellet_minimum )
+            if ( use_pellet && pellet_minimum )
             {
                 appendMessage("programma: pellet al minimo");
                 update_status = true;
