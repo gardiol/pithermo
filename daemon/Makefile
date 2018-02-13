@@ -18,10 +18,10 @@ obj:
 $(FRAMEWORK_OBJS): ${FRAMEWORK_SRCS}
 	g++ $(CFLAGS) -o $@ -c $(FRAMEWORK_MAPS_$(basename $(notdir $@))) -Iframework
 
-obj/main.o: src/main.cpp src/runnerthread.h src/command.h 
+obj/main.o: src/main.cpp src/runnerthread.h src/command.h src/logitem.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
-obj/runnerthread.o: src/runnerthread.cpp src/command.h src/program.h src/runnerthread.h
+obj/runnerthread.o: src/runnerthread.cpp src/command.h src/program.h src/runnerthread.h src/logitem.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -I/usr/local/include
 
 obj/command.o: src/command.cpp src/command.h
@@ -33,13 +33,16 @@ obj/program.o: src/program.cpp src/program.h
 obj/historyitem.o: src/historyitem.cpp src/historyitem.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
-obj/history.o: src/history.cpp src/history.h
+obj/history.o: src/history.cpp src/history.h src/history.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
-obj/logger.o: src/logger.cpp
+obj/logger.o: src/logger.cpp src/logitem.h src/logger.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
-pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o
+obj/logitem.o: src/logitem.cpp src/logitem.h
+	g++ $(CFLAGS) -o $@ -c $< -Iframework
+
+pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o
 	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib -lwiringPi
 
 .PHONY: clean

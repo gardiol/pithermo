@@ -87,7 +87,7 @@ void History::initialize(const std::string &mode, uint32_t len)
         }
     }
     _readNow();
-    FILE* read_file = fopen( _history_filename.c_str(), "r" );
+    FILE* read_file = fopen( _history_filename.c_str(), "rb" );
     if ( read_file != NULL )
     {
         fseek( read_file, 0, SEEK_END );
@@ -134,10 +134,10 @@ bool History::update(float last_temp, float last_humidity, float last_ext_temp)
     _history_cache[ 0 ][ _now_day ][ _now_hour ][ _now_min ] = new_item;
     _writeJson();
 
-    FILE* history_file = fopen( _history_filename.c_str(), "a" );
+    FILE* history_file = fopen( _history_filename.c_str(), "ab" );
     if ( history_file != NULL )
     {
-        new_item.writeToFile( history_file );
+        new_item.write( history_file );
         fclose(history_file);
     }
     else

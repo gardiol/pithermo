@@ -46,10 +46,11 @@ private:
     uint8_t fixReading(const int read);
     void updateCurrentTime();
     void updateProgram();
+    void updateEventsJson(const std::list<LogItem> *events);
     void appendMessage( const std::string& msg );
 
     void saveConfig();
-    void updateStatus(bool gas_on, bool pellet_on, bool pellet_minimum, bool pellet_feedback, bool pellet_flameout);
+    void updateStatus();
 
     bool readSensor(float &current_temp, float &current_humidity);
     void setGpioBool( uint8_t num, bool activate );
@@ -82,8 +83,6 @@ private:
     uint8_t _gas_command_gpio;
     uint8_t _sensor_gpio;
 
-    uint32_t _num_warnings;
-
     uint64_t _last_time;
     float _current_temp;
     float _current_ext_temp;
@@ -111,7 +110,16 @@ private:
     int32_t _day;
     int32_t _hour;
     int32_t _half_hour;
-    std::list<std::string> _messages;
+    std::string _str_temp;
+    std::string _str_ext_temp;
+    std::string _str_humidity;
+    uint64_t _last_pellet_on_time;
+    uint64_t _last_pellet_on_min_time;
+    uint64_t _last_gas_on_time;
+    uint64_t _today_pellet_time;
+    uint64_t _today_pellet_min_time;
+    uint64_t _today_gas_time;
+    uint64_t _pellet_startup_delay;
 };
 
 #endif // RUNNERTHREAD_H

@@ -14,7 +14,7 @@
 	border-right: 1px dashed black;
 }
 
-#status > div > p {
+p.status-title {
 	font-style: bold;
 	font-size: 140%;
 	border-bottom: 1px dotted black;

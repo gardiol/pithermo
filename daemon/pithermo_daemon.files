@@ -65,6 +65,8 @@ src/historyitem.cpp
 src/historyitem.h
 src/logger.cpp
 src/logger.h
+src/logitem.cpp
+src/logitem.h
 src/main.cpp
 src/program.cpp
 src/program.h

@@ -73,7 +73,7 @@ public:
         return _humidity_str;
     }
 
-    void writeToFile( FILE* file );
+    void write( FILE* file );
 
 private:
     uint64_t _time;

@@ -103,7 +103,7 @@ void HistoryItem::operator=(const HistoryItem &other)
     _humidity_str = other._humidity_str;
 }
 
-void HistoryItem::writeToFile(FILE *file)
+void HistoryItem::write(FILE *file)
 {
     if ( file != NULL )
     {

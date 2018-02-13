@@ -5,56 +5,96 @@
 
 using namespace FrameworkLibrary;
 
-Logger::Logger(const std::string &log_file):
-    _log_filename(log_file),
-    _log_file(NULL),
-    _debug(false)
+Logger::Logger(const std::string &log_path):
+    _log_filename(log_path + "/events"),
+    _debug_filename(log_path + "/debug"),
+    _debug(false),
+    _valid(false),
+    _log_update(false),
+    _day(0)
 {
-    _log_file = fopen( _log_filename.c_str(), "a" );
-    if ( _log_file != NULL )
-        logEvent( "Logger started" );
+    _valid = true;
+    _day = _calculateDay( FrameworkTimer::getTimeEpoc() );
+    FILE* f = fopen( _log_filename.c_str(), "rb" );
+    if ( f != NULL )
+    {
+        bool keep_read = true;
+        fseek( f, 0, SEEK_END );
+        int32_t flen = ftell(f);
+        int32_t size = LogItem::getSize();
+        while ( keep_read && (flen >= size) )
+        {   // Move to previous event:
+            flen -= size;
+            fseek( f, flen, SEEK_SET);
+            LogItem evt( f );
+            if ( evt.isValid() )
+            {
+                if ( _calculateDay( evt.getTime() ) == _day )
+                    _today_logs.push_front( evt );
+                else
+                    keep_read = false;
+            }
+        }
+        fclose(f);
+    }
 }
 
 Logger::~Logger()
 {
-    if ( _log_file != NULL )
+}
+
+void Logger::logEvent(LogItem evt)
+{
+    uint64_t new_day = _calculateDay( FrameworkTimer::getTimeEpoc() );
+    if ( new_day != _day )
     {
-        logEvent( "Logger closed" );
-        fclose( _log_file );
+        _today_logs.clear();
+        _day = new_day;
+    }
+    _today_logs.push_back( evt );
+    _log_update = true;
+    FILE* f = fopen(_log_filename.c_str(), "ab" );
+    if ( f != NULL )
+    {
+        evt.write(f);
+        fclose(f);
     }
 }
 
-void Logger::logEvent(const std::string &event)
+void Logger::logMessage(const std::string &str)
 {
-    if ( _log_file != NULL )
+    FILE* f = fopen(_debug_filename.c_str(), "a" );
+    if ( f != NULL )
     {
-        printStamp();
-        fprintf(_log_file, " -- %s\n", event.c_str() );
-        fflush(_log_file);
+        _printStamp(f);
+        fprintf(f, " %s\n", str.c_str() );
+        fflush(f);
     }
 }
 
 void Logger::logDebug(const std::string &str)
 {
     if ( _debug )
-    {
-        printStamp();
-        fprintf(_log_file, " -debug- %s\n", str.c_str() );
-        fflush(_log_file);
-    }
+        logMessage( " -debug- " + str );
 }
 
-void Logger::logTemp(float t, float h, float x)
+bool Logger::logsChanged()
 {
-    if ( _log_file != NULL )
+    if ( _log_update )
     {
-        printStamp();
-        fprintf(_log_file, " -- Temp: %f (ext: %f) Humidity: %f\n", t, x, h );
-        fflush(_log_file);
+        _log_update = false;
+        return true;
     }
+    return false;
 }
 
-void Logger::printStamp()
+uint64_t Logger::_calculateDay(uint64_t t)
+{
+    uint64_t d = t / (3600*24);
+    return d;
+}
+
+void Logger::_printStamp(FILE *f)
 {
     time_t now = (time_t)FrameworkTimer::getTimeEpoc();
     struct tm *tm_struct = localtime(&now);
@@ -64,5 +104,5 @@ void Logger::printStamp()
     int h = tm_struct->tm_hour;
     int m = tm_struct->tm_min;
     int s = tm_struct->tm_sec;
-    fprintf(_log_file, "%04d/%02d/%02d-%02d:%02d.%02d", y, M, d, h, m, s );
+    fprintf(f, "%04d/%02d/%02d-%02d:%02d.%02d", y, M, d, h, m, s );
 }

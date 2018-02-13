@@ -111,9 +111,7 @@ int main(int argc, char** argv)
                          .setOptions(1));
     cmd.defineParameter( CmdLineParameter("xchange", "Exchange path", CmdLineParameter::single, true )
                          .setOptions(1));
-    cmd.defineParameter( CmdLineParameter("history", "History file", CmdLineParameter::single, true )
-                         .setOptions(1));
-    cmd.defineParameter( CmdLineParameter("log", "log file", CmdLineParameter::single, true )
+    cmd.defineParameter( CmdLineParameter("logs", "Path to history, logs and debug files", CmdLineParameter::single, true )
                          .setOptions(1));
 
     cmd.setCommandLine( argc, argv );
@@ -122,11 +120,12 @@ int main(int argc, char** argv)
     {
         std::string config_file = cmd.consumeParameter( "config" ).getOption();
         std::string exchange_path = cmd.consumeParameter( "xchange" ).getOption();
-        std::string history_file = cmd.consumeParameter( "history" ).getOption();
-        std::string log_file = cmd.consumeParameter( "log" ).getOption();
-        Logger logger( log_file );
+        std::string log_path = cmd.consumeParameter( "logs" ).getOption();
+        Logger logger( log_path );
         if ( logger.isValid() )
         {
+            logger.logMessage("Started");
+            logger.logEvent( LogItem::START );
             if ( FrameworkUtils::fileExist( exchange_path ) )
             {
                 if ( cmd.consumeParameter( "daemon" ).isValid() )
@@ -138,7 +137,7 @@ int main(int argc, char** argv)
                 UdpSocket command_server("CommandServer","", "",0,5555);
                 if ( command_server.activateInterface() )
                 {
-                    RunnerThread runner(config_file, exchange_path, history_file, &logger);
+                    RunnerThread runner(config_file, exchange_path, log_path + "/history", &logger);
                     if ( runner.isRunning() )
                     {
                         while ( runner.isRunning() &&
@@ -157,13 +156,15 @@ int main(int argc, char** argv)
                         ret = 0;
                     }
                     else
-                        logger.logEvent( "Unable to start runner thread!" );
+                        logger.logMessage( "Unable to start runner thread!" );
                 }
                 else
-                    logger.logEvent( "Unable to open socket!" );
+                    logger.logMessage( "Unable to open socket!" );
             }
             else
-                logger.logEvent( "Exchange path does not exist!" );
+                logger.logMessage( "Exchange path does not exist!" );
+            logger.logEvent( LogItem::STOP );
+            logger.logMessage("Stopped");
         }
         else
             debugPrintError() << "Unable to open log file!\n";

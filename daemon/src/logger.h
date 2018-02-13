@@ -2,12 +2,15 @@
 #define LOGGER_H
 
 #include <string>
+#include <list>
 #include <stdio.h>
+
+#include "logitem.h"
 
 class Logger
 {
 public:
-    Logger( const std::string& log_file );
+    Logger( const std::string& log_path );
     ~Logger();
 
     void enableDebug( bool d )
@@ -20,21 +23,35 @@ public:
         return _debug;
     }
 
-    void logEvent( const std::string& event );
+    void logEvent( LogItem evt );
+    void logMessage( const std::string& str );
     void logDebug( const std::string& str );
-    void logTemp(float t, float h , float x);
 
     bool isValid() const
     {
-        return _log_file != NULL;
+        return _valid;
+    }
+
+    bool logsChanged();
+    const std::list<LogItem>* getLogs() const
+    {
+        return &_today_logs;
     }
 
 private:
-    void printStamp();
+    uint64_t _calculateDay( uint64_t t );
+    void _printStamp(FILE* f);
+
+    std::list<LogItem> _today_logs;
 
     std::string _log_filename;
-    FILE* _log_file;
+    std::string _debug_filename;
+
     bool _debug;
+    bool _valid;
+    bool _log_update;
+
+    uint64_t _day;
 };
 
 #endif // LOGGER_H

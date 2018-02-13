@@ -1,5 +1,6 @@
 // Status
 var system_status = null;
+var system_events = [];
 var firstStatusUpdate = true;
 // History:
 var hstGraph;
@@ -40,6 +41,33 @@ var tempApplyBtn;
 var prgResetBtn;
 var prgApplyBtn;
 var p_str = [];
+
+var MessageStr = {
+    0: "No event",
+    1: "Sistema avviato",
+    2: "Sistema fermato", 
+    4: "Gas acceso",
+    8: "Gas spento",
+    16: "Pellet acceso",
+    32: "Pellet spento",
+    64: "Pellet al minimo",
+    128: "Pellet in modulazione",
+    256: "Pellet FLAMEOUT!",
+    512: "Pellet flameout cancellato",
+    1024: "Pellet mandata calda",
+    2048: "Pellet mandata fredda",
+    4096: "Sovra-temperatura rilevata!",
+    8192: "Temperatura rientrata sotto il massimo",
+    16384: "Temperatura sotto il minimo rilevata!",
+    32768: "Temperatura rientrata sopra il minimo",
+    65536: "Anti-ghiaccio attivato!",
+    131072: "Anti-ghiaccio disattivato",
+    262144: "Modo manuale impostato",
+    524288: "Modo automatico impostato",
+    1048576: "Temperatura minima modificata",
+    2097152: "Temperatura massima modificata",
+    4194304: "Programma modificato",
+};
 
 require([
     "dojo/request",
@@ -221,6 +249,12 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 		}                
 	}
 
+    function buildEventStr(n){
+            var t = new Date( system_events[n].t*1000).toLocaleString();
+            var e_str = MessageStr[system_events[n].e] ? MessageStr[system_events[n].e] : MessageStr[0];                
+            return t + " -- " + e_str;            
+    }
+	
 	function updateStatus(){
         request("cgi-bin/status",{handleAs :"json"}).then(
             function(result){
@@ -232,14 +266,15 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 if ( system_status.mode == "manual" ){
                     autoBtn.set("disabled", false );
                     html.set("mode-label", "Impianto in MANUALE");
-                    if ( system_status.pellet.command == "on" )
+                    if ( system_status.pellet.command == "on" ){
                         pltOffBtn.set("disabled", false );
-                    else
+                        if ( system_status.pellet.minimum == "on" )
+                            pltModBtn.set("disabled", false );
+                        else
+                            pltMinBtn.set("disabled", false );
+                    }else{
                         pltOnBtn.set("disabled", false );
-                    if ( system_status.pellet.minimum == "on" )
-                        pltModBtn.set("disabled", false );
-                    else
-                        pltMinBtn.set("disabled", false );
+                    }
                     if ( system_status.gas.command == "on" )
                         gasOffBtn.set("disabled", false );
                     else
@@ -248,30 +283,63 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     manualBtn.set("disabled", false );
                     html.set("mode-label", "Impianto in AUTOMATICO");
                 }
+                var p_h = Math.trunc(system_status.pellet.time/3600);
+                var p_m = Math.trunc((system_status.pellet.time/60)%60);
+                var mp_h = Math.trunc(system_status.pellet.mintime/3600);
+                var mp_m = Math.trunc((system_status.pellet.mintime/60)%60);
+                var Mp_h = Math.trunc(system_status.pellet.time-system_status.pellet.mintime/3600);
+                var Mp_m = Math.trunc((system_status.pellet.time-system_status.pellet.mintime/60)%60);
+                html.set("pellet-time", p_h +"h" + p_m  + "m" );
+                html.set("pellet-mintime", mp_h +"h" + mp_m  + "m" );
+                html.set("pellet-modtime", Mp_h +"h" + Mp_m  + "m" );
+                
+                html.set("gas-time", Math.trunc(system_status.gas.time/3600) +"h " + Math.trunc((system_status.gas.time/60)%60)  + "m");
+                html.set("temp-label",system_status.temp.int + "° (" + system_status.temp.ext + "°)" );
+                html.set("humi-label", system_status.temp.hum );
                 attr.set("pellet-feedback-led", "src", system_status.pellet.status == "on" ? "images/max-temp.png":"images/min-temp.png");                
                 attr.set("pellet-minimum-status-led", "src", system_status.pellet.minimum == "on" ? "images/pellet-minimo.png":"images/pellet-modulazione.png");
                 attr.set("pellet-status-led", "src", system_status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
                 attr.set("gas-status-led", "src", system_status.gas.command == "on" ? "images/gas-on.png":"images/gas-off.png");                
                 style.set(flameoutBtn.domNode, 'display', system_status.pellet.flameout == "on" ? 'inline' : 'none' );		
-                domConstruct.empty("messages-queue");
-                for ( var i = 0; i < system_status.warnings.messages.length; ++i )
-                    domConstruct.place("<li>" + system_status.warnings.messages[i] + "</li>", "messages-queue","first");
                 programPane.set("disabled", false );
                 if (firstStatusUpdate) {
                     modeTab.selectChild(system_status.mode == "auto" ? programPane : manualPane);
                     firstStatusUpdate = false;
                 }
                 programRefresh();
+                request("cgi-bin/events",{handleAs :"json"}).then(
+                    function(events){
+                        var s = system_events.length;
+                        var e = events.length;
+                        if ( (system_events == []) || 
+                             (events.length < system_events.length) ){
+                            domConstruct.empty("messages-queue");
+                            s = 0;
+                        }
+                        system_events = events;                 
+                        for ( var x = s; x < events.length; x++ ){
+                            var str = buildEventStr(x);
+                            domConstruct.place("<li>" + str + "</li>", "messages-queue","first");
+                        }
+                    },
+                    function(err){
+                        html.set("mode-label", "Impossibile leggere la lista degli eventi!");
+                    });
                 window.setTimeout( function(){ updateStatus(); }, 2000 );
             }, 
             function(err){
                 system_status = null;
+                system_events = [];
                 modeTab.selectChild(manualPane);
                 [autoBtn,manualBtn,gasOnBtn,gasOffBtn,pltOnBtn,pltOffBtn,
                  pltMinBtn,pltModBtn,programPane].forEach(
                     function(o){
                         o.set("disabled", true );
                     });
+                html.set("gas-time", "Oggi: --h --m");
+                html.set("pellet-time", "Oggi: --h --m");
+                html.set("temp-label", "Temperatura: --(--)" );
+                html.set("humi-label", "Umidità: --" );
                 html.set("mode-label", "Connessione persa!");
                 attr.set("pellet-feedback-led", "src", "images/min-temp.png");
                 attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");

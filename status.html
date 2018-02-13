@@ -5,13 +5,24 @@
 </div>
 <div id="status">
 	<div id="mode">
-		<p>Modalità impianto </p>
-		<button id="auto-btn"></button>	
-		<button id="manual-btn"></button>	
-		<div><p id="mode-label">xxx</p></div>
+		<p id="mode-label" class="status-title">Modalità impianto </p>
+		<div>
+            <button id="auto-btn"></button>	
+            <button id="manual-btn"></button>	
+        </div>
+		<div>
+            Temp:<span id="temp-label"></span> / <span id="humi-label"></span>%
+        </div>
+        <div>
+            <p>Gas oggi: <span id="gas-time">0h 0m</span></p>
+            <p>Pellet oggi: <span id="pellet-time">0h 0m</span>
+            <p>Minimo: <span id="pellet-mintime">0h 0m</span> 
+                Modulaz.: <span id="pellet-modtime">0h 0m</span>
+            </p>
+        </div>
 	</div>
 	<div id="pellet-status">
-		<p>Stufa a pellet</p>
+		<p class="status-title">Stufa a pellet</p>
 		<div>
 			<div>
 				<button id="pellet-on-btn"></button>	
@@ -44,7 +55,7 @@
 		</div>
 	</div>
 	<div id="gas-status">
-		<p>Caldaia a gas</p>
+		<p class="status-title">Caldaia a gas</p>
 		<button id="gas-on-btn"></button>	
 		<img class="status-icon" id="gas-status-led" src="images/gas-off.png"/>
 		<button id="gas-off-btn"></button>	
