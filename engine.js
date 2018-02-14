@@ -287,8 +287,8 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 var p_m = Math.trunc((system_status.pellet.time/60)%60);
                 var mp_h = Math.trunc(system_status.pellet.mintime/3600);
                 var mp_m = Math.trunc((system_status.pellet.mintime/60)%60);
-                var Mp_h = Math.trunc(system_status.pellet.time-system_status.pellet.mintime/3600);
-                var Mp_m = Math.trunc((system_status.pellet.time-system_status.pellet.mintime/60)%60);
+                var Mp_h = Math.trunc((system_status.pellet.time-system_status.pellet.mintime)/3600);
+                var Mp_m = Math.trunc(((system_status.pellet.time-system_status.pellet.mintime)/60)%60);
                 html.set("pellet-time", p_h +"h" + p_m  + "m" );
                 html.set("pellet-mintime", mp_h +"h" + mp_m  + "m" );
                 html.set("pellet-modtime", Mp_h +"h" + Mp_m  + "m" );

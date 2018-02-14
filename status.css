@@ -52,3 +52,12 @@ img#pellet-feedback-led {
 	list-style: none;
 }
 
+div#times {
+	margin-top: 1em;
+}
+
+div#times > p {
+	margin: 0;
+	padding: 0;
+}
+
