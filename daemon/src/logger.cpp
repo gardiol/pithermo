@@ -68,7 +68,7 @@ void Logger::logMessage(const std::string &str)
     {
         _printStamp(f);
         fprintf(f, " %s\n", str.c_str() );
-        fflush(f);
+        fclose(f);
     }
 }
 

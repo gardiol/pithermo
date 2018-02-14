@@ -577,8 +577,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             {
                 _logger->logEvent( LogItem::PELLET_HOT );
                 // Make sure GAS is off (it has to be anyway)
-                if ( checkGas() )
-                    gasOff();
+//                if ( checkGas() )
+//                    gasOff();
             }
             else
                 _logger->logEvent( LogItem::PELLET_COLD );

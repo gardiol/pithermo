@@ -194,7 +194,7 @@ void History::_writeJson()
     // Example: [{temp:[{x:24,y:123456}],humidity:[{x:50,y:123456}]}]
     //
     FILE* history_json = fopen( (_exchange_path+"/_history").c_str(), "w" );
-    if ( history_json )
+    if ( history_json != NULL )
     {
         uint32_t jHour = _now_hour;
         uint32_t jDay = _now_day;
