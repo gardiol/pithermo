@@ -157,7 +157,8 @@ bool RunnerThread::checkGas()
 
 void RunnerThread::gasOn()
 { // on = LOW/false
-    _last_gas_on_time = FrameworkTimer::getTimeEpoc();
+    if ( _last_gas_on_time == 0 )
+        _last_gas_on_time = FrameworkTimer::getTimeEpoc();
     setGpioBool( _gas_command_gpio, false );
     _logger->logEvent( LogItem::GAS_ON );
     _logger->logDebug("gas ON");
@@ -184,7 +185,8 @@ bool RunnerThread::checkPellet()
 
 void RunnerThread::pelletOn()
 { // on = LOW/false
-    _last_pellet_on_time = FrameworkTimer::getTimeEpoc();
+    if ( _last_pellet_on_time == 0 )
+        _last_pellet_on_time = FrameworkTimer::getTimeEpoc();
     setGpioBool( _pellet_command_gpio, false );
     _logger->logEvent( LogItem::PELLET_ON );
     _logger->logDebug("pellet ON");
@@ -220,7 +222,8 @@ void RunnerThread::pelletMinimum(bool m)
     if ( m )
     {
         if ( _last_pellet_on_time > 0 )
-            _last_pellet_on_time = FrameworkTimer::getTimeEpoc();
+            if ( _last_pellet_on_min_time == 0 )
+                _last_pellet_on_min_time = FrameworkTimer::getTimeEpoc();
         _logger->logEvent( LogItem::PELLET_MINIMUM );
         _logger->logDebug("pellet MINIMO");
     }
@@ -569,7 +572,17 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 gasOff();
         }
         if ( current_pellet_feedback != _prev_pellet_feedback )
-            _logger->logEvent( current_pellet_feedback ? LogItem::PELLET_HOT : LogItem::PELLET_COLD );
+        {
+            if ( current_pellet_feedback )
+            {
+                _logger->logEvent( LogItem::PELLET_HOT );
+                // Make sure GAS is off (it has to be anyway)
+                if ( checkGas() )
+                    gasOff();
+            }
+            else
+                _logger->logEvent( LogItem::PELLET_COLD );
+        }
         _prev_pellet_feedback = current_pellet_feedback;
     }
 
@@ -724,12 +737,14 @@ bool RunnerThread::scheduleStart()
         switch ( i->getEvent() )
         {
         case  LogItem::GAS_ON:
-            _last_gas_on_time = i->getTime();
+            if ( _last_gas_on_time == 0 )
+                _last_gas_on_time = i->getTime();
             break;
 
         case LogItem::PELLET_MINIMUM:
             if ( _last_pellet_on_time > 0 )
-                _last_pellet_on_min_time = i->getTime();
+                if ( _last_pellet_on_min_time == 0 )
+                    _last_pellet_on_min_time = i->getTime();
             break;
 
         case LogItem::PELLET_MODULATION:
@@ -741,7 +756,8 @@ bool RunnerThread::scheduleStart()
             break;
 
         case  LogItem::PELLET_ON:
-            _last_pellet_on_time = i->getTime();
+            if ( _last_pellet_on_time == 0 )
+                _last_pellet_on_time = i->getTime();
             break;
 
         case LogItem::PELLET_OFF:
@@ -766,6 +782,22 @@ bool RunnerThread::scheduleStart()
             break;
         }
     }
+
+    // Ensure internal status match the actual status
+    if ( checkGas() )
+        gasOn();
+    else
+        gasOff();
+    if ( checkPellet() )
+    {
+        pelletOn();
+        if ( checkPelletMinimum() )
+            pelletMinimum(true);
+        else
+            pelletMinimum(false);
+    }
+    else
+        pelletOff();
 
     updateStatus();
 
