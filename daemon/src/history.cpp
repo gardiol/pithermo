@@ -68,11 +68,11 @@ void History::_readNow()
 
 void History::initialize(const std::string &mode, uint32_t len)
 {
-    _num_lines = len;
     if ( len < 1 )
         len = 1;
     if ( len > num_weeks )
         len = num_weeks;
+    _num_lines = len;
 
     _history_cache.clear();
     _history_cache.resize(num_weeks);
@@ -214,7 +214,6 @@ void History::_writeJson()
                     _ext_temp_strs[l][jMin] = ex_te;
                     _humi_strs[l][jMin] = hu;
                 }
-                jMin = 0;
                 if ( jHour > 0 )
                     jHour--;
                 else

@@ -1,7 +1,5 @@
 #WiringOP-Zero/wiringPi/wiringPi.c
 #WiringOP-Zero/wiringPi/wiringPi.h
-end_conv.c
-ext_add.c
 framework/basecomminterface.cpp
 framework/basecomminterface.h
 framework/basemutex.cpp
@@ -55,8 +53,6 @@ framework/variantlive.cpp
 framework/variantlive.h
 framework/variantstatic.cpp
 framework/variantstatic.h
-gen_hist.c
-read_hist.c
 src/command.cpp
 src/command.h
 src/history.cpp
@@ -72,3 +68,8 @@ src/program.cpp
 src/program.h
 src/runnerthread.cpp
 src/runnerthread.h
+
+#gen_hist.c
+#read_hist.c
+#end_conv.c
+#ext_add.c
