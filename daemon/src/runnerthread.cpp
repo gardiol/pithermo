@@ -392,16 +392,6 @@ bool RunnerThread::_checkSpecialConditions()
                 _over_temp = true;
                 _logger->logDebug("over temp start");
                 _logger->logEvent( LogItem::OVER_TEMP_ON );
-                /*                _gas_was_on_before_overtemp = checkGas();
-                if ( _manual_mode )
-                {
-                    if ( _gas_was_on_before_overtemp )
-                        gasOff();
-                    if ( checkPellet() )
-                        pelletMinimum(true);
-                }
-                else
-                    check_program = true;*/
                 update_status = true;
             }
         }   // We are already over temp, are we back under the max (with histeresys)?
@@ -410,16 +400,6 @@ bool RunnerThread::_checkSpecialConditions()
             _over_temp = false;
             _logger->logDebug("over temp end");
             _logger->logEvent( LogItem::OVER_TEMP_OFF );
-            /*            if ( _manual_mode )
-            {
-                if ( _gas_was_on_before_overtemp || _pellet_flameout )
-                    gasOn();
-                if ( checkPellet() )
-                    pelletMinimum(false);
-            }
-            else
-                check_program = true;
-            _gas_was_on_before_overtemp = false;*/
             update_status = true;
         }
 
@@ -432,16 +412,6 @@ bool RunnerThread::_checkSpecialConditions()
                 _under_temp = true;
                 _logger->logDebug("under min temp start");
                 _logger->logEvent( LogItem::UNDER_TEMP_ON );
-                /*                if ( _manual_mode )
-                {
-                    if ( checkPellet() && // If pellet is on, do not turn gas on
-                         pelletFeedback() )  // but still turn gas on until feedback is hot! (this covers also flameout situation)
-                        pelletMinimum( false );
-                    else
-                        gasOn();
-                }
-                else
-                    check_program = true;*/
                 update_status = true;
             }
         }   // We are already under temp. Have we recovered? (with histeresys)
@@ -450,15 +420,6 @@ bool RunnerThread::_checkSpecialConditions()
             _under_temp = false;
             _logger->logDebug("under min temp end");
             _logger->logEvent( LogItem::UNDER_TEMP_OFF );
-            /*            if ( _manual_mode )
-            {   // Spegnamo:
-                if ( checkGas() )
-                    gasOff();
-                if ( checkPellet() )
-                    pelletMinimum(true);
-            }
-            else
-                check_program = true;*/
             update_status = true;
         }
     }

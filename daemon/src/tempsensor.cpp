@@ -35,9 +35,10 @@ bool TempSensor::_rawRead()
 {
     bool ret = false;
 #ifdef DEMO
+    ret = true;
     _timestamp = FrameworkTimer::getTimeEpoc();
     _temp = (_timestamp/60) % 20 + 10;
-    _humidity = (_timestamp/3600) % 100 + 25;
+    _humidity = (_timestamp/3600) % 70 + 25;
 #else
     uint8_t laststate = HIGH;
     uint8_t counter = 0;
