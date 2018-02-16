@@ -5,9 +5,10 @@
 
 using namespace FrameworkLibrary;
 
-Logger::Logger(const std::string &log_path):
+Logger::Logger(const std::string &log_path, const std::string& exchange_path):
     _log_filename(log_path + "/events"),
     _debug_filename(log_path + "/debug"),
+    _events_json_filename(exchange_path + "/_events"),
     _debug(false),
     _valid(false),
     _log_update(false),
@@ -86,6 +87,98 @@ bool Logger::logsChanged()
         return true;
     }
     return false;
+}
+
+void Logger::calculateTodayTimes(uint64_t &gas_on_time,
+                                 uint64_t &pellet_on_time,
+                                 uint64_t &pellet_min_time,
+                                 uint64_t &gas_on_since,
+                                 uint64_t &pellet_on_since,
+                                 uint64_t &pellet_min_on_since)
+{
+    // Calculate today's on times
+    gas_on_time = 0;
+    pellet_on_time = 0;
+    pellet_min_time = 0;
+    gas_on_since = 0;
+    pellet_on_since = 0;
+    pellet_min_on_since = 0;
+    for ( std::list<LogItem>::const_iterator i = _today_logs.begin(); i != _today_logs.end(); ++i )
+    {
+        switch ( i->getEvent() )
+        {
+        case  LogItem::GAS_ON:
+            if ( gas_on_since == 0 )
+                gas_on_since = i->getTime();
+            break;
+
+        case LogItem::PELLET_MINIMUM:
+            if ( pellet_on_since > 0 )
+                if ( pellet_min_on_since == 0 )
+                    pellet_min_on_since = i->getTime();
+            break;
+
+        case LogItem::PELLET_MODULATION:
+            if ( pellet_min_on_since > 0 )
+            {
+                pellet_min_time += i->getTime() - pellet_min_on_since;
+                pellet_min_on_since = 0;
+            }
+            break;
+
+        case  LogItem::PELLET_ON:
+            if ( pellet_on_since == 0 )
+                pellet_on_since = i->getTime();
+            break;
+
+        case LogItem::PELLET_OFF:
+            if ( pellet_on_since > 0 )
+            {
+                pellet_on_time += i->getTime() - pellet_on_since;
+                pellet_on_since = 0;
+            }
+            if ( pellet_min_on_since > 0 )
+            {
+                pellet_min_time += i->getTime() - pellet_min_on_since;
+                pellet_min_on_since = 0;
+            }
+            break;
+
+        case LogItem::GAS_OFF:
+            if ( gas_on_since > 0 )
+            {
+                gas_on_time += i->getTime() - gas_on_since;
+                gas_on_since = 0;
+            }
+            break;
+        }
+    }
+}
+
+void Logger::updateEventsJson()
+{
+    if ( logsChanged() )
+    {
+        FILE* event_file = fopen( _events_json_filename.c_str(), "w" );
+        if ( event_file )
+        {
+            fwrite( "[", 1, 1, event_file );
+            for ( std::list<LogItem>::const_iterator i = _today_logs.begin(); i != _today_logs.end(); ++i )
+            {
+                if ( i != _today_logs.begin() )
+                    fwrite(",", 1, 1, event_file );
+                fwrite( "{\"t\":", 5, 1, event_file );
+                std::string time_str = i->getTimeStr();
+                std::string evt_str = i->getEventStr();
+                fwrite( time_str.c_str(), time_str.length(), 1, event_file );
+                fwrite(",\"e\":", 5, 1, event_file );
+                fwrite( evt_str.c_str(), evt_str.length(), 1, event_file );
+                fwrite("}", 1, 1, event_file );
+            }
+            fwrite( "]", 1, 1, event_file );
+            fclose( event_file );
+        }
+    }
 }
 
 uint64_t Logger::_calculateDay(uint64_t t)

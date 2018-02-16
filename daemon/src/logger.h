@@ -10,7 +10,7 @@
 class Logger
 {
 public:
-    Logger( const std::string& log_path );
+    Logger(const std::string& log_path , const std::string &exchange_path);
     ~Logger();
 
     void enableDebug( bool d )
@@ -33,10 +33,15 @@ public:
     }
 
     bool logsChanged();
-    const std::list<LogItem>* getLogs() const
-    {
-        return &_today_logs;
-    }
+
+    void calculateTodayTimes( uint64_t& gas_on_time,
+                              uint64_t& pellet_on_time,
+                              uint64_t& pellet_min_time,
+                              uint64_t& gas_on_since,
+                              uint64_t& pellet_on_since,
+                              uint64_t& pellet_min_on_since );
+
+    void updateEventsJson();
 
 private:
     uint64_t _calculateDay( uint64_t t );
@@ -46,6 +51,7 @@ private:
 
     std::string _log_filename;
     std::string _debug_filename;
+    std::string _events_json_filename;
 
     bool _debug;
     bool _valid;

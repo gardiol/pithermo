@@ -1,3 +1,5 @@
+src/tempsensor.cpp
+src/tempsensor.h
 #WiringOP-Zero/wiringPi/wiringPi.c
 #WiringOP-Zero/wiringPi/wiringPi.h
 framework/basecomminterface.cpp
@@ -55,6 +57,10 @@ framework/variantstatic.cpp
 framework/variantstatic.h
 src/command.cpp
 src/command.h
+src/generator.cpp
+src/generator.h
+src/gpiodevice.cpp
+src/gpiodevice.h
 src/history.cpp
 src/history.h
 src/historyitem.cpp

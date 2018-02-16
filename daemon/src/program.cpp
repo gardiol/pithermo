@@ -2,7 +2,10 @@
 
 #include <stdio.h>
 
-Program::Program()
+Program::Program():
+    _d(0),
+    _h(0),
+    _f(0)
 {
     _gas_program.resize(7);
     _pellet_program.resize(7);
@@ -32,22 +35,15 @@ Program::~Program()
 
 }
 
-void Program::getProgram( int d, int h, int f,
-                          bool& g, bool& p, bool &m )
+void Program::setTime(int d, int h, int f)
 {
     if ( ( d >= 0 ) && ( d < 7 ) &&
          ( h >= 0 ) && ( h < 24 ) &&
          ( f >= 0 ) && ( f < 2 ) )
     {
-        p = _pellet_program[d][h][f];
-        g = _gas_program[d][h][f];
-        m = _pellet_minimum_program[d][h][f];
-    }
-    else
-    {
-        p = false;
-        g = false;
-        m = false;
+        _d = d;
+        _h = h;
+        _f = f;
     }
 }
 

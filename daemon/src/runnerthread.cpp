@@ -13,13 +13,6 @@
 #include "command.h"
 #include "program.h"
 
-#ifndef NOPI
-#include <wiringPi.h>
-#else
-#define OUTPUT 0
-#define INPUT 1
-#endif
-
 // GPIO
 // 5 = minimo
 // 4 = ???
@@ -32,59 +25,29 @@ RunnerThread::RunnerThread(const std::string &cfg,
                            const std::string &hst, Logger *l):
     ScheduledThread("Runner", 10 * 1000 ),
     _logger(l),
+    _gas(NULL),
+    _pellet(NULL),
+    _temp_sensor(NULL),
     _config_file( cfg ),
     _exchange_path( exchange_path ),
     _commands_mutex("CommandsMutex"),
     _manual_mode(true),
+    _manual_gas_on(false),
     _anti_ice_active(false),
     _over_temp(false),
     _under_temp(false),
-    _gas_was_on_before_over(false),
     _pellet_flameout(false),
-    _prev_pellet_feedback(false),
+    _prev_pellet_hot(false),
     _min_temp(16.0),
     _max_temp(17.0),
     _temp_correction(1.0),
-    _sensor_failed_reads(0),
     _sensor_success_reads(0),
-    _sensor_timer(),
-    _pellet_command_gpio(2),
-    _pellet_minimum_gpio(5),
-    _pellet_feedback_gpio(7),
-    _gas_command_gpio(0),
-    _sensor_gpio(),
     _last_time(0),
-    _current_temp(0.0),
     _current_ext_temp(0.0),
-    _current_humidity(50.0),
-    _program_gas(false),
-    _program_pellet(false),
-    _program_pellet_minimum(false),
-    _gpio_error(false),
     _history( hst, exchange_path ),
-    _str_manual("manual"),
-    _str_auto("auto"),
-    _str_on("on"),
-    _str_off("off"),
-    _str_min_t(FrameworkUtils::ftostring( _min_temp ) ),
-    _str_max_t(FrameworkUtils::ftostring( _max_temp ) ),
-    _str_day("0"),
-    _str_h("00"),
-    _str_f("0"),
-    _str_pellet_off_warning("La stufa a pellet sarà spenta!"),
-    _str_pellet_on_warning("La stufa a pellet sarà accesa!"),
     _day(0),
     _hour(0),
     _half_hour(0),
-    _str_temp(FrameworkUtils::ftostring( _current_temp )),
-    _str_ext_temp(FrameworkUtils::ftostring( _current_ext_temp )),
-    _str_humidity(FrameworkUtils::ftostring( _current_humidity )),
-    _last_pellet_on_time(0),
-    _last_pellet_on_min_time(0),
-    _last_gas_on_time(0),
-    _today_pellet_time(0),
-    _today_pellet_min_time(0),
-    _today_gas_time(0),
     _pellet_startup_delay(60*45)
 {
     _status_json_template.push_back("{\"mode\":\"");
@@ -108,19 +71,46 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _status_json_template.push_back(",\"f\":");
     _status_json_template.push_back("},\"program\":");
 
-#ifdef NOPI
-    debugPrintNotice("") << "DemoMode\n";
-    if ( true )
-#else
-    if (wiringPiSetup () != -1)
-#endif
+    // Load config file
+    uint32_t history_len = 1;
+    std::string history_mode = "day";
+    std::string content;
+    FrameworkUtils::file_to_str( _config_file, content );
+    ConfigFile config("config", content );
+    if ( !config.isEmpty() )
     {
-        startThread();
-        while ( !_gpio_error && !isRunning() )
-            FrameworkTimer::msleep_s( 100 );
+        _logger->enableDebug( config.getValueBool("debug") );
+        _manual_mode = FrameworkUtils::string_tolower(config.getValue( "mode" )) == "manual";
+        _min_temp = FrameworkUtils::string_tof( config.getValue( "min_temp" ) );
+        _str_min_t = FrameworkUtils::ftostring( _min_temp );
+        _max_temp = FrameworkUtils::string_tof( config.getValue( "max_temp" ) );
+        if ( config.hasValue( "pellet_startup_delay" ) )
+            _pellet_startup_delay = FrameworkUtils::string_toi( config.getValue( "pellet_startup_delay" ) );
+        _str_max_t = FrameworkUtils::ftostring( _max_temp );
+        _temp_correction = FrameworkUtils::string_tof( config.getValue( "temp_correction" ) );
+        history_len = FrameworkUtils::string_toi( config.getValue("history_len") );
+        history_mode = FrameworkUtils::string_tolower( config.getValue( "history_mode" ) );
+        _program.loadConfig( config.getSection( "program" ) );
     }
     else
-        _logger->logMessage( "WiringPi initialization error");
+        _saveConfig();
+
+    // Load history log:
+    _history.initialize( history_mode, history_len );
+
+    uint64_t gas_on_time = 0;
+    uint64_t pellet_on_time = 0;
+    uint64_t pellet_min_time = 0;
+    _logger->calculateTodayTimes( gas_on_time, pellet_on_time, pellet_min_time );
+
+    // Initialize generators:
+    _gas = new Generator( _logger, 0, -1, -1, gas_on_time, 0 ); // command is GPIO 0
+    _pellet = new Generator( _logger, 2, 7, 5, pellet_on_time, pellet_min_time ); // command = 2, status = 7, min/mod=5
+    _temp_sensor = new TempSensor( _logger, 1, _temp_correction ); // 1 temp sensor
+
+    startThread();
+    while ( !isRunning() )
+        FrameworkTimer::msleep_s( 100 );
 }
 
 RunnerThread::~RunnerThread()
@@ -137,7 +127,22 @@ RunnerThread::~RunnerThread()
     }
     _commands_list.clear();
     _commands_mutex.unlock();
-    saveConfig();
+    if ( _temp_sensor != NULL )
+    {
+        delete _temp_sensor;
+        _temp_sensor = NULL;
+    }
+    if ( _gas != NULL )
+    {
+        delete _gas;
+        _gas = NULL;
+    }
+    if ( _pellet != NULL )
+    {
+        delete _pellet;
+        _pellet = NULL;
+    }
+    _saveConfig();
 }
 
 void RunnerThread::appendCommand(Command *cmd)
@@ -148,116 +153,10 @@ void RunnerThread::appendCommand(Command *cmd)
     _commands_mutex.unlock();
 }
 
-bool RunnerThread::checkGas()
-{
-    bool x = !readGpioBool( _gas_command_gpio, OUTPUT );
-    _logger->logDebug(std::string("Check Gas: ") + (x ? "on" : "off") );
-    return x;
-}
-
-void RunnerThread::gasOn()
-{ // on = LOW/false
-    if ( _last_gas_on_time == 0 )
-        _last_gas_on_time = FrameworkTimer::getTimeEpoc();
-    setGpioBool( _gas_command_gpio, false );
-    _logger->logEvent( LogItem::GAS_ON );
-    _logger->logDebug("gas ON");
-}
-
-void RunnerThread::gasOff()
-{ // off = HIGH/true
-    if ( _last_gas_on_time > 0 )
-    {
-        _today_gas_time += FrameworkTimer::getTimeEpoc() - _last_gas_on_time;
-        _last_gas_on_time = 0;
-    }
-    setGpioBool( _gas_command_gpio, true );
-    _logger->logEvent( LogItem::GAS_OFF );
-    _logger->logDebug("gas OFF");
-}
-
-bool RunnerThread::checkPellet()
-{
-    bool x = !readGpioBool( _pellet_command_gpio, OUTPUT );
-    _logger->logDebug(std::string("Check Pellet: ") + (x ? "on" : "off") );
-    return x;
-}
-
-void RunnerThread::pelletOn()
-{ // on = LOW/false
-    if ( _last_pellet_on_time == 0 )
-        _last_pellet_on_time = FrameworkTimer::getTimeEpoc();
-    setGpioBool( _pellet_command_gpio, false );
-    _logger->logEvent( LogItem::PELLET_ON );
-    _logger->logDebug("pellet ON");
-}
-
-void RunnerThread::pelletOff()
-{ // off = HIGH/true
-    if ( _last_pellet_on_time > 0 )
-    {
-        _today_pellet_time += FrameworkTimer::getTimeEpoc() - _last_pellet_on_time;
-        _last_pellet_on_time = 0;
-    }
-    if ( _last_pellet_on_min_time > 0 )
-    {
-        _today_pellet_min_time += FrameworkTimer::getTimeEpoc() - _last_pellet_on_min_time;
-        _last_pellet_on_min_time = 0;
-    }
-    setGpioBool( _pellet_command_gpio, true );
-    _logger->logEvent( LogItem::PELLET_OFF );
-    _logger->logDebug("pellet OFF");
-}
-
-bool RunnerThread::checkPelletMinimum()
-{
-    bool x = !readGpioBool( _pellet_minimum_gpio, OUTPUT );
-    _logger->logDebug(std::string("Check PelletMinimum: ") + (x ? "on" : "off") );
-    return x;
-}
-
-void RunnerThread::pelletMinimum(bool m)
-{ // on: LOW - off: HIGH
-    setGpioBool( _pellet_minimum_gpio, !m );
-    if ( m )
-    {
-        if ( _last_pellet_on_time > 0 )
-            if ( _last_pellet_on_min_time == 0 )
-                _last_pellet_on_min_time = FrameworkTimer::getTimeEpoc();
-        _logger->logEvent( LogItem::PELLET_MINIMUM );
-        _logger->logDebug("pellet MINIMO");
-    }
-    else
-    {
-        if ( _last_pellet_on_min_time > 0 )
-        {
-            _today_pellet_min_time += FrameworkTimer::getTimeEpoc() - _last_pellet_on_min_time;
-            _last_pellet_on_min_time = 0;
-        }
-        _logger->logEvent( LogItem::PELLET_MODULATION );
-        _logger->logDebug("pellet MODULAZIONE");
-    }
-}
-
-bool RunnerThread::pelletFeedback()
-{   // HIGH: mandata fredda, termostato off, relé chiuso
-    // LOW: mandata calda, termostato on, relé aperto
-    bool fdb = !readGpioBool( _pellet_feedback_gpio, INPUT );
-    if ( fdb )
-        _logger->logDebug("Feedback termostato mandata pellet CALDO");
-    else
-        _logger->logDebug("Feedback termostato mandata pellet FREDDO");
-    return fdb;
-}
-
-bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
+bool RunnerThread::_checkCommands()
 {
     bool update_status = false;
-    bool check_program = false;
     bool save_config = false;
-    bool ret = true;
-
-    // Processa comandi
     _commands_mutex.lock();
     while ( _commands_list.size() > 0 )
     {
@@ -276,8 +175,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             {
                 _pellet_flameout = false;
                 _logger->logEvent( LogItem::PELLET_FLAMEOUT_OFF );
-                if ( !_manual_mode )
-                    check_program = true;
             }
             break;
 
@@ -289,18 +186,18 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
 
         case Command::PELLET_MINIMUM_ON:
             _logger->logDebug("Pellet Minimum ON received");
-            if ( _manual_mode && checkPellet() )
+            if ( _manual_mode && _pellet->isOn() )
             {
-                pelletMinimum( true );
+                _pellet->setPower( Generator::POWER_LOW );
                 update_status = true;
             }
             break;
 
         case Command::PELLET_MINIMUM_OFF:
             _logger->logDebug("Pellet Minimum OFF received");
-            if ( _manual_mode && checkPellet() )
+            if ( _manual_mode && _pellet->isOn() )
             {
-                pelletMinimum( false );
+                _pellet->setPower( Generator::POWER_HIGH );
                 update_status = true;
             }
             break;
@@ -309,7 +206,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             _logger->logDebug("Pellet ON received");
             if ( _manual_mode )
             {
-                pelletOn();
+                _pellet->switchOn();
                 update_status = true;
             }
             break;
@@ -318,7 +215,7 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             _logger->logDebug("Pellet OFF received");
             if ( _manual_mode )
             {
-                pelletOff();
+                _pellet->switchOff();
                 update_status = true;
             }
             break;
@@ -327,7 +224,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             _logger->logDebug("Gas ON received");
             if ( _manual_mode )
             {
-                gasOn();
+                _gas->switchOn();
+                _manual_gas_on = true;
                 update_status = true;
             }
             break;
@@ -336,7 +234,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
             _logger->logDebug("Gas OFF received");
             if ( _manual_mode )
             {
-                gasOff();
+                _manual_gas_on = false;
+                _gas->switchOff();
                 update_status = true;
             }
             break;
@@ -352,9 +251,8 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         case Command::AUTO:
             _logger->logDebug("Auto mode");
             _manual_mode = false;
+            _manual_gas_on = false;
             _logger->logEvent( LogItem::AUTO_MODE );
-            updateProgram();
-            check_program = true;
             update_status = true;
             save_config = true;
             break;
@@ -399,9 +297,6 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
                 _logger->logEvent( LogItem::PROGRAM_UPDATE );
                 update_status = true;
                 save_config = true;
-                updateProgram();
-                if ( !_manual_mode )
-                    check_program = true;
             }
             break;
 
@@ -412,465 +307,272 @@ bool RunnerThread::scheduledRun(uint64_t elapsed_time_us, uint64_t cycle)
         }
     }
     _commands_mutex.unlock();
+    if ( save_config )
+        _saveConfig();
+    return update_status;
+}
 
-    // Cerca di leggere il sensore di temperatura
-    if ( !_sensor_timer.isRunning() || _sensor_timer.elapsedLoop() )
+bool RunnerThread::_checkSpecialConditions()
+{
+    bool update_status = false;
+    // Anti-ice is always the top priority:
+    if ( _temp_sensor->getTemp() <= 5.0 )
     {
-        readSensor( _current_temp, _current_humidity );
-        _str_temp = FrameworkUtils::ftostring( _current_temp );
-        _str_ext_temp = FrameworkUtils::ftostring( _current_ext_temp );
-        _str_humidity = FrameworkUtils::ftostring( _current_humidity );
-        _sensor_timer.reset();
-    }
-
-    // Applica i constraint di temperatura se abbiamo almeno una lettura valida dal sensore
-    if ( _sensor_success_reads > 0 )
-    {   // Anti-ice ha sempre la priorità
-        if ( _current_temp <= 5.0 )
+        if ( !_anti_ice_active )
         {
-            if ( !_anti_ice_active )
+            _logger->logDebug("Anti-ice ON");
+            _logger->logEvent( LogItem::ANTI_ICE_ON );
+            update_status = true;
+            _anti_ice_active = true;
+        }
+    }
+    else if ( _anti_ice_active )
+    {
+        _logger->logDebug("Anti-ice OFF (gas spento)");
+        _logger->logEvent( LogItem::ANTI_ICE_OFF );
+        update_status = true;
+        _anti_ice_active = false;
+    }
+    else // If we are not freezing, we can check the rest.
+    {
+        // Pellet flameout is the next critical one:
+        // Pellet temperature has changed?
+        bool pellet_hot = _pellet->isHot();
+        if ( _prev_pellet_hot != pellet_hot )
+        {   // Pellet temperature changed...
+            _logger->logEvent( pellet_hot ? LogItem::PELLET_HOT : LogItem::PELLET_COLD);
+            // Check for flameout:
+            if ( !_pellet_flameout && // we are NOT in flameout condition...
+                     // Pellet is ON, was HOT, now it's cold
+                 (_pellet->isOn() && _prev_pellet_hot && !pellet_hot ) )
             {
-                _logger->logDebug("Anti-ice ON");
-                _logger->logEvent( LogItem::ANTI_ICE_ON );
-                gasOn();
-                update_status = true;
-                _anti_ice_active = true;
+                _pellet_flameout = true;
+                _logger->logDebug("pellet flameout detected - pellet has gone cold");
+                _logger->logEvent( LogItem::PELLET_FLAMEOUT_ON );
+            }
+            else if ( _pellet_flameout && // We are in flameout...
+                      pellet_hot ) // Pellet is back HOT!
+            {
+                _pellet_flameout = false;
+                _logger->logDebug("pellet flameout end");
+                _logger->logEvent( LogItem::PELLET_FLAMEOUT_OFF );
+            }
+             _prev_pellet_hot = pellet_hot;
+        }
+        else // Pellet temperature still unchanged, check for missed start:
+        {
+            if ( _pellet->isOn() )
+            {
+                uint64_t pellet_on_since = _pellet->lastOnTime();
+                if ( !_pellet_flameout && // not in flameout
+                     !pellet_hot && // pellet is still COLD
+                     ((pellet_on_since + _pellet_startup_delay) < _last_time) ) // Too long since started
+                {
+                    _pellet_flameout = true;
+                    _logger->logDebug("pellet flameout detected - pellet was never hot after startup time");
+                    _logger->logEvent( LogItem::PELLET_FLAMEOUT_ON );
+                }
             }
         }
-        else if ( _anti_ice_active )
-        {
-            _logger->logDebug("Anti-ice OFF (gas spento)");
-            _logger->logEvent( LogItem::ANTI_ICE_OFF );
-            gasOff();
-            update_status = true;
-            _anti_ice_active = false;
-        }
-        else // Se non siamo a rischio congelamento...
-        {   // If not already over_temp, and current temp if above max(with histeresys)
-            if ( !_over_temp && (_current_temp > (_max_temp+0.1)) )
-            {   // Do not go over temp if everything is already off
-                if ( checkGas() || (checkPellet() && !checkPelletMinimum()) )
-                {   // Over max, and we have something to turn off:
-                    _over_temp = true;
-                    _logger->logDebug("over temp start");
-                    _logger->logEvent( LogItem::OVER_TEMP_ON );
-                    _gas_was_on_before_over = checkGas();
-                    if ( _manual_mode )
-                    {
-                        if ( _gas_was_on_before_over )
-                            gasOff();
-                        if ( checkPellet() )
-                            pelletMinimum(true);
-                    }
-                    else
-                        check_program = true;
-                    update_status = true;
-                }
-            }   // We are already over temp, are we back under the max (with histeresys)?
-            else if ( _over_temp && (_current_temp < _max_temp) )
-            {   // Rientrati dall'over-temperatura:
-                _over_temp = false;
-                _logger->logDebug("over temp end");
-                _logger->logEvent( LogItem::OVER_TEMP_OFF );
+
+        // Now, we can check for over_temp:
+        // If not already over_temp, and current temp if above max(with histeresys)
+        if ( !_over_temp && (_temp_sensor->getTemp() > (_max_temp+0.1)) )
+        {   // Do not go over temp if everything is already off
+            if ( _gas->isOn() || (_pellet->isOn() && !_pellet->isLow()) )
+            {   // Over max, and we have something to turn off:
+                _over_temp = true;
+                _logger->logDebug("over temp start");
+                _logger->logEvent( LogItem::OVER_TEMP_ON );
+                /*                _gas_was_on_before_overtemp = checkGas();
                 if ( _manual_mode )
                 {
-                    if ( _gas_was_on_before_over || _pellet_flameout )
-                        gasOn();
-                    if ( checkPellet() )
-                        pelletMinimum(false);
-                }
-                else
-                    check_program = true;
-                _gas_was_on_before_over = false;
-                update_status = true;
-            }
-
-            // We are not under_temp, but is current temp too low?
-            if ( !_under_temp && (_current_temp < _min_temp) )
-            {   // Do not go under temp if gas or pellet are already heating
-                if ( !checkGas() && !pelletFeedback() ) // We check pellet feedback, to cater for flameout?
-                {   // Siamo sotto il minimo! Accendiamo qualcosa:
-                    _under_temp = true;
-                    _logger->logDebug("under min temp start");
-                    _logger->logEvent( LogItem::UNDER_TEMP_ON );
-                    if ( _manual_mode )
-                    {
-                        if ( checkPellet() && // If pellet is on, do not turn gas on
-                             pelletFeedback() )  // but still turn gas on until feedback is hot! (this covers also flameout situation)
-                            pelletMinimum( false );
-                        else
-                            gasOn();
-                    }
-                    else
-                        check_program = true;
-                    update_status = true;
-                }
-            }   // We are already under temp. Have we recovered? (with histeresys)
-            else if ( _under_temp && (_current_temp > (_min_temp+0.2)) )
-            {   // Siamo tornati "sopra" la temperatura minima:
-                _under_temp = false;
-                _logger->logDebug("under min temp end");
-                _logger->logEvent( LogItem::UNDER_TEMP_OFF );
-                if ( _manual_mode )
-                {   // Spegnamo:
-                    if ( checkGas() )
+                    if ( _gas_was_on_before_overtemp )
                         gasOff();
                     if ( checkPellet() )
                         pelletMinimum(true);
                 }
                 else
-                    check_program = true;
+                    check_program = true;*/
                 update_status = true;
             }
+        }   // We are already over temp, are we back under the max (with histeresys)?
+        else if ( _over_temp && (_temp_sensor->getTemp() < _max_temp) )
+        {   // Rientrati dall'over-temperatura:
+            _over_temp = false;
+            _logger->logDebug("over temp end");
+            _logger->logEvent( LogItem::OVER_TEMP_OFF );
+            /*            if ( _manual_mode )
+            {
+                if ( _gas_was_on_before_overtemp || _pellet_flameout )
+                    gasOn();
+                if ( checkPellet() )
+                    pelletMinimum(false);
+            }
+            else
+                check_program = true;
+            _gas_was_on_before_overtemp = false;*/
+            update_status = true;
+        }
+
+        // At last, we check for under temp:
+        // We are not under_temp, but is current temp too low?
+        if ( !_under_temp && (_temp_sensor->getTemp() < _min_temp) )
+        {   // Do not go under temp if gas or pellet are already heating
+            if ( !_gas->isOn() && !_pellet->isHot() ) // We check pellet feedback, to cater for flameout?
+            {   // Siamo sotto il minimo! Accendiamo qualcosa:
+                _under_temp = true;
+                _logger->logDebug("under min temp start");
+                _logger->logEvent( LogItem::UNDER_TEMP_ON );
+                /*                if ( _manual_mode )
+                {
+                    if ( checkPellet() && // If pellet is on, do not turn gas on
+                         pelletFeedback() )  // but still turn gas on until feedback is hot! (this covers also flameout situation)
+                        pelletMinimum( false );
+                    else
+                        gasOn();
+                }
+                else
+                    check_program = true;*/
+                update_status = true;
+            }
+        }   // We are already under temp. Have we recovered? (with histeresys)
+        else if ( _under_temp && (_temp_sensor->getTemp() > (_min_temp+0.1)) )
+        {   // Siamo tornati "sopra" la temperatura minima:
+            _under_temp = false;
+            _logger->logDebug("under min temp end");
+            _logger->logEvent( LogItem::UNDER_TEMP_OFF );
+            /*            if ( _manual_mode )
+            {   // Spegnamo:
+                if ( checkGas() )
+                    gasOff();
+                if ( checkPellet() )
+                    pelletMinimum(true);
+            }
+            else
+                check_program = true;*/
+            update_status = true;
         }
     }
+    return update_status;
+}
 
-    // Aggiorna tempo, history e programma
+bool RunnerThread::scheduledRun(uint64_t, uint64_t)
+{
+    bool update_status = _checkCommands();
+
+    // Read internal temperature sensor:
+    if ( _temp_sensor->readSensor() )
+        _sensor_success_reads++;
+
+    // If we have at least ONE successful read, check some special conditions:
+    if ( _sensor_success_reads > 0 )
+        update_status = _checkSpecialConditions();
+
+    // Update time and history
     uint64_t current_time = FrameworkTimer::getTimeEpoc();
     if ( (_last_time+60) <= current_time )
     {
+        update_status = true;
         _logger->logDebug("Time interval (" + FrameworkUtils::tostring(current_time) +" - " + FrameworkUtils::tostring(_last_time) + " >= 60)");
-        _last_time = current_time;
-        updateCurrentTime();
-        updateProgram();
+        _updateCurrentTime( current_time );
+        // We save the temperatures only every minute
         if ( _sensor_success_reads > 0 )
         {
-            if ( !_history.update( _current_temp, _current_humidity, _current_ext_temp ) )
+            if ( !_history.update( _temp_sensor->getTemp(), _temp_sensor->getHimidity(), _current_ext_temp ) )
                 _logger->logDebug("Unable to write to history file");
         }
-        update_status = true;
-
-        if ( !_manual_mode )
-            check_program = true;
-
-        // Check pellet flameout condition:
-        bool current_pellet_feedback = pelletFeedback();
-        if ( !_pellet_flameout && // we are not in flameout
-             (checkPellet() && // pellet is on
-              !current_pellet_feedback && // pellet is not hot now
-              _prev_pellet_feedback) ) // but it was hot before...
-        {   // Pellet has shut off for some reasons! (no more fuel?)
-            _pellet_flameout = true;
-            _logger->logDebug("pellet flameout detected - pellet has gone cold");
-            _logger->logEvent( LogItem::PELLET_FLAMEOUT_ON );
-            if ( _manual_mode && !checkGas() ) // Force gas on in manual. Program will be checked anyway
-                gasOn();
-        }
-        else if ( !_pellet_flameout && // not in flameout
-                  checkPellet() && // pellet is on
-                  !current_pellet_feedback && // pellet temp is COLD
-                  ( (_last_pellet_on_time != 0) && // ignore invalid start time (might be, if pellet was already on at startup)
-                    (_last_pellet_on_time + _pellet_startup_delay) < current_time) ) // And it's been too long...
-        {   // Pellet never started
-            _pellet_flameout = true;
-            _logger->logDebug("pellet flameout detected - pellet was never hot after startup time");
-            _logger->logEvent( LogItem::PELLET_FLAMEOUT_ON );
-            if ( _manual_mode && !checkGas() ) // Force gas on in manual. Program will be checked anyway
-                gasOn();
-        }
-        else if ( _pellet_flameout &&   // we are in flameout...
-                  current_pellet_feedback ) // but now pellet is back HOT...
-        {
-            _pellet_flameout = false;
-            _logger->logDebug("pellet flameout end");
-            _logger->logEvent( LogItem::PELLET_FLAMEOUT_OFF );
-            if ( _manual_mode && checkGas() ) // This we can do anyway, since gas will be cut off by the feedback thermostat.
-                gasOff();
-        }
-        if ( current_pellet_feedback != _prev_pellet_feedback )
-        {
-            if ( current_pellet_feedback )
-            {
-                _logger->logEvent( LogItem::PELLET_HOT );
-                // Make sure GAS is off (it has to be anyway)
-                if ( checkGas() )
-                    gasOff();
-            }
-            else
-                _logger->logEvent( LogItem::PELLET_COLD );
-        }
-        _prev_pellet_feedback = current_pellet_feedback;
     }
 
-    if ( !( _anti_ice_active ) && // Skip program under extraordinary circumstances
-         ( ( (cycle == 0) && !_manual_mode ) || check_program ) )
+    // Now we have collected all the conditions, and we can proceed to apply them:
+    bool gas_on = _manual_mode ? _gas->isOn() : _program.getGas();
+    bool pellet_on = _manual_mode ? _pellet->isOn() : _program.getPellet();
+    bool pellet_minimum = _manual_mode ? _pellet->isLow() : _program.getPelletMinimum();
+    // Anti-ice relies always on gas:
+    if ( _anti_ice_active )
     {
-        bool use_gas = _program_gas;
-        bool use_pellet = _program_pellet;
-        bool pellet_minimum = _program_pellet_minimum;
-        _logger->logDebug("(in auto mode) Check program...");
-        // flameout is the most critical: switch to gas first
+        gas_on = true; // Force GAS to ON;
+        if ( pellet_on )
+            pellet_minimum = false; // Turn pellet to HIGH
+    }
+    else
+    {
         if ( _pellet_flameout )
-        {
-            if ( use_pellet && !pellet_minimum )
-            {
-                use_gas = true;
-                pellet_minimum = true;
-                _logger->logDebug( "program gas FORCED: PELLET FLAMEOUT" );
-            }
+        {   // Force gas if pellet is on high:
+            if ( pellet_on && !pellet_minimum )
+                gas_on = true;
         }
-        // Over temp: stop heating
         if ( _over_temp )
-        {
-            if ( use_gas )
-            {
-                use_gas = false;
-                _logger->logDebug( "program over temp! Gas off" );
-            }
-            if ( use_pellet )
-            {
+        {   // Turn off gas and set pellet to minimum
+            gas_on = false;
+            if ( pellet_on && !pellet_minimum )
                 pellet_minimum = true;
-                _logger->logDebug( "program over temp! Pellet to minimum" );
-            }
         }
-        // Under temp: start heating now
         if ( _under_temp )
-        {
-            if ( use_pellet ) // in case of flameout, gas is already on here
-            {
+        {   // Switch pellet to high or turn on gas
+            if ( pellet_on )
                 pellet_minimum = false;
-                _logger->logDebug( "program under temp! Pellet in modulation" );
-            }
             else
-            {
-                use_gas = true;
-                _logger->logDebug( "program under temp! Gas on" );
-            }
-        }
-        _logger->logDebug( std::string("program gas ") + (use_gas ? "on" : "off"));
-        _logger->logDebug( std::string("program pellet ") + (use_pellet ? "on" : "off"));
-        _logger->logDebug( std::string("program pellet minimum ") + (pellet_minimum ? "on" : "off"));
-        if ( checkGas() )
-        {
-            if ( !use_gas )
-            {
-                update_status = true;
-                gasOff();
-            }
-        }
-        else
-        {   // Do not turn on GAS if pellet feedback is hot
-            if ( use_gas && !pelletFeedback() )
-            {
-                update_status = true;
-                gasOn();
-            }
-        }
-        if ( checkPellet() )
-        {
-            if ( !use_pellet )
-            {
-                update_status = true;
-                pelletOff();
-            }
-        }
-        else
-        {
-            if ( use_pellet )
-            {
-                update_status = true;
-                pelletOn();
-            }
-        }
-        if ( checkPelletMinimum() )
-        {
-            if ( use_pellet && !pellet_minimum )
-            {
-                update_status = true;
-                pelletMinimum(false);
-            }
-        }
-        else
-        {
-            if ( use_pellet && pellet_minimum )
-            {
-                update_status = true;
-                pelletMinimum(true);
-            }
+                gas_on = true;
         }
     }
 
-    if ( _logger->logsChanged() )
-        updateEventsJson( _logger->getLogs() );
+    if ( gas_on && !_gas->isOn() )
+        update_status = _gas->switchOn();
+    else if ( !gas_on && _gas->isOn() )
+        update_status = _gas->switchOff();
 
-    if ( save_config )
-        saveConfig();
+    if ( pellet_on )
+    {
+        if ( !_pellet->isOn() )
+            update_status = _pellet->switchOn();
+        if ( pellet_minimum && !_pellet->isLow() )
+            update_status = _pellet->setPower( Generator::POWER_LOW );
+        else if ( !pellet_minimum && _pellet->isLow() )
+            update_status = _pellet->setPower( Generator::POWER_HIGH );
+    }
+    else if ( !pellet_on && _pellet->isOn() )
+        update_status = _pellet->switchOff();
+
+    _logger->updateEventsJson();
+
     if ( update_status )
-        updateStatus();
+        _updateStatus();
 
-    return ret;
+    return true;
 }
 
-bool RunnerThread::scheduleStart()
+void RunnerThread::_updateCurrentTime( uint64_t new_time )
 {
-    uint32_t history_len = 1;
-    std::string history_mode = "day";
-    std::string content;
-    FrameworkUtils::file_to_str( _config_file, content );
-    ConfigFile config("config", content );
-    if ( !config.isEmpty() )
-    {
-        _logger->enableDebug( config.getValueBool("debug") );
-        _manual_mode = FrameworkUtils::string_tolower(config.getValue( "mode" )) == "manual";
-        _min_temp = FrameworkUtils::string_tof( config.getValue( "min_temp" ) );
-        _str_min_t = FrameworkUtils::ftostring( _min_temp );
-        _max_temp = FrameworkUtils::string_tof( config.getValue( "max_temp" ) );
-        if ( config.hasValue( "pellet_startup_delay" ) )
-            _pellet_startup_delay = FrameworkUtils::string_toi( config.getValue( "pellet_startup_delay" ) );
-        _str_max_t = FrameworkUtils::ftostring( _max_temp );
-        _temp_correction = FrameworkUtils::string_tof( config.getValue( "temp_correction" ) );
-        history_len = FrameworkUtils::string_toi( config.getValue("history_len") );
-        history_mode = FrameworkUtils::string_tolower( config.getValue( "history_mode" ) );
-        _program.loadConfig( config.getSection( "program" ) );
-    }
-    else
-        saveConfig();
-
-    // Carica un log iniziale dell'history
-    _history.initialize( history_mode, history_len );
-
-    _sensor_timer.setLoopTime( 8000 * 1000 );
-    _last_time = FrameworkTimer::getTimeEpoc();
-    updateCurrentTime();
-    updateProgram();
-
-    // Calculate today's on times
-    _today_gas_time = _today_pellet_time = 0;
-    _last_gas_on_time = _last_pellet_on_time = 0;
-    const std::list<LogItem>* logs = _logger->getLogs();
-    for ( std::list<LogItem>::const_iterator i = logs->begin(); i != logs->end(); ++i )
-    {
-        switch ( i->getEvent() )
-        {
-        case  LogItem::GAS_ON:
-            if ( _last_gas_on_time == 0 )
-                _last_gas_on_time = i->getTime();
-            break;
-
-        case LogItem::PELLET_MINIMUM:
-            if ( _last_pellet_on_time > 0 )
-                if ( _last_pellet_on_min_time == 0 )
-                    _last_pellet_on_min_time = i->getTime();
-            break;
-
-        case LogItem::PELLET_MODULATION:
-            if ( _last_pellet_on_min_time > 0 )
-            {
-                _today_pellet_min_time += i->getTime() - _last_pellet_on_min_time;
-                _last_pellet_on_min_time = 0;
-            }
-            break;
-
-        case  LogItem::PELLET_ON:
-            if ( _last_pellet_on_time == 0 )
-                _last_pellet_on_time = i->getTime();
-            break;
-
-        case LogItem::PELLET_OFF:
-            if ( _last_pellet_on_time > 0 )
-            {
-                _today_pellet_time += i->getTime() - _last_pellet_on_time;
-                _last_pellet_on_time = 0;
-            }
-            if ( _last_pellet_on_min_time > 0 )
-            {
-                _today_pellet_min_time += i->getTime() - _last_pellet_on_min_time;
-                _last_pellet_on_min_time = 0;
-            }
-            break;
-
-        case LogItem::GAS_OFF:
-            if ( _last_gas_on_time > 0 )
-            {
-                _today_gas_time += i->getTime() - _last_gas_on_time;
-                _last_gas_on_time = 0;
-            }
-            break;
-        }
-    }
-
-    // Ensure internal status match the actual status
-    if ( checkGas() )
-        gasOn();
-    else
-        gasOff();
-    if ( checkPellet() )
-    {
-        pelletOn();
-        if ( checkPelletMinimum() )
-            pelletMinimum(true);
-        else
-            pelletMinimum(false);
-    }
-    else
-        pelletOff();
-
-    updateStatus();
-
-    return !_gpio_error;
-}
-
-uint8_t RunnerThread::fixReading(const int read)
-{
-    if (read > 255 || read < 0)
-        debugPrintError("WiringPi") << "Invalid data from wiringPi library\n";
-    return (uint8_t)read;
-}
-
-void RunnerThread::updateCurrentTime()
-{
+    _last_time = new_time;
     time_t now = (time_t)_last_time;
     struct tm *tm_struct = localtime(&now);
     int32_t new_day = (6+tm_struct->tm_wday)%7;
+    int32_t new_hour = tm_struct->tm_hour;
+    int32_t new_half = (tm_struct->tm_min >= 30 ? 1 : 0);
+    bool time_mod = false;
     if ( new_day != _day )
     {
-        _today_gas_time = 0;
-        _today_pellet_time = 0;
-        if ( _last_gas_on_time > 0 )
-            _last_gas_on_time = _last_time;
-        if ( _last_pellet_on_time > 0 )
-            _last_pellet_on_time = _last_time;
+        _gas->resetTimes();
+        _pellet->resetTimes();
         _day = new_day;
+        time_mod = true;
     }
-    _hour = tm_struct->tm_hour;
-    _half_hour = tm_struct->tm_min >= 30 ? 1 : 0;
-    _str_day = FrameworkUtils::tostring( _day );
-    _str_h = FrameworkUtils::tostring( _hour );
-    _str_f = FrameworkUtils::tostring( _half_hour );
-}
-
-void RunnerThread::updateProgram()
-{
-    _program.getProgram( _day, _hour, _half_hour,
-                         _program_gas,
-                         _program_pellet,
-                         _program_pellet_minimum );
-}
-
-void RunnerThread::updateEventsJson(const std::list<LogItem> *events)
-{
-    FILE* event_file = fopen( (_exchange_path+"/_events").c_str(), "w" );
-    if ( event_file )
+    if ( _hour != new_hour )
     {
-        fwrite( "[", 1, 1, event_file );
-        for ( std::list<LogItem>::const_iterator i = events->begin(); i != events->end(); ++i )
-        {
-            if ( i != events->begin() )
-                fwrite(",", 1, 1, event_file );
-            fwrite( "{\"t\":", 5, 1, event_file );
-            std::string time_str = i->getTimeStr();
-            std::string evt_str = i->getEventStr();
-            fwrite( time_str.c_str(), time_str.length(), 1, event_file );
-            fwrite(",\"e\":", 5, 1, event_file );
-            fwrite( evt_str.c_str(), evt_str.length(), 1, event_file );
-            fwrite("}", 1, 1, event_file );
-        }
-        fwrite( "]", 1, 1, event_file );
-        fclose( event_file );
+        _hour = new_hour;
+        time_mod = true;
     }
+    if ( _half_hour != new_half )
+    {
+        _half_hour = new_half;
+        time_mod = true;
+    }
+    if ( time_mod )
+        _program.setTime( _day, _hour, _half_hour );
 }
 
-void RunnerThread::saveConfig()
+void RunnerThread::_saveConfig()
 {
     std::string content;
     FrameworkUtils::file_to_str( _config_file, content );
@@ -892,8 +594,19 @@ void RunnerThread::saveConfig()
         debugPrintError() << "Unable to save file " << _config_file << "\n";
 }
 
-void RunnerThread::updateStatus()
+void RunnerThread::_updateStatus()
 {
+    std::string str_ext_temp = FrameworkUtils::ftostring( _current_ext_temp );
+    std::string str_temp = FrameworkUtils::ftostring( _temp_sensor->getTemp() );
+    std::string str_humidity = FrameworkUtils::ftostring( _temp_sensor->getHimidity() );
+    std::string str_min_t = FrameworkUtils::ftostring( _min_temp );
+    std::string str_max_t = FrameworkUtils::ftostring( _max_temp );
+    std::string str_day = FrameworkUtils::tostring( _day );
+    std::string str_h = FrameworkUtils::tostring( _hour );
+    std::string str_f = FrameworkUtils::tostring( _half_hour );
+    std::string str_pellet_off_warning("La stufa a pellet sarà spenta!");
+    std::string str_pellet_on_warning("La stufa a pellet sarà accesa!");
+
     FILE* status_file = fopen( (_exchange_path+"/_status").c_str(), "w" );
     if ( status_file )
     {
@@ -905,102 +618,101 @@ void RunnerThread::updateStatus()
             {
             case 0:
                 if ( _manual_mode )
-                    fwrite( _str_manual.c_str(), _str_manual.length(), 1, status_file);
+                    fwrite( "manual", 6, 1, status_file);
                 else
-                    fwrite( _str_auto.c_str(), _str_auto.length(), 1, status_file);
+                    fwrite( "auto", 4, 1, status_file);
                 break;
             case 1:
                 if ( _anti_ice_active )
-                    fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+                    fwrite( "on", 2, 1, status_file);
                 else
-                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
+                    fwrite( "off", 3, 1, status_file);
                 break;
             case 2:
-                if ( checkPellet() && !_program_pellet )
-                    fwrite( _str_pellet_off_warning.c_str(), _str_pellet_off_warning.size(), 1, status_file);
-                else if ( !checkPellet() && _program_pellet )
-                    fwrite( _str_pellet_on_warning.c_str(), _str_pellet_on_warning.size(), 1, status_file);
+                if ( _pellet->isOn() && !_program.getPellet() )
+                    fwrite( str_pellet_off_warning.c_str(), str_pellet_off_warning.size(), 1, status_file);
+                else if ( !_pellet->isOn() && _program.getPellet() )
+                    fwrite( str_pellet_on_warning.c_str(), str_pellet_on_warning.size(), 1, status_file);
                 break;
             case 3:
-                if ( checkPellet() )
-                    fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+                if ( _pellet->isOn() )
+                    fwrite( "on", 2, 1, status_file);
                 else
-                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
+                    fwrite( "off", 3, 1, status_file);
                 break;
             case 4:
-                if ( pelletFeedback() )
-                    fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+                if ( _pellet->isHot() )
+                    fwrite( "on", 2, 1, status_file);
                 else
-                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
+                    fwrite( "off", 3, 1, status_file);
                 break;
             case 5:
-                if ( checkPelletMinimum() )
-                    fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+                if ( _pellet->isLow() )
+                    fwrite( "on", 2, 1, status_file);
                 else
-                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
+                    fwrite( "off", 3, 1, status_file);
                 break;
             case 6:
                 if ( _pellet_flameout )
-                    fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+                    fwrite( "on", 2, 1, status_file);
                 else
-                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
+                    fwrite( "off", 3, 1, status_file);
                 break;
             case 7:
             {
-                uint32_t total_time = _today_pellet_time + (_last_pellet_on_time > 0 ? (FrameworkTimer::getTimeEpoc()-_last_pellet_on_time) : 0 );
+                uint32_t total_time = _pellet->todayTimeOn();
                 std::string str = FrameworkUtils::tostring( total_time );
                 fwrite( str.c_str(), str.length(), 1, status_file);
             }
                 break;
             case 8:
             {
-                uint32_t total_time = _today_pellet_min_time + (_last_pellet_on_min_time > 0 ? (FrameworkTimer::getTimeEpoc()-_last_pellet_on_min_time) : 0 );
+                uint32_t total_time = _pellet->todayLowOnTime();
                 std::string str = FrameworkUtils::tostring( total_time );
                 fwrite( str.c_str(), str.length(), 1, status_file);
             }
                 break;
             case 9:
-                if ( checkGas() )
-                    fwrite( _str_on.c_str(), _str_on.length(), 1, status_file);
+                if ( _gas->isOn() )
+                    fwrite( "on", 2, 1, status_file);
                 else
-                    fwrite( _str_off.c_str(), _str_off.length(), 1, status_file);
+                    fwrite( "off", 3, 1, status_file);
                 break;
             case 10:
             {
-                uint32_t total_time = _today_gas_time + (_last_gas_on_time > 0 ? (FrameworkTimer::getTimeEpoc()-_last_gas_on_time) : 0 );
+                uint32_t total_time = _pellet->todayTimeOn();
                 std::string str = FrameworkUtils::tostring( total_time );
                 fwrite( str.c_str(), str.length(), 1, status_file);
             }
                 break;
             case 11:
-                fwrite( _str_min_t.c_str(), _str_min_t.length(), 1, status_file);
+                fwrite( str_min_t.c_str(), str_min_t.length(), 1, status_file);
                 break;
             case 12:
-                fwrite( _str_max_t.c_str(), _str_max_t.length(), 1, status_file);
+                fwrite( str_max_t.c_str(), str_max_t.length(), 1, status_file);
                 break;
             case 13:
-                fwrite( _str_temp.c_str(), _str_temp.length(), 1, status_file);
+                fwrite( str_temp.c_str(), str_temp.length(), 1, status_file);
                 break;
             case 14:
-                fwrite( _str_ext_temp.c_str(), _str_ext_temp.length(), 1, status_file);
+                fwrite( str_ext_temp.c_str(), str_ext_temp.length(), 1, status_file);
                 break;
             case 15:
-                fwrite( _str_humidity.c_str(), _str_humidity.length(), 1, status_file);
+                fwrite( str_humidity.c_str(), str_humidity.length(), 1, status_file);
                 break;
             case 16:
-                fwrite( _str_day.c_str(), _str_day.length(), 1, status_file);
+                fwrite( str_day.c_str(), str_day.length(), 1, status_file);
                 break;
             case 17:
-                fwrite( _str_h.c_str(), _str_h.length(), 1, status_file);
+                fwrite( str_h.c_str(), str_h.length(), 1, status_file);
                 break;
             case 18:
-                fwrite( _str_f.c_str(), _str_f.length(), 1, status_file);
+                fwrite( str_f.c_str(), str_f.length(), 1, status_file);
                 break;
             case 19:
                 break;
             }
         }
-
         _program.writeJSON( status_file );
 
         fwrite( "}", 1, 1, status_file );
@@ -1008,126 +720,3 @@ void RunnerThread::updateStatus()
     }
 }
 
-bool RunnerThread::readSensor( float & current_temp, float & current_humidity )
-{
-    bool ret = false;
-#ifndef NOPI
-    int pin = 1;
-    uint8_t laststate = HIGH;
-    uint8_t counter = 0;
-    int dht22_dat[5] = {0,0,0,0,0};
-    uint8_t j = 0, i;
-
-    // pull pin down for 18 milliseconds
-    pinMode(pin, OUTPUT);
-    digitalWrite(pin, LOW);
-    delay(18);
-    // then pull it up for 40 microseconds
-    digitalWrite(pin, HIGH);
-    delayMicroseconds(40);
-    // prepare to read the pin
-    pinMode(pin, INPUT);
-
-    // detect change and read data
-    for ( i=0; i< 85; i++)
-    {
-        counter = 0;
-        while (fixReading(digitalRead(pin)) == laststate)
-        {
-            counter++;
-            delayMicroseconds(1);
-            if (counter == 255)
-                break;
-        }
-        laststate = fixReading(digitalRead(pin));
-        if (counter == 255)
-            break;
-        // ignore first 3 transitions
-        if ((i >= 4) && (i%2 == 0)) {
-            // shove each bit into the storage bytes
-            dht22_dat[j/8] <<= 1;
-            if (counter > 16)
-                dht22_dat[j/8] |= 1;
-            j++;
-        }
-    }
-
-    // check we read 40 bits (8bit x 5 ) + verify checksum in the last byte
-    // print it out if data is good
-    if ((j >= 40) &&
-            (dht22_dat[4] == ((dht22_dat[0] + dht22_dat[1] + dht22_dat[2] + dht22_dat[3]) & 0xFF)) )
-    {
-        float new_humidity = (dht22_dat[0] * 256 + dht22_dat[1]) / 10.0;
-        float new_temp = (((dht22_dat[2] & 0x7F)* 256 + dht22_dat[3]) / 10.0) + _temp_correction;
-        /* negative temp */
-        if ((dht22_dat[2] & 0x80) != 0)
-            new_temp = -new_temp;
-
-        if ( (_sensor_success_reads == 0) || // prima lettura sempre buona!
-             ( (new_humidity > 0.0) &&    // dato valido?
-               (new_humidity < 95.0) &&   // dato valido?
-               (fabs(current_humidity-new_humidity)<10.0) // delta ragionevole?
-               ) )
-        {
-            current_humidity = new_humidity;
-            ret = true;
-        }
-        if ( (_sensor_success_reads == 0) || // prima lettura sempre buona!
-             ( ( new_temp > -60.0 ) && // dato valido?
-               ( new_temp < 60.0 ) &&  // dato valido?
-               (fabs(current_temp-new_temp)<2.0) // delta ragionevole?
-               ) )
-        {
-            current_temp = new_temp;
-            ret = true;
-        }
-
-        // Skip fake readings (will turn on anti-ice):
-        if ( (current_humidity == 0) && (current_temp == 0) && ret )
-            ret = false;
-
-        _sensor_success_reads++;
-    }
-    else
-        _sensor_failed_reads++;
-#else
-    float new_humidity = current_humidity+1.0;
-    float new_temp = current_temp+1;
-    if ( new_humidity > 95.0 )
-        new_humidity = 40;
-    if ( new_temp > 30 )
-        new_temp = 1;
-    current_humidity = new_humidity;
-    current_temp = new_temp;
-    ret = true;
-    _sensor_success_reads++;
-#endif
-    if ( ret )
-        _logger->logDebug("Sensor reads - t: " + FrameworkUtils::ftostring( current_temp ) + "/" + FrameworkUtils::ftostring( _current_ext_temp ) +
-                          " h: " + FrameworkUtils::ftostring( current_humidity ) +
-                          " - "  + FrameworkUtils::tostring( _sensor_success_reads ) + " ok - " + FrameworkUtils::tostring( _sensor_failed_reads ) + " failed");
-    else
-        _logger->logDebug("Sensor reads - t: -- /" + FrameworkUtils::ftostring( _current_ext_temp ) +
-                          " h: --" +
-                          " - "  + FrameworkUtils::tostring( _sensor_success_reads ) + " ok - " + FrameworkUtils::tostring( _sensor_failed_reads ) + " failed");
-    return ret;
-}
-
-void RunnerThread::setGpioBool(uint8_t num, bool activate)
-{
-#ifndef NOPI
-    pinMode( num, OUTPUT);
-    digitalWrite( num, activate ? HIGH : LOW );
-#endif
-}
-
-bool RunnerThread::readGpioBool(uint8_t num, int mode )
-{
-#ifdef NOPI
-    return false;
-#else
-    pinMode( num, mode);
-    uint8_t pin = digitalRead( num );
-    return pin == HIGH;
-#endif
-}

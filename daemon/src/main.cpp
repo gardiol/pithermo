@@ -13,6 +13,10 @@
 #include "runnerthread.h"
 #include "command.h"
 
+#ifndef DEMO
+#include <wiringPi.h>
+#endif
+
 using namespace FrameworkLibrary;
 
 static void daemonize()
@@ -124,47 +128,57 @@ int main(int argc, char** argv)
         Logger logger( log_path );
         if ( logger.isValid() )
         {
-            logger.logMessage("Started");
-            logger.logEvent( LogItem::START );
-            if ( FrameworkUtils::fileExist( exchange_path ) )
+#ifdef DEMO
+            debugPrintNotice("") << "DemoMode\n";
+            if ( true )
+#else
+            if (wiringPiSetup () != -1)
+#endif
             {
-                if ( cmd.consumeParameter( "daemon" ).isValid() )
-                    daemonize();
-
-                SigHandler sig_handler;
-                FrameworkSigHandler::setHandler( &sig_handler, FrameworkSigHandler::SIGINT_SIGNAL );
-
-                UdpSocket command_server("CommandServer","", "",0,5555);
-                if ( command_server.activateInterface() )
+                logger.logMessage("Started");
+                logger.logEvent( LogItem::START );
+                if ( FrameworkUtils::fileExist( exchange_path ) )
                 {
-                    RunnerThread runner(config_file, exchange_path, log_path + "/history", &logger);
-                    if ( runner.isRunning() )
+                    if ( cmd.consumeParameter( "daemon" ).isValid() )
+                        daemonize();
+
+                    SigHandler sig_handler;
+                    FrameworkSigHandler::setHandler( &sig_handler, FrameworkSigHandler::SIGINT_SIGNAL );
+
+                    UdpSocket command_server("CommandServer","", "",0,5555);
+                    if ( command_server.activateInterface() )
                     {
-                        while ( runner.isRunning() &&
-                                sig_handler.keepRunning() &&
-                                command_server.isActive() )
+                        RunnerThread runner(config_file, exchange_path, log_path + "/history", &logger);
+                        if ( runner.isRunning() )
                         {
-                            if ( command_server.waitForIncomingData(10*1000) )
+                            while ( runner.isRunning() &&
+                                    sig_handler.keepRunning() &&
+                                    command_server.isActive() )
                             {
-                                uint32_t frame_size = 0;
-                                char* frame = static_cast<char*>(command_server.getFrame(frame_size));
-                                Command* cmd = new Command( frame, frame_size );
-                                runner.appendCommand( cmd );
-                                delete [] frame;
+                                if ( command_server.waitForIncomingData(10*1000) )
+                                {
+                                    uint32_t frame_size = 0;
+                                    char* frame = static_cast<char*>(command_server.getFrame(frame_size));
+                                    Command* cmd = new Command( frame, frame_size );
+                                    runner.appendCommand( cmd );
+                                    delete [] frame;
+                                }
                             }
+                            ret = 0;
                         }
-                        ret = 0;
+                        else
+                            logger.logMessage( "Unable to start runner thread!" );
                     }
                     else
-                        logger.logMessage( "Unable to start runner thread!" );
+                        logger.logMessage( "Unable to open socket!" );
                 }
                 else
-                    logger.logMessage( "Unable to open socket!" );
+                    logger.logMessage( "Exchange path does not exist!" );
+                logger.logEvent( LogItem::STOP );
+                logger.logMessage("Stopped");
             }
             else
-                logger.logMessage( "Exchange path does not exist!" );
-            logger.logEvent( LogItem::STOP );
-            logger.logMessage("Stopped");
+                debugPrintError() << "WiringPi initialization error";
         }
         else
             debugPrintError() << "Unable to open log file!\n";

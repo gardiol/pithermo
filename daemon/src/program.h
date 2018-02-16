@@ -13,8 +13,20 @@ public:
     Program();
     ~Program();
 
-    void getProgram( int d, int h, int f,
-                     bool& g, bool& p, bool &m );
+    void setTime( int d, int h, int f );
+    bool getGas() const
+    {
+        return _gas_program[d][h][f];
+    }
+    bool getPellet() const
+    {
+        return _pellet_program[d][h][f];
+    }
+
+    bool getPelletMinimum() const
+    {
+        return _pellet_minimum_program[d][h][f];
+    }
 
     bool change( const std::string& p );
     void loadConfig( const ConfigData* c );
@@ -23,6 +35,9 @@ public:
     void writeJSON( FILE* file );
 
 private:
+    int _d;
+    int _h;
+    int _f;
     std::vector<std::vector<std::vector<bool> > > _gas_program;
     std::vector<std::vector<std::vector<bool> > > _pellet_program;
     std::vector<std::vector<std::vector<bool> > > _pellet_minimum_program;
