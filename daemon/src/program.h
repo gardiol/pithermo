@@ -16,16 +16,16 @@ public:
     void setTime( int d, int h, int f );
     bool getGas() const
     {
-        return _gas_program[d][h][f];
+        return _gas_program[_d][_h][_f];
     }
     bool getPellet() const
     {
-        return _pellet_program[d][h][f];
+        return _pellet_program[_d][_h][_f];
     }
 
     bool getPelletMinimum() const
     {
-        return _pellet_minimum_program[d][h][f];
+        return _pellet_minimum_program[_d][_h][_f];
     }
 
     bool change( const std::string& p );

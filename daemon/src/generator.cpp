@@ -4,7 +4,7 @@
 
 using namespace FrameworkLibrary;
 
-Generator::Generator(std::string &n,
+Generator::Generator(const std::string &n,
                      Logger *l,
                      int command_gpio,
                      int status_gpio,
@@ -44,6 +44,10 @@ Generator::Generator(std::string &n,
     }
     else
         switchOff();
+}
+
+Generator::~Generator()
+{
 }
 
 bool Generator::switchOn()
@@ -132,12 +136,17 @@ void Generator::resetTimes()
         _on_low_since = FrameworkTimer::getTimeEpoc();
 }
 
+uint64_t Generator::lastOnTime()
+{
+    return _on_since;
+}
+
 uint64_t Generator::todayOnTime()
 {
-    _today_pellet_time + (_last_pellet_on_time > 0 ? (FrameworkTimer::getTimeEpoc()-_last_pellet_on_time) : 0 );
+    return _today_on_time + ( _on_since > 0 ? (FrameworkTimer::getTimeEpoc() - _on_since) : 0 );
 }
 
 uint64_t Generator::todayLowOnTime()
 {
-    _today_pellet_min_time + (_last_pellet_on_min_time > 0 ? (FrameworkTimer::getTimeEpoc()-_last_pellet_on_min_time) : 0 );
+    return _today_low_time + ( _on_low_since > 0 ? (FrameworkTimer::getTimeEpoc()) - _on_low_since : 0 );
 }

@@ -9,7 +9,7 @@ class Generator: protected GPIODevice
 public:
     enum PowerLevel { POWER_LOW, POWER_HIGH };
 
-    Generator(std::string& n,
+    Generator(const std::string& n,
               Logger* l,
               int command_gpio,
               int status_gpio,

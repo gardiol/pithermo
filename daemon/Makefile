@@ -1,9 +1,9 @@
-ifndef NOPI
-$(info Build per TARGET - NOPI not specified)
+ifndef DEMO
+$(info Build per TARGET - DEMO not specified)
 CFLAGS=-fPIC -g
 else
-$(info Build per PC - NOPI specified)
-CFLAGS=-fPIC -g -DNOPI
+$(info Build per PC - DEMO specified)
+CFLAGS=-fPIC -g -DDEMO
 endif
 
 FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./framework/basesemaphor.cpp ./framework/basethread.cpp ./framework/circularbuffer.cpp ./framework/cmdlineparser.cpp ./framework/configdata.cpp ./framework/configfile.cpp ./framework/debugprint.cpp ./framework/udpsocket.cpp ./framework/variant.cpp ./framework/variantlive.cpp ./framework/variantstatic.cpp ./framework/frameworksighandler.cpp ./framework/frameworktimer.cpp ./framework/frameworkutils.cpp ./framework/genericcommdevice.cpp ./framework/memorychecker.cpp ./framework/profiler.cpp ./framework/profilerinternal.cpp ./framework/scheduledthread.cpp ./framework/socketcommdevice.cpp ./framework/tcpclient.cpp ./framework/tcpserver.cpp ./framework/transmissionstats.cpp ./framework/typeinfo.cpp
@@ -45,8 +45,8 @@ obj/logitem.o: src/logitem.cpp src/logitem.h
 obj/generator.o: src/generator.cpp src/generator.h src/logger.h src/logitem.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
-obj/gpiodevice.o: src/gpiodevice.cpp src/gpiodevice.h -I/usr/local/include src/logger.h src/logitem.h
-	g++ $(CFLAGS) -o $@ -c $< -Iframework
+obj/gpiodevice.o: src/gpiodevice.cpp src/gpiodevice.h src/logger.h src/logitem.h
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -I/usr/local/include
 
 obj/tempsensor.o: src/tempsensor.cpp src/tempsensor.h src/gpiodevice.h src/logger.h src/logitem.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework

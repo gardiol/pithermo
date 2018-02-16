@@ -82,11 +82,9 @@ RunnerThread::RunnerThread(const std::string &cfg,
         _logger->enableDebug( config.getValueBool("debug") );
         _manual_mode = FrameworkUtils::string_tolower(config.getValue( "mode" )) == "manual";
         _min_temp = FrameworkUtils::string_tof( config.getValue( "min_temp" ) );
-        _str_min_t = FrameworkUtils::ftostring( _min_temp );
         _max_temp = FrameworkUtils::string_tof( config.getValue( "max_temp" ) );
         if ( config.hasValue( "pellet_startup_delay" ) )
             _pellet_startup_delay = FrameworkUtils::string_toi( config.getValue( "pellet_startup_delay" ) );
-        _str_max_t = FrameworkUtils::ftostring( _max_temp );
         _temp_correction = FrameworkUtils::string_tof( config.getValue( "temp_correction" ) );
         history_len = FrameworkUtils::string_toi( config.getValue("history_len") );
         history_mode = FrameworkUtils::string_tolower( config.getValue( "history_mode" ) );
@@ -101,11 +99,23 @@ RunnerThread::RunnerThread(const std::string &cfg,
     uint64_t gas_on_time = 0;
     uint64_t pellet_on_time = 0;
     uint64_t pellet_min_time = 0;
-    _logger->calculateTodayTimes( gas_on_time, pellet_on_time, pellet_min_time );
+    uint64_t gas_on_since = 0;
+    uint64_t pellet_on_since = 0;
+    uint64_t pellet_low_on_since = 0;
+    _logger->calculateTodayTimes( gas_on_time, pellet_on_time, pellet_min_time,
+                                  gas_on_since,pellet_on_since,pellet_low_on_since );
 
     // Initialize generators:
-    _gas = new Generator( _logger, 0, -1, -1, gas_on_time, 0 ); // command is GPIO 0
-    _pellet = new Generator( _logger, 2, 7, 5, pellet_on_time, pellet_min_time ); // command = 2, status = 7, min/mod=5
+    _gas = new Generator( "gas", _logger, 0, -1, -1,
+                          gas_on_time, 0,
+                          gas_on_since, 0,
+                          LogItem::GAS_ON, LogItem::GAS_OFF,
+                          LogItem::NO_EVENT, LogItem::NO_EVENT ); // command is GPIO 0
+    _pellet = new Generator( "pellet", _logger, 2, 7, 5,
+                             pellet_on_time, pellet_min_time,
+                             pellet_on_since, pellet_low_on_since,
+                             LogItem::PELLET_ON, LogItem::PELLET_OFF,
+                             LogItem::PELLET_MINIMUM, LogItem::PELLET_MODULATION ); // command = 2, status = 7, min/mod=5
     _temp_sensor = new TempSensor( _logger, 1, _temp_correction ); // 1 temp sensor
 
     startThread();
@@ -266,7 +276,6 @@ bool RunnerThread::_checkCommands()
                 _logger->logDebug("Changed min temp to " + cmd->getParam() );
                 _logger->logEvent( LogItem::MIN_TEMP_UPDATE );
                 _min_temp = tmp_temp;
-                _str_min_t = FrameworkUtils::ftostring( _min_temp );
                 update_status = true;
                 save_config = true;
             }
@@ -282,7 +291,6 @@ bool RunnerThread::_checkCommands()
                 _logger->logDebug("Changed max temp to " + cmd->getParam() );
                 _logger->logEvent( LogItem::MAX_TEMP_UPDATE );
                 _max_temp = tmp_temp;
-                _str_max_t = FrameworkUtils::ftostring( _max_temp );
                 update_status = true;
                 save_config = true;
             }
@@ -578,8 +586,8 @@ void RunnerThread::_saveConfig()
     FrameworkUtils::file_to_str( _config_file, content );
     ConfigFile config("config", content );
     config.setValue( "mode", _manual_mode ? "manual" : "auto" );
-    config.setValue( "min_temp", _str_min_t );
-    config.setValue( "max_temp", _str_max_t );
+    config.setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
+    config.setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
     config.setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
     config.setValue("history_mode", _history.getMode() );
     config.setValue("history_len", FrameworkUtils::tostring( _history.getLen() ) );
@@ -660,7 +668,7 @@ void RunnerThread::_updateStatus()
                 break;
             case 7:
             {
-                uint32_t total_time = _pellet->todayTimeOn();
+                uint32_t total_time = _pellet->todayOnTime();
                 std::string str = FrameworkUtils::tostring( total_time );
                 fwrite( str.c_str(), str.length(), 1, status_file);
             }
@@ -680,7 +688,7 @@ void RunnerThread::_updateStatus()
                 break;
             case 10:
             {
-                uint32_t total_time = _pellet->todayTimeOn();
+                uint32_t total_time = _pellet->todayOnTime();
                 std::string str = FrameworkUtils::tostring( total_time );
                 fwrite( str.c_str(), str.length(), 1, status_file);
             }

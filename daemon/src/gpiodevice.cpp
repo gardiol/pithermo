@@ -29,12 +29,12 @@ void GPIODevice::setGPIOinput(int gpio_no)
 }
 
 bool GPIODevice::readPGIObool(int gpio_no)
-{
+{ // false : LOW : relé closed - true : HIGH : relé open
 #ifndef DEMO
     pinMode( gpio_no, _mode[ gpio_no ] );
     _values[ gpio_no ] = (digitalRead( g ) == HIGH);
 #else
-    if ( _values.find( gpio_no ) = _values.end() )
+    if ( _values.find( gpio_no ) == _values.end() )
         _values[ gpio_no ] = false;
 #endif
     return _values[ gpio_no ];
@@ -47,7 +47,6 @@ void GPIODevice::writeGPIObool(int gpio_no, bool value)
     digitalWrite( gpio_no, value ? HIGH : LOW );
 #endif
     _values[ gpio_no ] = value;
-    return _values[ gpio_no ];
 }
 
 uint8_t GPIODevice::readGPIOraw(int gpio_no)

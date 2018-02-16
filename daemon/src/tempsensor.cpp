@@ -10,7 +10,7 @@ TempSensor::TempSensor(Logger *l, int gpio, float temp_correction):
     _humidity(0.0),
     _timestamp(0),
     _gpio(gpio),
-    temp_correction(_temp_correction)
+    _temp_correction(temp_correction)
 {
     _timer.setLoopTime( 8000 * 1000 );
 }

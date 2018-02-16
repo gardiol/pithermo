@@ -125,7 +125,7 @@ int main(int argc, char** argv)
         std::string config_file = cmd.consumeParameter( "config" ).getOption();
         std::string exchange_path = cmd.consumeParameter( "xchange" ).getOption();
         std::string log_path = cmd.consumeParameter( "logs" ).getOption();
-        Logger logger( log_path );
+        Logger logger( log_path, exchange_path );
         if ( logger.isValid() )
         {
 #ifdef DEMO
