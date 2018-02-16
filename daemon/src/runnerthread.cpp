@@ -185,6 +185,7 @@ bool RunnerThread::_checkCommands()
             {
                 _pellet_flameout = false;
                 _logger->logEvent( LogItem::PELLET_FLAMEOUT_OFF );
+                update_status = true;
             }
             break;
 
@@ -436,7 +437,8 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
 
     // If we have at least ONE successful read, check some special conditions:
     if ( _sensor_success_reads > 0 )
-        update_status = _checkSpecialConditions();
+        if ( _checkSpecialConditions() )
+            update_status = true;
 
     // Update time and history
     uint64_t current_time = FrameworkTimer::getTimeEpoc();
@@ -487,21 +489,39 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
     }
 
     if ( gas_on && !_gas->isOn() )
-        update_status = _gas->switchOn();
+    {
+        if ( _gas->switchOn() )
+            update_status = true;
+    }
     else if ( !gas_on && _gas->isOn() )
-        update_status = _gas->switchOff();
+    {
+        if ( _gas->switchOff() )
+            update_status = true;
+    }
 
     if ( pellet_on )
     {
         if ( !_pellet->isOn() )
-            update_status = _pellet->switchOn();
+        {
+            if ( _pellet->switchOn() )
+                update_status = true;
+        }
         if ( pellet_minimum && !_pellet->isLow() )
-            update_status = _pellet->setPower( Generator::POWER_LOW );
+        {
+            if ( _pellet->setPower( Generator::POWER_LOW ) )
+                update_status = true;
+        }
         else if ( !pellet_minimum && _pellet->isLow() )
-            update_status = _pellet->setPower( Generator::POWER_HIGH );
+        {
+            if ( _pellet->setPower( Generator::POWER_HIGH ) )
+                update_status = true;
+        }
     }
     else if ( !pellet_on && _pellet->isOn() )
-        update_status = _pellet->switchOff();
+    {
+        if ( _pellet->switchOff() )
+            update_status = true;
+    }
 
     _logger->updateEventsJson();
 
