@@ -28,6 +28,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _gas(NULL),
     _pellet(NULL),
     _temp_sensor(NULL),
+    _history( hst, exchange_path ),
     _config_file( cfg ),
     _exchange_path( exchange_path ),
     _commands_mutex("CommandsMutex"),
@@ -43,11 +44,10 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _temp_correction(1.0),
     _sensor_success_reads(0),
     _last_time(0),
-    _current_ext_temp(0.0),
-    _history( hst, exchange_path ),
     _day(0),
     _hour(0),
     _half_hour(0),
+    _current_ext_temp(0.0),
     _pellet_startup_delay(60*45)
 {
     _status_json_template.push_back("{\"mode\":\"");
@@ -602,7 +602,7 @@ void RunnerThread::_updateStatus()
     FILE* status_file = fopen( (_exchange_path+"/_status").c_str(), "w" );
     if ( status_file )
     {
-        for ( int i = 0; i < _status_json_template.size(); ++i )
+        for ( unsigned int i = 0; i < _status_json_template.size(); ++i )
         {
             fwrite( _status_json_template[i].c_str(),
                     _status_json_template[i].length(), 1, status_file);

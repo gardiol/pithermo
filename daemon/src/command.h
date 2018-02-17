@@ -40,7 +40,7 @@ private:
     std::string _cmd_string;
 
     static std::vector<std::set< std::pair<std::string, CmdType> > > _commands;
-    static int _commands_size;
+    static uint32_t _commands_size;
 
 };
 

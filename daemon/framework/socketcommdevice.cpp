@@ -133,7 +133,7 @@ SocketCommDevice::SocketCommDevice(SocketCommDevice::family f,
             _private->_remoteAddress = ra;
     }
     // Nessun socket può trasmettere se non ho settato un remote ip/port:
-    if ( (_private->_remoteAddress == "") || (!_private->_remotePort > 0 ) )
+    if ( (_private->_remoteAddress == "") || !(_private->_remotePort > 0 ) )
         setCanWrite( false );
 
     // Verifico il protocollo:
@@ -141,7 +141,7 @@ SocketCommDevice::SocketCommDevice(SocketCommDevice::family f,
     {
     case udpip:
         // non può ricevere se non ho settato una porta locale:
-        if ( !_private->_localPort > 0 )
+        if ( !(_private->_localPort > 0) )
             setCanRead( false );
         break;
 

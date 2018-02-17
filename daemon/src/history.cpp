@@ -57,10 +57,10 @@ void History::_readNow()
             _history_cache[w] = _history_cache[w-1];
         _history_cache[0].clear();
         _history_cache[0].resize( num_days );
-        for ( int d = 0; d < num_days; ++d )
+        for ( uint32_t d = 0; d < num_days; ++d )
         {
             _history_cache[0][d].resize( num_hours );
-            for ( int h = 0; h < num_hours; ++h )
+            for ( uint32_t h = 0; h < num_hours; ++h )
                 _history_cache[0][d][h].resize( num_mins );
         }
     }
@@ -76,13 +76,13 @@ void History::initialize(const std::string &mode, uint32_t len)
 
     _history_cache.clear();
     _history_cache.resize(num_weeks);
-    for ( int w = 0; w < num_weeks; ++w )
+    for ( uint32_t w = 0; w < num_weeks; ++w )
     {
         _history_cache[w].resize( num_days );
-        for ( int d = 0; d < num_days; ++d )
+        for ( uint32_t d = 0; d < num_days; ++d )
         {
             _history_cache[w][d].resize( num_hours );
-            for ( int h = 0; h < num_hours; ++h )
+            for ( uint32_t h = 0; h < num_hours; ++h )
                 _history_cache[w][d][h].resize( num_mins );
         }
     }
