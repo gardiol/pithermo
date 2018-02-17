@@ -542,8 +542,11 @@ void RunnerThread::_updateCurrentTime( uint64_t new_time )
     bool time_mod = false;
     if ( new_day != _day )
     {
-        _gas->resetTimes();
-        _pellet->resetTimes();
+        if ( _day != 0 )
+        {   // do not reset on first run or we will zeroize precalulated on times
+            _gas->resetTimes();
+            _pellet->resetTimes();
+        }
         _day = new_day;
         time_mod = true;
     }
