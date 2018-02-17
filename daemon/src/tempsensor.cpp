@@ -3,6 +3,8 @@
 #include "frameworkutils.h"
 
 #include <math.h>
+#include <time.h>
+#include <wiringPi.h>
 
 TempSensor::TempSensor(Logger *l, int gpio, float temp_correction):
     _logger(l),
@@ -40,33 +42,34 @@ bool TempSensor::_rawRead()
     _temp = (_timestamp/60) % 20 + 10;
     _humidity = (_timestamp/3600) % 70 + 25;
 #else
+    int pin = 1;
     uint8_t laststate = HIGH;
     uint8_t counter = 0;
     int dht22_dat[5] = {0,0,0,0,0};
     uint8_t j = 0, i;
 
     // pull pin down for 18 milliseconds
-    setGPIOoutput( _gpio );
-    writeGPIObool( _gpio, false );
-    FrameworkTimer::msleep_s( 18 );
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW);
+    delay(18);
     // then pull it up for 40 microseconds
-    writeGPIObool( _gpio, true );
-    FrameworkTimer::usleep_s( 40 );
+    digitalWrite(pin, HIGH);
+    delayMicroseconds(40);
     // prepare to read the pin
-    setGPIOinput(_gpio);
+    pinMode(pin, INPUT);
 
     // detect change and read data
     for ( i=0; i< 85; i++)
     {
         counter = 0;
-        while (readGPIOraw(_gpio) == laststate)
+        while ((uint8_t)(digitalRead(pin)) == laststate)
         {
             counter++;
-            FrameworkTimer::usleep_s( 1 );
+            delayMicroseconds(1);
             if (counter == 255)
                 break;
         }
-        laststate = readGPIOraw(_gpio);
+        laststate = (uint8_t)(digitalRead(pin));
         if (counter == 255)
             break;
         // ignore first 3 transitions

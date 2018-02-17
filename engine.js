@@ -258,8 +258,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 	function updateStatus(){
         request("cgi-bin/status",{handleAs :"json"}).then(
             function(result){
-                if ( !result )
+                if ( !result ){
+                    window.setTimeout( function(){ updateStatus(); }, 2000 );
                     return;
+		}
                 system_status = result;
                 [gasOnBtn,gasOffBtn,pltOnBtn,pltOffBtn,pltMinBtn,pltModBtn,manualBtn,autoBtn].forEach(
                     function(o){

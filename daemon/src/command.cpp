@@ -18,9 +18,9 @@ void Command::init()
     _commands[8].insert( std::pair<std::string, CmdType>("ext-temp", EXT_TEMP) );
     _commands[9].insert( std::pair<std::string, CmdType>("pellet-on", PELLET_ON) );
     _commands[10].insert( std::pair<std::string, CmdType>("pellet-off", PELLET_OFF) );
-    _commands[10].insert( std::pair<std::string, CmdType>("pellet-off", PELLET_OFF) );
     _commands[11].insert( std::pair<std::string, CmdType>("set-history", SET_HISTORY) );
     _commands[14].insert( std::pair<std::string, CmdType>("reset-flameout", FLAMEOUT_RESET) );
+    _commands[17].insert( std::pair<std::string, CmdType>("pellet-minimum-on", PELLET_MINIMUM_ON) );
     _commands[18].insert( std::pair<std::string, CmdType>("pellet-minimum-off", PELLET_MINIMUM_OFF) );
     _commands_size = _commands.size();
 }

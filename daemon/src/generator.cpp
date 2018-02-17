@@ -57,6 +57,7 @@ bool Generator::switchOn()
     writeGPIObool( _command_gpio, false );
     _logger->logEvent( _on_event );
     _logger->logDebug( _name + " ON");
+    return true;
 }
 
 bool Generator::switchOff()
@@ -74,12 +75,13 @@ bool Generator::switchOff()
     writeGPIObool( _command_gpio, true );
     _logger->logEvent( _off_event );
     _logger->logDebug( _name + " OFF");
+    return true;
 }
 
 bool Generator::setPower(Generator::PowerLevel pl)
-{   // Relé close : false : power low
-    // Relé open : true : power high
-    writeGPIObool( _power_gpio, pl == POWER_HIGH );
+{   // Relé close : LOW/true : power low
+    // Relé open : HIGH/false : power high
+    writeGPIObool( _power_gpio, pl != POWER_LOW );
     if ( pl == POWER_LOW )
     {
         if ( _on_since > 0 )
@@ -98,19 +100,20 @@ bool Generator::setPower(Generator::PowerLevel pl)
         _logger->logEvent( _high_event );
         _logger->logDebug( _name + " HIGH");
     }
+	return true;
 }
 
 bool Generator::isLow()
 {
     bool x = !readPGIObool( _power_gpio );
-    _logger->logDebug(_name + " power is " + (x ? "HIGH" : "LOW") );
+//    _logger->logDebug(_name + " power is " + (x ? "HIGH" : "LOW") );
     return x;
 }
 
 bool Generator::isOn()
 {
     bool x = !readPGIObool( _command_gpio );
-    _logger->logDebug(_name + " is " + (x ? "on" : "off") );
+//    _logger->logDebug(_name + " is " + (x ? "on" : "off") );
     return x;
 }
 
@@ -119,11 +122,11 @@ bool Generator::isHot()
     // HIGH: mandata fredda, termostato off, relé chiuso
     // LOW: mandata calda, termostato on, relé aperto
     bool fdb = !readPGIObool( _status_gpio );
-    if ( fdb )
+/*    if ( fdb )
         _logger->logDebug(_name + " is HOT");
     else
         _logger->logDebug(_name + " is COLD");
-    return fdb;
+*/    return fdb;
 }
 
 void Generator::resetTimes()
