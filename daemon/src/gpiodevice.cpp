@@ -30,33 +30,44 @@ void GPIODevice::setGPIOinput(int gpio_no)
 
 bool GPIODevice::readPGIObool(int gpio_no)
 { // false : LOW : relé closed - true : HIGH : relé open
+    if ( gpio_no > -1 )
+    {
 #ifndef DEMO
-    pinMode( gpio_no, _mode[ gpio_no ] );
-    _values[ gpio_no ] = (digitalRead( gpio_no ) == HIGH);
+        pinMode( gpio_no, _mode[ gpio_no ] );
+        _values[ gpio_no ] = (digitalRead( gpio_no ) == HIGH);
 #else
-    if ( _values.find( gpio_no ) == _values.end() )
-        _values[ gpio_no ] = false;
+        if ( _values.find( gpio_no ) == _values.end() )
+            _values[ gpio_no ] = false;
 #endif
-    return _values[ gpio_no ];
+        return _values[ gpio_no ];
+    }
+    return false;
 }
 
 void GPIODevice::writeGPIObool(int gpio_no, bool value)
 { // false : LOW : relé closed - true : HIGH : relé open
+    if ( gpio_no > -1 )
+    {
 #ifndef DEMO
-    pinMode( gpio_no, OUTPUT);
-    digitalWrite( gpio_no, value ? HIGH : LOW );
+        pinMode( gpio_no, OUTPUT);
+        digitalWrite( gpio_no, value ? HIGH : LOW );
 #endif
-    _values[ gpio_no ] = value;
+        _values[ gpio_no ] = value;
+    }
 }
 
 uint8_t GPIODevice::readGPIOraw(int gpio_no)
 {
+    if ( gpio_no > -1 )
+    {
 #ifdef DEMO
-    return 0;
+        return 0;
 #else
-    int read = digitalRead( gpio_no );
-//    if ( read > 255 || read <  0 )
-//        debugPrintError("WiringPi") << "Invalid data from wiringPi library\n";
-    return read;
+        int read = digitalRead( gpio_no );
+        //    if ( read > 255 || read <  0 )
+        //        debugPrintError("WiringPi") << "Invalid data from wiringPi library\n";
+        return read;
 #endif
+    }
+    return 0;
 }

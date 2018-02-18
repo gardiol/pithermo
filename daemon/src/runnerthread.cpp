@@ -337,10 +337,13 @@ bool RunnerThread::_checkSpecialConditions()
     }
     else if ( _anti_ice_active )
     {
-        _logger->logDebug("Anti-ice OFF (gas spento)");
-        _logger->logEvent( LogItem::ANTI_ICE_OFF );
-        update_status = true;
-        _anti_ice_active = false;
+        if ( _temp_sensor->getTemp() > 6.0 )
+        {
+            _logger->logDebug("Anti-ice OFF (gas spento)");
+            _logger->logEvent( LogItem::ANTI_ICE_OFF );
+            update_status = true;
+            _anti_ice_active = false;
+        }
     }
     else // If we are not freezing, we can check the rest.
     {
@@ -408,8 +411,8 @@ bool RunnerThread::_checkSpecialConditions()
         // We are not under_temp, but is current temp too low?
         if ( !_under_temp && (_temp_sensor->getTemp() < _min_temp) )
         {   // Do not go under temp if gas or pellet are already heating
-            if ( !_gas->isOn() && !_pellet->isHot() ) // We check pellet feedback, to cater for flameout?
-            {   // Siamo sotto il minimo! Accendiamo qualcosa:
+            if ( !_gas->isOn() && !(_pellet->isOn() && !_pellet->isLow() && _pellet->isHot()) )
+            {   // We are under temp, we need to turn on something
                 _under_temp = true;
                 _logger->logDebug("under min temp start");
                 _logger->logEvent( LogItem::UNDER_TEMP_ON );
@@ -481,7 +484,7 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
         }
         if ( _under_temp )
         {   // Switch pellet to high or turn on gas
-            if ( pellet_on )
+            if ( pellet_on && !_pellet_flameout )
                 pellet_minimum = false;
             else
                 gas_on = true;
@@ -526,8 +529,12 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
     _logger->updateEventsJson();
 
     if ( update_status )
+    {
+        _pellet->printStatus();
+        _gas->printStatus();
+        _temp_sensor->printStatus();
         _updateStatus();
-
+    }
     return true;
 }
 

@@ -41,6 +41,8 @@ public:
     uint64_t todayOnTime();
     uint64_t todayLowOnTime();
 
+    void printStatus();
+
 protected:
 
 private:

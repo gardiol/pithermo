@@ -153,3 +153,12 @@ uint64_t Generator::todayLowOnTime()
 {
     return _today_low_time + ( _on_low_since > 0 ? (FrameworkTimer::getTimeEpoc()) - _on_low_since : 0 );
 }
+
+void Generator::printStatus()
+{
+    _logger->logDebug(_name + " is " + ( isOn() ? "ON" : "OFF" ) );
+    if ( _power_gpio > -1 )
+        _logger->logDebug(_name + " power is " + ( isLow() ? "LOW" : "HIGH" ) );
+    if ( _status_gpio > -1 )
+        _logger->logDebug(_name + " status is " + ( isHot() ? "HOT" : "COLD" ) );
+}

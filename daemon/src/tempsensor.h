@@ -28,6 +28,8 @@ public:
         return _humidity;
     }
 
+    void printStatus();
+
 private:
     Logger* _logger;
     float _temp;

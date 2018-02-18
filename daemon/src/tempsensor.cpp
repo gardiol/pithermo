@@ -32,6 +32,13 @@ bool TempSensor::readSensor()
     return ret;
 }
 
+void TempSensor::printStatus()
+{
+    _logger->logDebug("Sensor reads - t: " + FrameworkUtils::ftostring( _temp ) +
+                      " h: " + FrameworkUtils::ftostring( _humidity ) +
+                      " - Last successful read: "  + FrameworkUtils::tostring( _timestamp ) );
+}
+
 
 bool TempSensor::_rawRead()
 {
@@ -122,9 +129,5 @@ bool TempSensor::_rawRead()
         }
     }
 #endif
-
-    _logger->logDebug("Sensor reads - t: " + FrameworkUtils::ftostring( _temp ) +
-                      " h: " + FrameworkUtils::ftostring( _humidity ) +
-                      " - Last successful read: "  + FrameworkUtils::tostring( _timestamp ) );
     return ret;
 }
