@@ -65,7 +65,7 @@ bool Generator::switchOff()
     if ( _on_since > 0 )
     {
         _today_on_time += FrameworkTimer::getTimeEpoc() - _on_since;
-        _today_on_time = 0;
+        _on_since = 0;
     }
     if ( _on_low_since > 0 )
     {
@@ -106,14 +106,12 @@ bool Generator::setPower(Generator::PowerLevel pl)
 bool Generator::isLow()
 {
     bool x = !readPGIObool( _power_gpio );
-//    _logger->logDebug(_name + " power is " + (x ? "HIGH" : "LOW") );
     return x;
 }
 
 bool Generator::isOn()
 {
     bool x = !readPGIObool( _command_gpio );
-//    _logger->logDebug(_name + " is " + (x ? "on" : "off") );
     return x;
 }
 
@@ -122,11 +120,7 @@ bool Generator::isHot()
     // HIGH: mandata fredda, termostato off, relé chiuso
     // LOW: mandata calda, termostato on, relé aperto
     bool fdb = !readPGIObool( _status_gpio );
-/*    if ( fdb )
-        _logger->logDebug(_name + " is HOT");
-    else
-        _logger->logDebug(_name + " is COLD");
-*/    return fdb;
+    return fdb;
 }
 
 void Generator::resetTimes()
