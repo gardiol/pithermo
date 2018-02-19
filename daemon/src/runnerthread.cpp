@@ -118,6 +118,9 @@ RunnerThread::RunnerThread(const std::string &cfg,
                              LogItem::PELLET_MINIMUM, LogItem::PELLET_MODULATION ); // command = 2, status = 7, min/mod=5
     _temp_sensor = new TempSensor( _logger, 1, _temp_correction ); // 1 temp sensor
 
+    // Ensure we print at next check
+    _prev_pellet_hot = !_pellet->isHot();
+
     startThread();
     while ( !isRunning() )
         FrameworkTimer::msleep_s( 100 );
@@ -321,6 +324,54 @@ bool RunnerThread::_checkCommands()
     return update_status;
 }
 
+bool RunnerThread::_checkFlameout()
+{
+    bool update_status = false;
+    // Pellet temperature has changed?
+    bool pellet_hot = _pellet->isHot();
+    if ( _prev_pellet_hot != pellet_hot )
+    {   // Pellet temperature changed...
+        _logger->logEvent( pellet_hot ? LogItem::PELLET_HOT : LogItem::PELLET_COLD);
+        _logger->logDebug(std::string("Pellet temp changed! now ") + (pellet_hot ? "HOT" : "COLD" ) );
+        // Check for flameout:
+        if ( !_pellet_flameout && // we are NOT in flameout condition...
+                 // Pellet is ON, was HOT, now it's cold
+             (_pellet->isOn() && _prev_pellet_hot && !pellet_hot ) )
+        {
+            _pellet_flameout = true;
+            update_status = true;
+            _logger->logDebug("pellet flameout detected - pellet has gone cold");
+            _logger->logEvent( LogItem::PELLET_FLAMEOUT_ON );
+        }
+        else if ( _pellet_flameout && // We are in flameout...
+                  pellet_hot ) // Pellet is back HOT!
+        {
+            _pellet_flameout = false;
+            update_status = true;
+            _logger->logDebug("pellet flameout end");
+            _logger->logEvent( LogItem::PELLET_FLAMEOUT_OFF );
+        }
+         _prev_pellet_hot = pellet_hot;
+    }
+    else // Pellet temperature still unchanged, check for missed start:
+    {
+        if ( _pellet->isOn() )
+        {
+            uint64_t pellet_on_since = _pellet->lastOnTime();
+            if ( !_pellet_flameout && // not in flameout
+                 !pellet_hot && // pellet is still COLD
+                 ((pellet_on_since + _pellet_startup_delay) < _last_time) ) // Too long since started
+            {
+                _pellet_flameout = true;
+                update_status = true;
+                _logger->logDebug("pellet flameout detected - pellet was never hot after startup time");
+                _logger->logEvent( LogItem::PELLET_FLAMEOUT_ON );
+            }
+        }
+    }
+    return update_status;
+}
+
 bool RunnerThread::_checkSpecialConditions()
 {
     bool update_status = false;
@@ -347,46 +398,6 @@ bool RunnerThread::_checkSpecialConditions()
     }
     else // If we are not freezing, we can check the rest.
     {
-        // Pellet flameout is the next critical one:
-        // Pellet temperature has changed?
-        bool pellet_hot = _pellet->isHot();
-        if ( _prev_pellet_hot != pellet_hot )
-        {   // Pellet temperature changed...
-            _logger->logEvent( pellet_hot ? LogItem::PELLET_HOT : LogItem::PELLET_COLD);
-            // Check for flameout:
-            if ( !_pellet_flameout && // we are NOT in flameout condition...
-                     // Pellet is ON, was HOT, now it's cold
-                 (_pellet->isOn() && _prev_pellet_hot && !pellet_hot ) )
-            {
-                _pellet_flameout = true;
-                _logger->logDebug("pellet flameout detected - pellet has gone cold");
-                _logger->logEvent( LogItem::PELLET_FLAMEOUT_ON );
-            }
-            else if ( _pellet_flameout && // We are in flameout...
-                      pellet_hot ) // Pellet is back HOT!
-            {
-                _pellet_flameout = false;
-                _logger->logDebug("pellet flameout end");
-                _logger->logEvent( LogItem::PELLET_FLAMEOUT_OFF );
-            }
-             _prev_pellet_hot = pellet_hot;
-        }
-        else // Pellet temperature still unchanged, check for missed start:
-        {
-            if ( _pellet->isOn() )
-            {
-                uint64_t pellet_on_since = _pellet->lastOnTime();
-                if ( !_pellet_flameout && // not in flameout
-                     !pellet_hot && // pellet is still COLD
-                     ((pellet_on_since + _pellet_startup_delay) < _last_time) ) // Too long since started
-                {
-                    _pellet_flameout = true;
-                    _logger->logDebug("pellet flameout detected - pellet was never hot after startup time");
-                    _logger->logEvent( LogItem::PELLET_FLAMEOUT_ON );
-                }
-            }
-        }
-
         // Now, we can check for over_temp:
         // If not already over_temp, and current temp if above max(with histeresys)
         if ( !_over_temp && (_temp_sensor->getTemp() > (_max_temp+0.1)) )
@@ -409,6 +420,7 @@ bool RunnerThread::_checkSpecialConditions()
 
         // At last, we check for under temp:
         // We are not under_temp, but is current temp too low?
+        printf("(u %d) T: %f -- mT: %f\n", _under_temp, _temp_sensor->getTemp(), _min_temp );
         if ( !_under_temp && (_temp_sensor->getTemp() < _min_temp) )
         {   // Do not go under temp if gas or pellet are already heating
             if ( !_gas->isOn() && !(_pellet->isOn() && !_pellet->isLow() && _pellet->isHot()) )
@@ -437,6 +449,9 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
     // Read internal temperature sensor:
     if ( _temp_sensor->readSensor() )
         _sensor_success_reads++;
+
+    if ( _checkFlameout() )
+        update_status = true;
 
     // If we have at least ONE successful read, check some special conditions:
     if ( _sensor_success_reads > 0 )
@@ -679,7 +694,7 @@ void RunnerThread::_updateStatus()
                 break;
             case 10:
             {
-                uint32_t total_time = _pellet->todayOnTime();
+                uint32_t total_time = _gas->todayOnTime();
                 std::string str = FrameworkUtils::tostring( total_time );
                 fwrite( str.c_str(), str.length(), 1, status_file);
             }

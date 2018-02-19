@@ -32,6 +32,7 @@ private:
     void _updateCurrentTime(uint64_t new_time);
     void _updateStatus();
     bool _checkCommands();
+    bool _checkFlameout();
     bool _checkSpecialConditions();
     void _saveConfig();
 
