@@ -420,7 +420,6 @@ bool RunnerThread::_checkSpecialConditions()
 
         // At last, we check for under temp:
         // We are not under_temp, but is current temp too low?
-        printf("(u %d) T: %f -- mT: %f\n", _under_temp, _temp_sensor->getTemp(), _min_temp );
         if ( !_under_temp && (_temp_sensor->getTemp() < _min_temp) )
         {   // Do not go under temp if gas or pellet are already heating
             if ( !_gas->isOn() && !(_pellet->isOn() && !_pellet->isLow() && _pellet->isHot()) )
