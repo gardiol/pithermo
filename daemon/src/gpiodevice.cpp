@@ -24,7 +24,7 @@ void GPIODevice::setGPIOoutput(int gpio_no)
 void GPIODevice::setGPIOinput(int gpio_no)
 {
 #ifndef DEMO
-    _mode[ gpio_no ] = OUTPUT;
+    _mode[ gpio_no ] = INPUT;
 #endif
 }
 
