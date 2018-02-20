@@ -96,6 +96,9 @@ RunnerThread::RunnerThread(const std::string &cfg,
     // Load history log:
     _history.initialize( history_mode, history_len );
 
+    // Ensure on times will not be zeroized later
+    _updateCurrentTime( FrameworkTimer::getTimeEpoc() );
+
     uint64_t gas_on_time = 0;
     uint64_t pellet_on_time = 0;
     uint64_t pellet_min_time = 0;
@@ -563,11 +566,8 @@ void RunnerThread::_updateCurrentTime( uint64_t new_time )
     bool time_mod = false;
     if ( new_day != _day )
     {
-        if ( _day != 0 )
-        {   // do not reset on first run or we will zeroize precalulated on times
-            _gas->resetTimes();
-            _pellet->resetTimes();
-        }
+        _gas->resetTimes();
+        _pellet->resetTimes();
         _day = new_day;
         time_mod = true;
     }

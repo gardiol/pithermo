@@ -117,8 +117,8 @@ bool Generator::isOn()
 
 bool Generator::isHot()
 {
-    // HIGH: mandata fredda, termostato off, relé chiuso
-    // LOW: mandata calda, termostato on, relé aperto
+    // HIGH: mandata fredda, termostato off, relé chiuso, 3.3V
+    // LOW: mandata calda, termostato on, relé aperto, 0V
     bool fdb = !readPGIObool( _status_gpio );
     return fdb;
 }
