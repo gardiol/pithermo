@@ -32,7 +32,9 @@ public:
         AUTO_MODE           = 0x0000000000080000,// 512k
         MIN_TEMP_UPDATE     = 0x0000000000100000,// 1024k
         MAX_TEMP_UPDATE     = 0x0000000000200000,// 2048k
-        PROGRAM_UPDATE      = 0x0000000000400000 // 4096k
+        PROGRAM_UPDATE      = 0x0000000000400000,// 4096k
+        ACTIVATED           = 0x0000000000800000,// 8192k
+        DEACTIVATED         = 0x0000000001000000 // 16384k
     };
 
     LogItem( Event t );

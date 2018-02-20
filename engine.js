@@ -34,6 +34,8 @@ var MessageStr = {
     1048576: "Temperatura minima modificata",
     2097152: "Temperatura massima modificata",
     4194304: "Programma modificato",
+    8388608: "Sistema attivato",
+    16777216: "Sistema disattivato",
 };
 
 require([
@@ -149,6 +151,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             disabled: true,
             smallDelta: 0.1,
             style: "width: 6em;",
+            onChange: function(){ tempEdited = true; },
             constraints: { min:-100, max:100, places:1 }
         }, "min-temp"),
         tempMax: new NumberSpinner({
@@ -156,6 +159,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             disabled: true,
             smallDelta: 0.1,
             style: "width: 6em;",
+            onChange: function(){ tempEdited = true; },
             constraints: { min:-100, max:100, places:1 }
         }, "max-temp"),
         tempReset: new Button({
@@ -171,7 +175,8 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     dialog.on("execute", function() {
                         if ( system_status ) {
                             sts.tempMax.set("value", system_status.temp.max );				
-                            sts.tempMin.set("value", system_status.temp.min );				
+                            sts.tempMin.set("value", system_status.temp.min );		
+                            tempEdited = false;
                         }
                     });
                     dialog.show();
@@ -192,7 +197,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         function(result){},
                         function(err){alert("Command error: " + err );});
                         request.post("cgi-bin/set_max_temp",{data:sts.tempMax.value}).then(
-                        function(result){},
+                        function(result){tempEdited = false;},
                         function(err){alert("Command error: " + err );});
                     });
                     dialog.show();
@@ -200,6 +205,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         }, "temp-apply"),
     };   
     var system_status = null;
+    var tempEdited = false;
     
     var prg = {
         reset:  new Button({
@@ -271,7 +277,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     }
          
     function changeHistory(){
-        request.post("cgi-bin/set_history",{data:hstUnit.get("value")}).then(
+        request.post("cgi-bin/set_history",{data:hst.unit.get("value")}).then(
             function(result){
                 updateHistory();
             },
@@ -416,7 +422,21 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 if ( result ){
                     system_status = result;
                     for ( var p in sts )
-                        sts[p].set("disabled", true);                
+                        sts[p].set("disabled", true); 
+                    sts.tempMin.set("disabled", false );
+                    sts.tempMax.set("disabled", false );
+                    if ( !tempEdited ){
+                        if ( sts.tempMin.get("value") != system_status.temp.min )
+                            sts.tempMin.set("value", system_status.temp.min);
+                        if ( sts.tempMax.get("value") != system_status.temp.max )
+                            sts.tempMax.set("value", system_status.temp.max);
+                    }
+                    sts.tempApply.set("disabled", false );
+                    sts.tempReset.set("disabled", false );
+                    if ( system_status.active == "on" )
+                        sts.off.set("disabled", false );
+                    else 
+                        sts.on.set("disabled", false );
                     if ( system_status.mode == "manual" ){
                         sts.auto.set("disabled", false );
                         html.set("mode-label", "Impianto in MANUALE");
@@ -430,13 +450,14 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                             sts.pelletOn.set("disabled", false );
                         }
                         if ( system_status.gas.command == "on" )
-                            sts.gasOffBtn.set("disabled", false );
+                            sts.gasOff.set("disabled", false );
                         else
-                            sts.gasOnBtn.set("disabled", false );
-                    }else{
+                            sts.gasOn.set("disabled", false );
+                    }else if ( system_status.mode == "auto" ) {
                         sts.manual.set("disabled", false );
                         html.set("mode-label", "Impianto in AUTOMATICO");
-                    }
+                    }else
+                        html.set("mode-label", "Impianto SPENTO");
                     var p_h = Math.trunc(system_status.pellet.time/3600);
                     var p_m = Math.trunc((system_status.pellet.time/60)%60);
                     var mp_h = Math.trunc(system_status.pellet.mintime/3600);
@@ -453,7 +474,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     attr.set("pellet-minimum-status-led", "src", system_status.pellet.minimum == "on" ? "images/pellet-minimo.png":"images/pellet-modulazione.png");
                     attr.set("pellet-status-led", "src", system_status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
                     attr.set("gas-status-led", "src", system_status.gas.command == "on" ? "images/gas-on.png":"images/gas-off.png");                
-                    style.set(flameoutBtn.domNode, 'display', system_status.pellet.flameout == "on" ? 'inline' : 'none' );		
+                    style.set(sts.flameout.domNode, 'display', system_status.pellet.flameout == "on" ? 'inline' : 'none' );		
                     programRefresh();
                     request("cgi-bin/events",{handleAs :"json"}).then(
                         function(events){
@@ -477,6 +498,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 stsTimer = window.setTimeout( function(){ updateStatus(); }, 2000 );
             }, 
             function(err){
+                tempEdited = false;
                 system_status = null;
                 system_events = [];                
                 for ( var p in sts )
@@ -501,7 +523,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         extTempData = {};
         var ext_zeros = 0;
         var t = [], h = [], x = [];
-        var s = hstSel.get("value");
+        var s = hst.sel.get("value");
         if ( hstData ){
             var te = [], ex = [], hu = [], ti = [];
             for ( var v = 0; (v < s) || (ti.length < 15); v++ ){
@@ -548,14 +570,14 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 			function(result){
                 if ( result ) {
                     hstData = result.data;
-                    if ( hstUnit.get("value") != result.mode )
-                        hstUnit.set("value", result.mode);
-                    if ( hstSel.get("value") > result.len )
-                        hstSel.set("value", result.len);                        
-                    hstSel.set("maximum", result.len );
-                    hstSel.set("discreteValues", result.len );
+                    if ( hst.unit.get("value") != result.mode )
+                        hst.unit.set("value", result.mode);
+                    if ( hst.sel.get("value") > result.len )
+                        hst.sel.set("value", result.len);                        
+                    hst.sel.set("maximum", result.len );
+                    hst.sel.set("discreteValues", result.len );
                     historySetData();                                
-                    html.set("history-label",  hstSel.get("value"));
+                    html.set("history-label",  hst.sel.get("value"));
                     hstTimer = window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
                 }
 			},
@@ -590,7 +612,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                             minorTicks: false,minorLabels: false,
                             microTicks: false,
                             labelFunc:function(text,value,prec){
-                                if ( hstUnit.get("value") != "h" )
+                                if ( hst.unit.get("value") != "h" )
                                     return new Date(parseInt(value)*1000).toLocaleString();
                                 else
                                     return new Date(parseInt(value)*1000).toLocaleTimeString();
@@ -636,7 +658,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     }
         
     function buildStatus(){
-        on(dom.byId("status-size"), "click", function(){dclass.toggle(dom.byId("status-controls"), "hidden");});
+        on(dom.byId("status-size"), "click", function(){
+            dclass.toggle(dom.byId("status-controls"), "hidden");
+            dclass.toggle(dom.byId("messages"), "messages-big");            
+        });
         for ( var p in sts )
             sts[p].startup();
     }

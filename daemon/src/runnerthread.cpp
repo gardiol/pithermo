@@ -33,6 +33,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _exchange_path( exchange_path ),
     _commands_mutex("CommandsMutex"),
     _manual_mode(true),
+    _activated(false),
     _manual_gas_on(false),
     _anti_ice_active(false),
     _over_temp(false),
@@ -51,6 +52,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _pellet_startup_delay(60*45)
 {
     _status_json_template.push_back("{\"mode\":\"");
+    _status_json_template.push_back("\",\"active\":\"");
     _status_json_template.push_back("\",\"antiice\":\"");
     _status_json_template.push_back("\",\"warnings\":{\"modeswitch\":\"");
     _status_json_template.push_back("\"},\"pellet\":{\"command\":\"");
@@ -83,6 +85,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
         _manual_mode = FrameworkUtils::string_tolower(config.getValue( "mode" )) == "manual";
         _min_temp = FrameworkUtils::string_tof( config.getValue( "min_temp" ) );
         _max_temp = FrameworkUtils::string_tof( config.getValue( "max_temp" ) );
+        _activated = config.getValueBool( "activated" );
         if ( config.hasValue( "pellet_startup_delay" ) )
             _pellet_startup_delay = FrameworkUtils::string_toi( config.getValue( "pellet_startup_delay" ) );
         _temp_correction = FrameworkUtils::string_tof( config.getValue( "temp_correction" ) );
@@ -124,6 +127,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     // Ensure we print at next check
     _prev_pellet_hot = !_pellet->isHot();
 
+    _updateStatus();
     startThread();
     while ( !isRunning() )
         FrameworkTimer::msleep_s( 100 );
@@ -180,6 +184,28 @@ bool RunnerThread::_checkCommands()
         _commands_list.pop_front();
         switch ( cmd->command() )
         {
+        case Command::ACTIVATE:
+            _logger->logDebug("Activate command received");
+            if ( !_activated )
+            {
+                _logger->logEvent( LogItem::ACTIVATED );
+                save_config = true;
+                _activated = true;
+                update_status = true;
+            }
+            break;
+
+        case Command::DEACTIVATE:
+            _logger->logDebug("Deactivate command received");
+            if ( _activated )
+            {
+                _logger->logEvent( LogItem::DEACTIVATED );
+                save_config = true;
+                _activated = false;
+                update_status = true;
+            }
+            break;
+
         case Command::EXT_TEMP:
             _logger->logDebug("New EXT TEMP received: " + cmd->getParam());
             _current_ext_temp = FrameworkUtils::string_tof( cmd->getParam() );
@@ -452,13 +478,16 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
     if ( _temp_sensor->readSensor() )
         _sensor_success_reads++;
 
-    if ( _checkFlameout() )
-        update_status = true;
-
-    // If we have at least ONE successful read, check some special conditions:
-    if ( _sensor_success_reads > 0 )
-        if ( _checkSpecialConditions() )
+    if ( _activated )
+    {
+        if ( _checkFlameout() )
             update_status = true;
+
+        // If we have at least ONE successful read, check some special conditions:
+        if ( _sensor_success_reads > 0 )
+            if ( _checkSpecialConditions() )
+                update_status = true;
+    }
 
     // Update time and history
     uint64_t current_time = FrameworkTimer::getTimeEpoc();
@@ -466,7 +495,12 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
     {
         update_status = true;
         _logger->logDebug("Time interval (" + FrameworkUtils::tostring(current_time) +" - " + FrameworkUtils::tostring(_last_time) + " >= 60)");
-        _updateCurrentTime( current_time );
+        if ( _updateCurrentTime( current_time ) )
+        {
+            _gas->resetTimes();
+            _pellet->resetTimes();
+        }
+
         // We save the temperatures only every minute
         if ( _sensor_success_reads > 0 )
         {
@@ -475,72 +509,82 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
         }
     }
 
-    // Now we have collected all the conditions, and we can proceed to apply them:
-    bool gas_on = _manual_mode ? _gas->isOn() : _program.getGas();
-    bool pellet_on = _manual_mode ? _pellet->isOn() : _program.getPellet();
-    bool pellet_minimum = _manual_mode ? _pellet->isLow() : _program.getPelletMinimum();
-    // Anti-ice relies always on gas:
-    if ( _anti_ice_active )
+    if ( _activated )
     {
-        gas_on = true; // Force GAS to ON;
+        // Now we have collected all the conditions, and we can proceed to apply them:
+        bool gas_on = _manual_mode ? _gas->isOn() : _program.getGas();
+        bool pellet_on = _manual_mode ? _pellet->isOn() : _program.getPellet();
+        bool pellet_minimum = _manual_mode ? _pellet->isLow() : _program.getPelletMinimum();
+        // Anti-ice relies always on gas:
+        if ( _anti_ice_active )
+        {
+            gas_on = true; // Force GAS to ON;
+            if ( pellet_on )
+                pellet_minimum = false; // Turn pellet to HIGH
+        }
+        else
+        {
+            if ( _pellet_flameout )
+            {   // Force gas if pellet is on high:
+                if ( pellet_on && !pellet_minimum )
+                    gas_on = true;
+            }
+            if ( _over_temp )
+            {   // Turn off gas and set pellet to minimum
+                gas_on = false;
+                if ( pellet_on && !pellet_minimum )
+                    pellet_minimum = true;
+            }
+            if ( _under_temp )
+            {   // Switch pellet to high or turn on gas
+                if ( pellet_on && !_pellet_flameout )
+                    pellet_minimum = false;
+                else
+                    gas_on = true;
+            }
+        }
+
+        if ( gas_on && !_gas->isOn() )
+        {
+            if ( _gas->switchOn() )
+                update_status = true;
+        }
+        else if ( !gas_on && _gas->isOn() )
+        {
+            if ( _gas->switchOff() )
+                update_status = true;
+        }
+
         if ( pellet_on )
-            pellet_minimum = false; // Turn pellet to HIGH
+        {
+            if ( !_pellet->isOn() )
+            {
+                if ( _pellet->switchOn() )
+                    update_status = true;
+            }
+            if ( pellet_minimum && !_pellet->isLow() )
+            {
+                if ( _pellet->setPower( Generator::POWER_LOW ) )
+                    update_status = true;
+            }
+            else if ( !pellet_minimum && _pellet->isLow() )
+            {
+                if ( _pellet->setPower( Generator::POWER_HIGH ) )
+                    update_status = true;
+            }
+        }
+        else if ( !pellet_on && _pellet->isOn() )
+        {
+            if ( _pellet->switchOff() )
+                update_status = true;
+        }
     }
     else
     {
-        if ( _pellet_flameout )
-        {   // Force gas if pellet is on high:
-            if ( pellet_on && !pellet_minimum )
-                gas_on = true;
-        }
-        if ( _over_temp )
-        {   // Turn off gas and set pellet to minimum
-            gas_on = false;
-            if ( pellet_on && !pellet_minimum )
-                pellet_minimum = true;
-        }
-        if ( _under_temp )
-        {   // Switch pellet to high or turn on gas
-            if ( pellet_on && !_pellet_flameout )
-                pellet_minimum = false;
-            else
-                gas_on = true;
-        }
-    }
-
-    if ( gas_on && !_gas->isOn() )
-    {
-        if ( _gas->switchOn() )
-            update_status = true;
-    }
-    else if ( !gas_on && _gas->isOn() )
-    {
-        if ( _gas->switchOff() )
-            update_status = true;
-    }
-
-    if ( pellet_on )
-    {
-        if ( !_pellet->isOn() )
-        {
-            if ( _pellet->switchOn() )
-                update_status = true;
-        }
-        if ( pellet_minimum && !_pellet->isLow() )
-        {
-            if ( _pellet->setPower( Generator::POWER_LOW ) )
-                update_status = true;
-        }
-        else if ( !pellet_minimum && _pellet->isLow() )
-        {
-            if ( _pellet->setPower( Generator::POWER_HIGH ) )
-                update_status = true;
-        }
-    }
-    else if ( !pellet_on && _pellet->isOn() )
-    {
-        if ( _pellet->switchOff() )
-            update_status = true;
+        if ( _pellet->isOn() )
+            _pellet->switchOff();
+        if ( _gas->isOn() )
+            _gas->switchOff();
     }
 
     _logger->updateEventsJson();
@@ -555,8 +599,9 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
     return true;
 }
 
-void RunnerThread::_updateCurrentTime( uint64_t new_time )
+bool RunnerThread::_updateCurrentTime( uint64_t new_time )
 {
+    bool ret = false;
     _last_time = new_time;
     time_t now = (time_t)_last_time;
     struct tm *tm_struct = localtime(&now);
@@ -566,8 +611,7 @@ void RunnerThread::_updateCurrentTime( uint64_t new_time )
     bool time_mod = false;
     if ( new_day != _day )
     {
-        _gas->resetTimes();
-        _pellet->resetTimes();
+        ret = true;
         _day = new_day;
         time_mod = true;
     }
@@ -583,6 +627,7 @@ void RunnerThread::_updateCurrentTime( uint64_t new_time )
     }
     if ( time_mod )
         _program.setTime( _day, _hour, _half_hour );
+    return ret;
 }
 
 void RunnerThread::_saveConfig()
@@ -590,6 +635,7 @@ void RunnerThread::_saveConfig()
     std::string content;
     FrameworkUtils::file_to_str( _config_file, content );
     ConfigFile config("config", content );
+    config.setValueBool("activated", _activated );
     config.setValue( "mode", _manual_mode ? "manual" : "auto" );
     config.setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
     config.setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
@@ -630,99 +676,108 @@ void RunnerThread::_updateStatus()
             switch (i)
             {
             case 0:
-                if ( _manual_mode )
-                    fwrite( "manual", 6, 1, status_file);
-                else
-                    fwrite( "auto", 4, 1, status_file);
+                if ( _activated )
+                {
+                    if ( _manual_mode )
+                        fwrite( "manual", 6, 1, status_file);
+                    else
+                        fwrite( "auto", 4, 1, status_file);
+                }
                 break;
             case 1:
-                if ( _anti_ice_active )
+                if ( _activated )
                     fwrite( "on", 2, 1, status_file);
                 else
                     fwrite( "off", 3, 1, status_file);
                 break;
             case 2:
+                if ( _anti_ice_active )
+                    fwrite( "on", 2, 1, status_file);
+                else
+                    fwrite( "off", 3, 1, status_file);
+                break;
+            case 3:
                 if ( _pellet->isOn() && !_program.getPellet() )
                     fwrite( str_pellet_off_warning.c_str(), str_pellet_off_warning.size(), 1, status_file);
                 else if ( !_pellet->isOn() && _program.getPellet() )
                     fwrite( str_pellet_on_warning.c_str(), str_pellet_on_warning.size(), 1, status_file);
                 break;
-            case 3:
+            case 4:
                 if ( _pellet->isOn() )
                     fwrite( "on", 2, 1, status_file);
                 else
                     fwrite( "off", 3, 1, status_file);
                 break;
-            case 4:
+            case 5:
                 if ( _pellet->isHot() )
                     fwrite( "on", 2, 1, status_file);
                 else
                     fwrite( "off", 3, 1, status_file);
                 break;
-            case 5:
+            case 6:
                 if ( _pellet->isLow() )
                     fwrite( "on", 2, 1, status_file);
                 else
                     fwrite( "off", 3, 1, status_file);
                 break;
-            case 6:
+            case 7:
                 if ( _pellet_flameout )
                     fwrite( "on", 2, 1, status_file);
                 else
                     fwrite( "off", 3, 1, status_file);
                 break;
-            case 7:
+            case 8:
             {
                 uint32_t total_time = _pellet->todayOnTime();
                 std::string str = FrameworkUtils::tostring( total_time );
                 fwrite( str.c_str(), str.length(), 1, status_file);
             }
                 break;
-            case 8:
+            case 9:
             {
                 uint32_t total_time = _pellet->todayLowOnTime();
                 std::string str = FrameworkUtils::tostring( total_time );
                 fwrite( str.c_str(), str.length(), 1, status_file);
             }
                 break;
-            case 9:
+            case 10:
                 if ( _gas->isOn() )
                     fwrite( "on", 2, 1, status_file);
                 else
                     fwrite( "off", 3, 1, status_file);
                 break;
-            case 10:
+            case 11:
             {
                 uint32_t total_time = _gas->todayOnTime();
                 std::string str = FrameworkUtils::tostring( total_time );
                 fwrite( str.c_str(), str.length(), 1, status_file);
             }
                 break;
-            case 11:
+            case 12:
                 fwrite( str_min_t.c_str(), str_min_t.length(), 1, status_file);
                 break;
-            case 12:
+            case 13:
                 fwrite( str_max_t.c_str(), str_max_t.length(), 1, status_file);
                 break;
-            case 13:
+            case 14:
                 fwrite( str_temp.c_str(), str_temp.length(), 1, status_file);
                 break;
-            case 14:
+            case 15:
                 fwrite( str_ext_temp.c_str(), str_ext_temp.length(), 1, status_file);
                 break;
-            case 15:
+            case 16:
                 fwrite( str_humidity.c_str(), str_humidity.length(), 1, status_file);
                 break;
-            case 16:
+            case 17:
                 fwrite( str_day.c_str(), str_day.length(), 1, status_file);
                 break;
-            case 17:
+            case 18:
                 fwrite( str_h.c_str(), str_h.length(), 1, status_file);
                 break;
-            case 18:
+            case 19:
                 fwrite( str_f.c_str(), str_f.length(), 1, status_file);
                 break;
-            case 19:
+            case 20:
                 break;
             }
         }

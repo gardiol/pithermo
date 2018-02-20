@@ -12,6 +12,8 @@ class Command
 public:
     static void init();
     enum CmdType { INVALID,
+                   ACTIVATE,
+                   DEACTIVATE,
                    PELLET_ON,
                    PELLET_OFF,
                    PELLET_MINIMUM_ON,

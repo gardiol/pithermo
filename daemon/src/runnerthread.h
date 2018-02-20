@@ -29,7 +29,7 @@ public:
 
 private:
     bool scheduledRun(uint64_t, uint64_t);
-    void _updateCurrentTime(uint64_t new_time);
+    bool _updateCurrentTime(uint64_t new_time);
     void _updateStatus();
     bool _checkCommands();
     bool _checkFlameout();
@@ -51,6 +51,7 @@ private:
     BaseMutex _commands_mutex;
 
     bool _manual_mode;
+    bool _activated;
     bool _manual_gas_on;
 
     // Special conditions:
