@@ -1,12 +1,16 @@
 
-#modsel {
-	width: 100%;
+/* general */
+.size-button {
+    height: 2em;
+    width: 2em;
+    vertical-align: middle;
+    margin-left: 2em;
+}
+.hidden {
+    display: none;
 }
 
-div.clear {
-	clear: both;
-}
-
+/* History area specific */
 #history-area {
 	width: 100%;
     overflow: visible;
@@ -34,10 +38,187 @@ div.clear {
 	margin-top: 0px;
 	margin-right: -5em;
 }
+.history-big {
+    height: 32em !important;
+}
 
-#history-size {
-    height: 2em;
-    width: 2em;
+/* Status are specific */
+#status-area {
+	width: 100%;
+    padding-top: 2em;
+    padding-bottom: 2em;
+    border-bottom: 1px inset black;
+    background: beige;
+}
+
+#messages {
+	margin-left: 3em;
+	margin-right: 3em;
+	margin-bottom: 1em;
+	border: 2px solid gray;
+	height: 3em;
+	overflow-y: scroll;
+	background: lightyellow;
+	color: blue;
+}
+
+#messages-queue {
+	list-style: none;
     vertical-align: middle;
-    margin-left: 2em;
+}
+
+#status-info {
+    text-align: center;
+    vertical-align: middle;
+}
+
+#status-info > div {
+    text-align: center;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#status-info > div > div {
+    text-align: center;
+    vertical-align: middle;
+}
+
+#status-main {
+    text-align: center;
+}
+
+#status-boxes-align {
+    vertical-align: top;
+    text-align: center;
+}
+
+.status-boxes {
+	padding:0.8em;
+    margin: 1em;
+    display: inline-block;
+	background: peru;
+	text-align: center;
+	height: 15em;
+	border: 1px dashed black;
+}
+
+p.status-title {
+	font-style: bold;
+	font-size: 140%;
+	border-bottom: 1px dotted black;
+}
+
+img.status-icon {
+	height: 5em;
+}
+
+img.status-icon-sub {
+	height: 1em;
+}
+
+img#pellet-feedback-led {
+	height: 2em;
+}
+
+#pellet-status > div {
+	display: inline-block;
+    vertical-align: middle;
+}
+
+.temp-img {
+	height: 2em;
+        vertical-align: middle;
+}
+
+
+/* Program specific */
+#program-area {
+    background: LightGoldenRodYellow;
+}
+
+#program-header-row {
+    width: 100%;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#program-header-row > div {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#program-header-row > img {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#program-change {
+    width: 100%;
+    height: 1em;
+    padding: 0.2em;
+    text-align: center;
+}
+
+.program-changed {
+    background: yellow !important;
+}
+
+#program-selector {
+	text-align: center;
+}
+
+#program-selector > div {
+	display: inline-block;
+	vertical-align: middle;
+	border: 2px solid black;
+	margin: 1em;
+	padding: 1em;
+}
+
+#select-box {
+	height: 6.5em;
+}
+
+#select-box > div {
+	display: inline-block;
+	vertical-align: middle;
+	width: 5em;
+	height: 100%;
+}
+
+#program-selector > div > div > img {
+	height: 3em;
+}
+
+#today-table {
+    margin-top: 1em;
+    margin-bottom: 1em;
+    background: LemonChiffon;
+}
+
+.program-selected {
+	background: lightgreen;
+	border: 1px solid black;
+}
+
+.program-table {
+	border-collapse: collapse;
+	text-align: center;
+    width: 100%;
+	border-bottom: 1px dashed black;
+}
+
+.program-table th, td {
+	border-left: 1px solid black;
+	border-right: 1px solid black;
+    height: 1.5em;
+}
+
+.program-table tr {
+	border-top: 1px dashed black;
+}
+
+.program-table td img {
+	width: 1.5em;
+	height: 1.5em;
 }

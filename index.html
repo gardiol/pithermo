@@ -1,33 +1,150 @@
+<!DOCTYPE html>
 <html>
 <head>
 	<title>ThermoController</title>
-	<meta charset="UTF-8">
-	<link rel="stylesheet" href="js/dijit/themes/claro/claro.css">
-	<link rel="stylesheet" href="js/dgrid/css/dgrid.css">
-	<link rel="stylesheet" href="index.css?ver=1">
+	<meta charset="UTF-8"/>
+	<link rel="stylesheet" href="js/dijit/themes/claro/claro.css"/>
+	<link rel="stylesheet" href="js/dgrid/css/dgrid.css"/>
+	<link rel="stylesheet" href="index.css?ver=4"/>
 	<script>dojoConfig = {parseOnLoad: true}</script>
 	<script src="js/dojo/dojo.js" data-dojo-config="async: true"></script>
 </head>
 <body style="width: 100%; height: 100%;" class="claro">
-	<div id="history-area">
-		<div id="history-graph">
-		</div>
-		<div id="history-controls">
-            <spam>Mostra le ultime</span>
-			<span id="history-sel"></span>
-			<span id="history-label"></span>
-			<select id="history-unit">
-				<option value="h" selected="selected">ore</option>
-				<option value="d">giornate</option>
-				<option value="w">settimane</option>
-			</select>
-			<img id="history-size" src="images/maximize.png"/>
-		</div>
-	</div>
-	<div id="modsel">
-		<div class="clear" id="mode-stack">
-		</div>
-	</div>
-	<script src="engine.js"></script>
+
+<div id="history-area">
+    <div id="history-graph">
+    </div>
+    <div id="history-controls">
+        <span>Mostra le ultime</span>
+        <span id="history-sel"></span>
+        <span id="history-label"></span>
+        <select id="history-unit">
+            <option value="h" selected="selected">ore</option>
+            <option value="d">giornate</option>
+            <option value="w">settimane</option>
+        </select>
+        <img alt="hstSize" id="history-size" class="size-button" src="images/maximize.png"/>
+    </div><!-- history controls-->
+</div><!-- history area-->
+
+<div id="status-area">
+    <div id="messages">
+        <ul id="messages-queue"></ul>
+    </div>
+    <div id="status-info">
+        <div>
+            <div>
+                <span id="mode-label">Modalità impianto</span>
+                Temp:
+                <span id="temp-label"></span>
+                / 
+                <span id="humi-label"></span>%
+            </div>
+            <div>
+                Gas oggi: <span id="gas-time">0h 0m</span>
+                Pellet oggi: <span id="pellet-time">0h 0m</span>
+                Minimo: <span id="pellet-mintime">0h 0m</span> 
+                Modulaz.: <span id="pellet-modtime">0h 0m</span>
+            </div>
+        </div>
+        <img alt="stsSize" id="status-size" class="size-button" src="images/maximize.png"/>
+    </div><!-- status info-->
+    <div id="status-controls" class="hidden">
+        <div id="status-main">
+            <button id="on-btn"></button>	
+            <button id="off-btn"></button>	
+            <button id="auto-btn"></button>	
+            <button id="manual-btn"></button>	
+        </div>
+        <div id="status-boxes-align">
+        	<div id="temp-pane" class="status-boxes">
+                <p class="status-title">Temperature</p>
+                <div>
+                    <img alt="minTemp" class="temp-img" src="images/min-temp.png"/>
+                    <div id="min-temp"></div>
+                </div>
+                <div>
+                    <img alt="maxTemp" class="temp-img" src="images/max-temp.png"/>
+                    <div id="max-temp"></div>
+                </div>
+                <div>
+                    <button id="temp-reset"></button>
+                    <button id="temp-apply"></button>
+                </div>
+            </div><!-- temp pane-->
+        	<div id="pellet-status" class="status-boxes">
+                <p class="status-title">Stufa a pellet</p>
+                <div>
+                    <div><button id="pellet-on-btn"></button></div>
+                    <div><button id="pellet-minimum-on-btn"></button></div>
+                </div>
+                <div>
+                    <div><img alt="psl" class="status-icon" id="pellet-status-led" src="images/pellet-off.png"/></div>
+                    <div><img alt="pmsl" class="status-icon-sub" id="pellet-minimum-status-led" src="images/pellet-modulazione.png"/></div>
+                    <div><img alt="pfl" class="status-icon-temp" id="pellet-feedback-led" src="images/min-temp.png"/></div>
+                    <div><button id="pellet-flameout-reset-btn"></button></div>
+                </div>
+                <div>
+                    <div><button id="pellet-off-btn"></button></div>
+                    <div><button id="pellet-minimum-off-btn"></button></div>
+                </div>
+            </div><!-- pellet status-->
+            <div id="gas-status" class="status-boxes">
+                <p class="status-title">Caldaia a gas</p>
+                <button id="gas-on-btn"></button>	
+                <img alt="gl" class="status-icon" id="gas-status-led" src="images/gas-off.png"/>
+                <button id="gas-off-btn"></button>	
+            </div><!-- gas status-->
+        </div> <!-- status row-->
+    </div><!-- status controls-->
+</div><!-- status area-->
+    
+<div id="program-area">
+    <div id="program-header-row">
+        <div>
+            <table class="program-table" id="today-table">
+            </table>
+        </div>
+        <img alt="psize" id="program-size" class="size-button" src="images/maximize.png"/>
+    </div><!-- today row-->
+    <div id="program-editor" class="hidden">
+        <div id="program-selector">
+            <div id="select-box">
+                <div id="select-off">
+                    <img alt="o" id="select-off-img" src="images/off.png"/>
+                    <p>Off</p>
+                </div>
+                <div id="select-gas">
+                    <img alt="g" id="select-gas-img" src="images/gas.png"/>
+                    <p>Gas</p>
+                </div>
+                <div id="select-pelletgas">
+                    <img alt="x" id="select-pelletgas-img" src="images/pellet-gas.png"/>
+                    <p>Pellet + Gas</p>
+                </div>
+                <div id="select-pellet">
+                    <img alt="p" id="select-pellets-img" src="images/pellet.png"/>
+                    <p>Pellet (modula)</p>
+                </div>
+                <div id="select-pellet-minimum">
+                    <img alt="m" id="select-pellet-minimum-img" src="images/pellet-min.png"/>
+                    <p>Pellet (minimo)</p>
+                </div>
+                <div>
+                    <div><button id="program-reset"></button></div>
+                    <div><button id="program-apply"></button></div>
+                </div>
+            </div><!-- select box-->
+        </div><!-- program selector-->
+        <div id="program-change">
+        </div><!-- program change-->
+        <div id="program-content">
+            <table id="program-table" class="program-table">
+            </table>
+        </div><!-- program table-->
+    </div><!-- program editor-->
+</div><!-- program area-->
+
+<script src="engine.js"></script>
 </body>
 </html>
