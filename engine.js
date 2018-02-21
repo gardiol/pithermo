@@ -372,7 +372,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 
     function buildEventStr(n){
             var t = new Date( system_events[n].t*1000).toLocaleString();
-            var e_str = MessageStr[system_events[n].e] ? MessageStr[system_events[n].e] : MessageStr[0];                
+            var e_str = MessageStr[system_events[n].e] ? MessageStr[system_events[n].e] : MessageStr[0] + "(" + system_events[n].e + ")";                
             return t + " -- " + e_str;            
     }
 	
