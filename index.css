@@ -137,6 +137,7 @@ img#pellet-feedback-led {
 /* Program specific */
 #program-area {
     background: LightGoldenRodYellow;
+    padding-bottom: 1em;
 }
 
 #program-header-row {
@@ -238,3 +239,13 @@ img#pellet-feedback-led {
     height: 1em !important;
 }
 
+.program_now_h {
+	background: green;
+	color: yellow;
+}
+.auto_now_c {
+	background: lightgreen !important;
+}
+.auto_now_now {
+	background: green !important;
+}

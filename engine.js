@@ -343,8 +343,38 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     } else {
                         src += "off.png";
                     }
-                    attr.set(program_cels[d][h][f]["_img"], "src", src );                    
+                    attr.set(program_cels[d][h][f]["_img"], "src", src );   
+                    
+                    dclass.remove(program_cels[d][h][f], "auto_now_now" )                                
+                    dclass.remove(program_cels[d][h][f], "auto_now_c" );
+                    if ( d == system_status.now.d ){
+                        dclass.remove(today_ref[1+f][h], "auto_now_c" );
+                        attr.set(today_ref[1+f][h]["_img"], "src", src );
+                        if ( h == system_status.now.h ){
+                            if ( f == system_status.now.f ){
+                                dclass.add(program_cels[d][h][f], "auto_now_now" );                         
+                                dclass.add(today_ref[1+f][h], "auto_now_c" );
+                            } else {
+                                dclass.add(program_cels[d][h][f], "auto_now_c" );     
+                            }
+                        }
+                        else
+                            dclass.add(program_cels[d][h][f], "auto_now_c" );                         
+                    } else {
+                        if ( (h == system_status.now.h) && (f == system_status.now.f) ) {
+                            dclass.add(program_cels[d][h][f], "auto_now_c" );                         
+                        }
+                    }                        
                 }
+                
+/*                if ( h == system_status.now.h ){
+                    if ( f == system_status.now.f ){
+                        dclass.add(program_cels[d][h][f], "auto_now_c" );                         
+                    } else {
+                        dclass.remove(program_cels[d][h][f], "auto_now_c" )                                
+                    }
+                }*/
+                
             }
         }
         
@@ -726,7 +756,13 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             prg[p].startup();
         
         for ( var h = 0; h < 24; h++ ){
-            today_ref[0].push( domConstruct.create("th", { colspan: "2", innerHTML: h < 10 ? "0"+h : h } ) );
+//            today_ref[0].push( domConstruct.create("th", { colspan: "2", innerHTML: h < 10 ? "0"+h : h } ) );
+            today_ref[0][h] = domConstruct.create("th", { innerHTML: h < 10 ? "0"+h : h } );
+            today_ref[1][h] = domConstruct.create("td", {} );
+            today_ref[1][h]["_img"] = domConstruct.create("img", { src: "images/off.png" }, today_ref[1][h] );            
+            today_ref[2].push( domConstruct.create("td", {} ) );
+            today_ref[2][h]["_img"] = domConstruct.create("img", { src: "images/off.png" }, today_ref[2][h] );            
+            
             program_h_headers[h] = domConstruct.create("th", { rowspan: "2", innerHTML: h < 10 ? "0"+h : h } );
             program_h_headers[h]["_h"] = h;
             on(program_h_headers[h], "click", function(evt){
@@ -751,8 +787,8 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             });
 
             for ( var f = 0; f < 2; f++ ){
-                today_ref[1].push( domConstruct.create("th", { innerHTML: f == 0 ? "00" : "30" } ) );
-                today_ref[2].push( domConstruct.create("td", { innerHTML: "" } ) );
+//                today_ref[1].push( domConstruct.create("th", { innerHTML: f == 0 ? "00" : "30" } ) );
+//                today_ref[2].push( domConstruct.create("td", { innerHTML: "" } ) );
                 program_f_headers[h][f] = domConstruct.create("th", { innerHTML: f == 0 ? "00" : "30" } );
                 program_f_headers[h]["_h"] = h;
                 program_f_headers[h]["_f"] = f;
@@ -838,13 +874,6 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             });
         }
         
-        today_ref.forEach( function(row){
-            var row_node = domConstruct.create("tr", null, dom.byId("today-table") );
-            row.forEach(function(c){
-                domConstruct.place(c, row_node);
-            });            
-        });
-
         domConstruct.empty(dom.byId("program-table"));
         var row_node = domConstruct.create("tr", null, dom.byId("program-table") );
         domConstruct.create("td", { colspan:2, rowspan:2 }, row_node );
@@ -866,6 +895,14 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 row_node = domConstruct.create("tr", null, dom.byId("program-table") );
             }
         }
+        
+        for ( var r = 0; r < 3; r++ ){
+            var row_node = domConstruct.create("tr", null, dom.byId("today-table") );
+            domConstruct.create("th", { innerHTML: (r == 0 ? "" : (r == 1 ? "00" : "30"))}, row_node );            
+            today_ref[r].forEach(function(c){
+                domConstruct.place(c, row_node);
+            });            
+        };
     }
     
     buildHistory();
