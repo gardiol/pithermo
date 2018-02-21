@@ -160,6 +160,7 @@ img#pellet-feedback-led {
     height: 1em;
     padding: 0.2em;
     text-align: center;
+    margin-bottom: 0.5em;
 }
 
 .program-changed {
@@ -199,6 +200,10 @@ img#pellet-feedback-led {
     background: LemonChiffon;
 }
 
+#program-content {
+	text-align: center;
+}
+
 .program-selected {
 	background: lightgreen;
 	border: 1px solid black;
@@ -207,14 +212,16 @@ img#pellet-feedback-led {
 .program-table {
 	border-collapse: collapse;
 	text-align: center;
-    width: 100%;
 	border-bottom: 1px dashed black;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .program-table th, td {
 	border-left: 1px solid black;
 	border-right: 1px solid black;
-    height: 1.5em;
+    height: 1.7em;
+    width: 1.7em;
 }
 
 .program-table tr {
@@ -225,3 +232,9 @@ img#pellet-feedback-led {
 	width: 1.5em;
 	height: 1.5em;
 }
+
+.copy {
+    width: 1em !important;
+    height: 1em !important;
+}
+

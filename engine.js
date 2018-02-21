@@ -1,5 +1,4 @@
 // For program:
-var copyInProgress = null;
 var prev_mode;
 var minTemp;
 var maxTemp;
@@ -236,7 +235,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 dialog.on("execute", function() {
                     var ps = json.stringify(program_status);
                     request.post("cgi-bin/program",{data:ps}).then(
-                        function(result){},
+                        function(result){programEdited = false;},
                         function(err){alert("Command error: " + err );});
                 });
                 dialog.show();
@@ -244,19 +243,23 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         }, "program-apply"),
     };
     var today_ref = [[],[],[]];
-    var program_ref = [
-        [domConstruct.create("th")],
-        [domConstruct.create("th")],
-        [domConstruct.create("th", {innerHTML:"LU"})],
-        [domConstruct.create("th", {innerHTML:"MA"})],
-        [domConstruct.create("th", {innerHTML:"ME"})],
-        [domConstruct.create("th", {innerHTML:"GI"})],
-        [domConstruct.create("th", {innerHTML:"VE"})],
-        [domConstruct.create("th", {innerHTML:"SA"})],
-        [domConstruct.create("th", {innerHTML:"DO"})],
-    ];        
+    var program_copy_headers = [];
+    var program_h_headers = [];
+    var program_f_headers = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
+    var program_d_headers = [
+        domConstruct.create("th", {innerHTML:"LU"}),
+        domConstruct.create("th", {innerHTML:"MA"}),
+        domConstruct.create("th", {innerHTML:"ME"}),
+        domConstruct.create("th", {innerHTML:"GI"}),
+        domConstruct.create("th", {innerHTML:"VE"}),
+        domConstruct.create("th", {innerHTML:"SA"}),
+        domConstruct.create("th", {innerHTML:"DO"})
+    ];
+    var program_cels = [];        
     var program_status = null;
     var selected_type;
+    var copyInProgress = null;
+    var programEdited = false;
 
     function confirmCmd(msg,ok,cmd){
 		var dialog = new ConfirmDialog({
@@ -304,9 +307,50 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 	}
 
 	function programRefresh(){
-        /*
-		if ( dom.byId( "program-table" ) ){
-            var eq = true;
+        if ( !program_status || !system_status )
+            return;
+        programEdited = false;
+        for ( var d = 0; (d < 7) && !programEdited; d++ ){
+            for ( var h = 0; (h < 48) && !programEdited; h++ ){
+                if ( program_status[d][h] != system_status.program[d][h] ){
+                    programEdited = true;
+                }
+            }
+        }
+        if ( !programEdited ){
+            dclass.remove(dom.byId("program-change"), "program-changed");
+            html.set("program-change", "");
+        }else{
+            dclass.add(dom.byId("program-change"), "program-changed");
+            html.set("program-change", "Programma modificato!");
+        }
+
+        for ( var d = 0; d < 7; d++ ){
+            
+            for ( var h = 0; h < 24; h++ ){
+                
+                for ( var f = 0; f < 2; f++ ){
+                    var c = program_status[d][h*2+f];
+                    var src = "images/";
+                    if ( c == 'p' ){
+                        src += "pellet.png";
+                    } else if ( c == 'g' ){
+                        src += "gas.png";
+                    } else if ( c == 'x' ){
+                        src += "pellet-gas.png";
+                    } else if ( c == 'm' ){
+                        src += "pellet-min.png";
+                    } else {
+                        src += "off.png";
+                    }
+                    attr.set(program_cels[d][h][f]["_img"], "src", src );                    
+                }
+            }
+        }
+        
+        
+        
+/*            var eq = true;
             var prev_pellet_on = false;
 			var nd = system_status.now.d, nh = system_status.now.h, nf = system_status.now.f;
 			for ( var d = 0; d < 7; d++ ){
@@ -396,13 +440,6 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 			dclass.add( p_str[nd][24], "program_now_h" );
             dclass.add( p_str[nd][nh][2], "program_now_h" );
 			dclass.add( p_str[nd][nh][nf][1], "program_now_h" );
-            if ( eq ){
-               dclass.remove(dom.byId("program-change"), "program-changed");
-               html.set("program-change", "");
-            }else{
-               dclass.add(dom.byId("program-change"), "program-changed");
-               html.set("program-change", "Programma modificato!");
-            }
 		}     */           
 	}
 
@@ -475,7 +512,15 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     attr.set("pellet-status-led", "src", system_status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
                     attr.set("gas-status-led", "src", system_status.gas.command == "on" ? "images/gas-on.png":"images/gas-off.png");                
                     style.set(sts.flameout.domNode, 'display', system_status.pellet.flameout == "on" ? 'inline' : 'none' );		
-                    programRefresh();
+                    if ( !programEdited ){
+                        program_status = [];
+                        for ( var d = 0; d < system_status.program.length; d++ ){
+                            program_status[d] = [];
+                            for ( var h = 0; h < system_status.program[d].length; h++ )                                
+                                program_status[d][h] = system_status.program[d][h];
+                        }
+                        programRefresh();
+                    }
                     request("cgi-bin/events",{handleAs :"json"}).then(
                         function(events){
                             var s = system_events.length;
@@ -682,160 +727,147 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         
         for ( var h = 0; h < 24; h++ ){
             today_ref[0].push( domConstruct.create("th", { colspan: "2", innerHTML: h < 10 ? "0"+h : h } ) );
-            program_ref[0].push( domConstruct.create("th", { colspan: "2", innerHTML: h < 10 ? "0"+h : h } ) );                  
+            program_h_headers[h] = domConstruct.create("th", { rowspan: "2", innerHTML: h < 10 ? "0"+h : h } );
+            program_h_headers[h]["_h"] = h;
+            on(program_h_headers[h], "click", function(evt){
+                if ( program_status ){
+                    var i = evt.currentTarget;
+                    var h = i._h;
+                    var dialog = new ConfirmDialog({title: "Imposta ora intera",
+                                                    content: "Imposto l'ora uguale ora su tutta la settimana?"
+                                                    });
+                    dialog.set("buttonOk", "Si");
+                    dialog.set("buttonCancel", "Annulla");
+                    dialog.on("execute",function() {
+                        for ( var d = 0; d < 7; d++ ){
+                            for ( var f = 0; f < 2; f++ ){
+                                program_status[d][h*2+f] = selected_type;
+                            }
+                        }
+                        programRefresh();
+                    });
+                    dialog.show();
+                }
+            });
+
             for ( var f = 0; f < 2; f++ ){
                 today_ref[1].push( domConstruct.create("th", { innerHTML: f == 0 ? "00" : "30" } ) );
                 today_ref[2].push( domConstruct.create("td", { innerHTML: "" } ) );
-                program_ref[1].push( domConstruct.create("th", { innerHTML: f == 0 ? "00" : "30" } ) );
-                for ( var r = 2; r < 9; r++ )
-                    program_ref[r].push( domConstruct.create("td", { innerHTML: "" } ) );
+                program_f_headers[h][f] = domConstruct.create("th", { innerHTML: f == 0 ? "00" : "30" } );
+                program_f_headers[h]["_h"] = h;
+                program_f_headers[h]["_f"] = f;
+                on(program_f_headers[h][f], "click", function(evt){
+                    if ( program_status ){
+                        var i = evt.currentTarget;
+                        var h = i._h;
+                        var f = i._f;
+                        var dialog = new ConfirmDialog({title: "Imposta mezz'ora",
+                                                        content: "Imposto la mezz'ora su tutta la settimana?"});
+                        dialog.set("buttonOk", "Si");
+                        dialog.set("buttonCancel", "Annulla");
+                        dialog.on("execute",function(){
+                            for ( var d = 0; d < 7; d++ ){
+                                program_status[d][h*2+f] = selected_type;
+                            }
+                            programRefresh();
+                        });
+                        dialog.show();
+                    }
+                });
+                for ( var d = 0; d < 7; d++ ){
+                    if ( !program_cels[d] ) program_cels[d] = [];
+                    if ( !program_cels[d][h] ) program_cels[d][h] = [];
+                    program_cels[d][h][f] = ( domConstruct.create("td", { innerHTML: "" } ) );
+                    program_cels[d][h][f]["_img"] = domConstruct.create("img", { src: "images/off.png" }, program_cels[d][h][f] );            
+                    program_cels[d][h][f]["_d"] = d;
+                    program_cels[d][h][f]["_h"] = h;
+                    program_cels[d][h][f]["_f"] = f;
+                    on(program_cels[d][h][f], "click", function(evt){
+                        if ( program_status ){
+                            var i = evt.currentTarget;
+                            var x = i._h*2+i._f;
+                            program_status[i._d][x] = program_status[i._d][x] == selected_type ? 'o' : selected_type;
+                            programRefresh();
+                        }
+					});
+                }
             }        
         }
+        for ( var d = 0; d < 7; d++ ){
+            program_copy_headers[d] = domConstruct.create("td", {} );
+            program_copy_headers[d]["_d"] = d;
+            program_copy_headers[d]["_img"] = domConstruct.create("img", { class:"copy", src: "images/copy.png" }, program_copy_headers[d] );            
+            on(program_copy_headers[d], "click", function(evt){
+                if ( program_status ){
+                    var i = evt.currentTarget;
+                    var d = i._d;
+                    if ( copyInProgress === null ){
+                        copyInProgress = d;
+                        for ( var x = 0; x < 7; x++ )
+                            attr.set(program_copy_headers[x]["_img"], "src", (x == copyInProgress) ? "images/cancel_copy.png" : "images/paste.png");
+                    } else {
+                        for ( var x = 0; x < 7; x++ )
+                            attr.set(program_copy_headers[x]["_img"], "src", "images/copy.png" );
+                        for ( var n = 0; n < program_status[d].length; n++ )
+                            program_status[d][n] = program_status[copyInProgress][n]; 	
+                        copyInProgress = null;
+                    }	
+                    programRefresh();
+                }
+            });
+                                
+            program_d_headers[d]["_d"] = d;
+            on(program_d_headers[d], "click", function(evt){
+                if ( program_status ){
+                    var i = evt.currentTarget;
+                    var d = i._d;
+                    var dialog = new ConfirmDialog({title: "Imposta giornata",
+                                                    content: "Imposto l'intero giorno?"});
+                    dialog.set("buttonOk", "Si");
+                    dialog.set("buttonCancel", "Annulla");
+                    dialog.on("execute",function() {
+                        for ( var h = 0; h < 24; h++ ){
+                            for ( var f = 0; f < 2; f++ ){
+                                program_status[d][h*2+f] = selected_type;
+                            }
+                        }
+                        programRefresh();
+                    });
+                    dialog.show();
+                }
+            });
+        }
+        
         today_ref.forEach( function(row){
             var row_node = domConstruct.create("tr", null, dom.byId("today-table") );
             row.forEach(function(c){
                 domConstruct.place(c, row_node);
             });            
         });
-        program_ref.forEach( function(row){
-            var row_node = domConstruct.create("tr", null, dom.byId("program-table") );
-            row.forEach(function(c){
-                domConstruct.place(c, row_node);
-            });            
-        });
 
-        
+        domConstruct.empty(dom.byId("program-table"));
+        var row_node = domConstruct.create("tr", null, dom.byId("program-table") );
+        domConstruct.create("td", { colspan:2, rowspan:2 }, row_node );
+        for ( var d = 0; d < 7; d++ ){
+            domConstruct.place( program_copy_headers[d], row_node );
+        }
+        row_node = domConstruct.create("tr", null, dom.byId("program-table") );
+        for ( var d = 0; d < 7; d++ ){
+            domConstruct.place( program_d_headers[d], row_node );
+        }
+        row_node = domConstruct.create("tr", null, dom.byId("program-table") );
+        for ( var h = 0; h < 24; h++ ){
+            domConstruct.place(program_h_headers[h], row_node);
+            for ( var f = 0; f < 2; f++){
+                domConstruct.place(program_f_headers[h][f], row_node);                
+                for ( var d = 0; d < 7; d++ ){
+                    domConstruct.place(program_cels[d][h][f], row_node);
+                }
+                row_node = domConstruct.create("tr", null, dom.byId("program-table") );
+            }
+        }
     }
     
-  /*  
-		onLoad: function() {
-            	p_str = [];
-                for ( var d = 0; d < 7; d++ ){
-                    p_str[d] = [];
-                    for ( var h = 0; h < 24; h++ ){
-                        p_str[d][h] = [];
-                        for ( var f = 0; f < 2; f++ ){
-                            p_str[d][h][f] = [
-                                "program-cell-"+d+"-"+(h < 10 ? "0"+h:h)+(f==0?"00":"30"),
-                                "program-header-"+(h<10?"0":"")+h+""+(f==0?"00":"30")
-                            ];
-                        }
-                        p_str[d][h][2] = "program-header-"+(h<10?"0":"")+h;
-                    }
-                    p_str[d][24] = "program-day-"+d;
-                }
-                query("#program-table > tbody > tr > td").on("click", 
-					function(evt){ 
-						var id = evt.currentTarget.id ;
-						var d = id.substr(13,1);
-						var h = (+id.substr(15,2))*2+(id.substr(17,2)=="30"?1:0);
-						if ( (d>=0 && d < 7) && (h>=0 && h < 48) ){
-                                                    program_status[d][h] = program_status[d][h] == selected_type ? 'o' : selected_type;
-						    programRefresh();
-                                                }
-					});
-                ["program-header-00","program-header-01","program-header-02","program-header-03","program-header-04","program-header-05",
-                 "program-header-06","program-header-07","program-header-08","program-header-09","program-header-10","program-header-11",
-                 "program-header-12","program-header-13","program-header-14","program-header-15","program-header-16","program-header-17",
-                 "program-header-18","program-header-19","program-header-20","program-header-21","program-header-22","program-header-23"]
-                .forEach( 
-                    function(i){
-                        on(dom.byId(i), "click", function(evt){
-                            var h = evt.currentTarget.id.substr(15,2);
-                            var dialog = new ConfirmDialog({
-                                                            title: "Imposta ora intera",
-                                                            content: "Imposto l'intera ora su tutta la settimana?"
-                                                            });
-                            dialog.set("buttonOk", "Si");
-                            dialog.set("buttonCancel", "Annulla");
-                            dialog.on("execute",
-                                function() {
-                                    for ( var d = 0; d < 7; d++ ){
-                                        for ( var f = 0; f < 2; f++ ){
-                                            program_status[d][h*2+f] = selected_type;
-                                        }
-                                    }
-                                    programRefresh();
-                                });
-                            dialog.show();
-                        });
-                    });
-                ["program-header-0000","program-header-0100","program-header-0200","program-header-0300","program-header-0400","program-header-0500",
-                 "program-header-0600","program-header-0700","program-header-0800","program-header-0900","program-header-1000","program-header-1100",
-                 "program-header-1200","program-header-1300","program-header-1400","program-header-1500","program-header-1600","program-header-1700",
-                 "program-header-1800","program-header-1900","program-header-2000","program-header-2100","program-header-2200","program-header-2300",
-                 "program-header-0030","program-header-0130","program-header-0230","program-header-0330","program-header-0430","program-header-0530",
-                 "program-header-0630","program-header-0730","program-header-0830","program-header-0930","program-header-1030","program-header-1130",
-                 "program-header-1230","program-header-1330","program-header-1430","program-header-1530","program-header-1630","program-header-1730",
-                 "program-header-1830","program-header-1930","program-header-2030","program-header-2130","program-header-2230","program-header-2330"]
-                .forEach( 
-                    function(i){
-                        on(dom.byId(i), "click", function(evt){
-                            var id = evt.currentTarget.id;
-                            var h = id.substr(15,2);
-                            var f = id.substr(17,2) == "00" ? 0 : 1;
-                            var dialog = new ConfirmDialog({
-                        						title: "Imposta mezz'ora",
-                        						content: "Imposto la mezz'ora su tutta la settimana?"});
-                            dialog.set("buttonOk", "Si");
-                            dialog.set("buttonCancel", "Annulla");
-                            dialog.on("execute",
-                                    function() {
-								for ( var d = 0; d < 7; d++ ){
-									program_status[d][h*2+f] = selected_type;
-								}
-								programRefresh();
-							});
-                            dialog.show();
-                        });
-                    });
-                ["program-day-0","program-day-1","program-day-2","program-day-3","program-day-4","program-day-5","program-day-6"].forEach( 
-                    function(i){
-                        on(dom.byId(i), "click", function(evt){
-                            var d = evt.currentTarget.id.substr(12,1);
-                            var dialog = new ConfirmDialog({
-                        						title: "Imposta giornata",
-                        						content: "Imposto l'intero giorno?"});
-                            dialog.set("buttonOk", "Si");
-                            dialog.set("buttonCancel", "Annulla");
-                            dialog.on("execute",
-                                    function() {
-                            for ( var h = 0; h < 24; h++ ){
-                                for ( var f = 0; f < 2; f++ ){
-                                    program_status[d][h*2+f] = selected_type;
-                                }
-                            }
-                            programRefresh();
-                            });
-                            dialog.show();
-                        });
-                    });
-
-
-			["copy0","copy1","copy2","copy3","copy4","copy5","copy6"].forEach(
-				function(i){
-					query("#"+i).on("click", 
-						function(evt){
-							if ( !copyInProgress ){
-								copyInProgress = i.substr(4,1);
-								for ( var x = 0; x < 7; x++ )
-									attr.set("copy"+x, "src", (x == copyInProgress) ? "images/cancel_copy.png" : "images/paste.png");
-							} else {
-								var dest =  i.substr(4,1);
-								for ( var n = 0; n < program_status[dest].length; n++ )
-									program_status[dest][n] = program_status[copyInProgress][n]; 	
-								for ( var x = 0; x < 7; x++ )
-									attr.set("copy"+x, "src", "images/copy.png");
-								copyInProgress = null;
-							}	
-							programRefresh();
-						});
-				});
-
-
-*/    
-    
-
     buildHistory();
     buildStatus();
     buildProgram();                
