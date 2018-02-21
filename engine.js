@@ -366,111 +366,8 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         }
                     }                        
                 }
-                
-/*                if ( h == system_status.now.h ){
-                    if ( f == system_status.now.f ){
-                        dclass.add(program_cels[d][h][f], "auto_now_c" );                         
-                    } else {
-                        dclass.remove(program_cels[d][h][f], "auto_now_c" )                                
-                    }
-                }*/
-                
             }
         }
-        
-        
-        
-/*            var eq = true;
-            var prev_pellet_on = false;
-			var nd = system_status.now.d, nh = system_status.now.h, nf = system_status.now.f;
-			for ( var d = 0; d < 7; d++ ){
-			   var n_g = 0, n_p = 0, n_P = 0, n_Pon = 0;
-				dclass.remove( p_str[d][24], "program_now_h" );
-				for ( var h = 0; h < 24; h++ ){
-                    dclass.remove( p_str[d][h][2], "program_now_h" );
-					for ( var f = 0; f < 2; f++ ){
-                        dclass.remove(p_str[d][h][f][0], "auto_now_c" )
-                        dclass.remove(p_str[d][h][f][0], "auto_now_now" )
-			var c = program_status[d][h*2+f];
-                        var s = "";
-                        if ( c != ' ' && c != 'o' ){
-                            s = '<img src="images/';
-                            if ( c == 'p' ){
-                                s+='pellet.png"/>';
-                                n_P++;
-                                if ( !prev_pellet_on ){
-                                    prev_pellet_on = true;
-                                    n_Pon++;
-                                }
-                            }else if( c == 'g' ){ 
-                                s+='gas.png"/>';
-                                n_g++;
-                                prev_pellet_on = false;
-                            }else if( c == 'x' ){
-                                s+='pellet-gas.png"/>';
-                                n_g++;
-                                n_P++;
-                                if ( !prev_pellet_on ){
-                                    prev_pellet_on = true;
-                                    n_Pon++;
-                                }
-                            }else if( c == 'm' ) {
-                                s+='pellet-min.png"/>';
-                                n_p++;
-                                if ( !prev_pellet_on ){
-                                    prev_pellet_on = true;
-                                    n_Pon++;
-                                }
-                            }
-                        }else{
-                            prev_pellet_on = false;
-                        }
-                        html.set(p_str[d][h][f][0],s);
-                        if ( d == nd ){
-                            dclass.add(p_str[d][h][f][0], "auto_now_c" )
-                            if ( h == nh && f == nf ) {
-                                dclass.add(p_str[d][h][f][0], "auto_now_now" )
-                            }
-                        }else if ( h == nh && f == nf ) {
-                            dclass.add(p_str[d][h][f][0], "auto_now_c" )
-                        }
-                        (d == nd || h == nh && f == nf) ? dclass.add(p_str[d][h][f][0], "auto_now_c" ) : dclass.remove(p_str[d][h][f][0], "auto_now_c" );
-						dclass.remove( p_str[d][h][f][1], "program_now_h" );
-                        if ( d == copyInProgress ){
-                            dclass.add( p_str[d][h][f][0], "copy_source");
-                        }else{                        
-                            dclass.remove( p_str[d][h][f][0], "copy_source");
-                        }
-					}
-				}
-                 //Stima: al minimo 10h/1 sacco - modulazione: 5h/1 sacco
-                var bags = (n_P/(2*5) + n_p/(2*10));
-                var status = "Uso gas: "+(n_g/2)+"h -- Pellet: "+(n_P/2)+"h modulazione + "+(n_p/2)+" minimo -- ";
-                if ( n_Pon > 2 ) status += "<b>";
-                status += "" + n_Pon + " accensioni";
-                if ( n_Pon > 2 ) status += "</b>";
-                status += " -- " + bags.toFixed(1) + " sacchi. ";
-                if ( bags > 1.8 )
-                    status += "<b>OCCHIO AL CONSUMO PELLET!</b>";                
-                html.set("program-status-"+d, status );
-                if ( d == copyInProgress ){
-                    dclass.add( "program-copy-"+d, "copy_source");
-                    dclass.add( "program-status-"+d, "copy_source");
-                }else{
-                    dclass.remove( "program-copy-"+d, "copy_source");
-                    dclass.remove( "program-status-"+d, "copy_source");
-                }
-                var l = program_status[d].length;
-                while ( (l > 0) && eq ){
-                    if ( program_status[d][l] != system_status.program[d][l] )
-                        eq = false;
-                    --l;
-                }
-			}
-			dclass.add( p_str[nd][24], "program_now_h" );
-            dclass.add( p_str[nd][nh][2], "program_now_h" );
-			dclass.add( p_str[nd][nh][nf][1], "program_now_h" );
-		}     */           
 	}
 
     function buildEventStr(n){
@@ -756,7 +653,6 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             prg[p].startup();
         
         for ( var h = 0; h < 24; h++ ){
-//            today_ref[0].push( domConstruct.create("th", { colspan: "2", innerHTML: h < 10 ? "0"+h : h } ) );
             today_ref[0][h] = domConstruct.create("th", { innerHTML: h < 10 ? "0"+h : h } );
             today_ref[1][h] = domConstruct.create("td", {} );
             today_ref[1][h]["_img"] = domConstruct.create("img", { src: "images/off.png" }, today_ref[1][h] );            
@@ -787,8 +683,6 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             });
 
             for ( var f = 0; f < 2; f++ ){
-//                today_ref[1].push( domConstruct.create("th", { innerHTML: f == 0 ? "00" : "30" } ) );
-//                today_ref[2].push( domConstruct.create("td", { innerHTML: "" } ) );
                 program_f_headers[h][f] = domConstruct.create("th", { innerHTML: f == 0 ? "00" : "30" } );
                 program_f_headers[h]["_h"] = h;
                 program_f_headers[h]["_f"] = f;
