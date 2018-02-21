@@ -87,7 +87,8 @@ bool Generator::setPower(Generator::PowerLevel pl)
         if ( _on_since > 0 )
             if ( _on_low_since == 0 )
                 _on_low_since = FrameworkTimer::getTimeEpoc();
-        _logger->logEvent( _low_event );
+        if ( _low_event != LogItem::NO_EVENT )
+            _logger->logEvent( _low_event );
         _logger->logDebug( _name + " LOW");
     }
     else
@@ -97,7 +98,8 @@ bool Generator::setPower(Generator::PowerLevel pl)
             _today_low_time += FrameworkTimer::getTimeEpoc() - _on_low_since;
             _on_low_since = 0;
         }
-        _logger->logEvent( _high_event );
+        if ( _low_event != LogItem::NO_EVENT )
+            _logger->logEvent( _high_event );
         _logger->logDebug( _name + " HIGH");
     }
 	return true;
