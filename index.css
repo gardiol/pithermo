@@ -1,20 +1,28 @@
 
 /* general */
-.size-button {
-    height: 2em;
-    width: 2em;
-    vertical-align: middle;
-    margin-left: 2em;
-}
 .hidden {
     display: none;
 }
 
+.celated {
+    visibility: hidden;
+}
+
+.control-bar {
+    padding: 0;
+    margin: 0.5em 10% 0.5em 10%;
+    background: linear-gradient(gray,lightgray);
+    border: 2px groove gray;
+    border-radius: 1em;
+}
+
 /* History area specific */
 #history-area {
-	width: 100%;
-    overflow: hidden;
-    background: cornsilk;
+    background: AliceBlue;
+}
+
+#history-graph {
+    height: 14em;
 }
 
 #history-controls {
@@ -29,23 +37,15 @@
     vertical-align: middle;
 }
 
-#history-graph {
-	height: 16em;
-	width: 100%;
-	margin-bottom: 1em;
-	margin-left: 1em;
-	margin-top: 0px;
-	margin-right: -5em;
-}
+
 .history-big {
     height: 32em !important;
 }
 
 /* Status are specific */
 #status-area {
-	width: 100%;
-    padding-top: 2em;
-    padding-bottom: 2em;
+    padding: 1em 0 1em 0;
+    border-top: 1px inset black;
     border-bottom: 1px inset black;
     background: beige;
 }
@@ -53,8 +53,7 @@
 #messages {
 	margin-left: 3em;
 	margin-right: 3em;
-	margin-bottom: 1em;
-	border: 2px solid gray;
+	border: 1px solid gray;
 	height: 3em;
 	overflow-y: scroll;
 	background: lightyellow;
@@ -73,6 +72,7 @@
 #status-info {
     text-align: center;
     vertical-align: middle;
+    padding: 1em;
 }
 
 #status-info > div {
@@ -81,28 +81,32 @@
     vertical-align: middle;
 }
 
-#status-info > div > div {
+/*#status-info > div > div {
     text-align: center;
     vertical-align: middle;
-}
+}*/
 
 #status-main {
     text-align: center;
-}
-
-#status-boxes-align {
-    vertical-align: top;
-    text-align: center;
+    width: 100%;
 }
 
 .status-boxes {
-	padding:0.8em;
-    margin: 1em;
-    display: inline-block;
+	padding: 1em;
+    display: inline-table;
 	background: peru;
 	text-align: center;
-	height: 15em;
+	height: 16em;
+    width: 20%;
 	border: 1px dashed black;
+}
+
+#status-onoff{
+    margin-bottom: 1em;
+}
+
+#temp-buttons {
+    margin-top: 1em;
 }
 
 p.status-title {
@@ -136,12 +140,11 @@ img#pellet-feedback-led {
 
 /* Program specific */
 #program-area {
-    background: LightGoldenRodYellow;
-    padding-bottom: 1em;
+    background: PeachPuff;
+    padding: 1em 0 1em 0;
 }
 
 #program-header-row {
-    width: 100%;
     text-align: center;
     vertical-align: middle;
 }
@@ -157,14 +160,9 @@ img#pellet-feedback-led {
 }
 
 #program-change {
-    width: 100%;
-    height: 1em;
-    padding: 0.2em;
+    padding: 0;
     text-align: center;
-    margin-bottom: 0.5em;
-}
-
-.program-changed {
+    margin: 0 0 0.2em 0;
     background: yellow !important;
 }
 
@@ -177,11 +175,7 @@ img#pellet-feedback-led {
 	vertical-align: middle;
 	border: 2px solid black;
 	margin: 1em;
-	padding: 1em;
-}
-
-#select-box {
-	height: 6.5em;
+	padding: 1em 1em 0 1em;
 }
 
 #select-box > div {
@@ -206,27 +200,24 @@ img#pellet-feedback-led {
 }
 
 .program-selected {
-	background: lightgreen;
-	border: 1px solid black;
+	background: coral;
 }
 
 .program-table {
 	border-collapse: collapse;
 	text-align: center;
-	border-bottom: 1px dashed black;
+    border: 1px solid gray;
     margin-left: auto;
     margin-right: auto;
 }
 
 .program-table th, td {
-	border-left: 1px solid black;
-	border-right: 1px solid black;
     height: 1.7em;
     width: 1.7em;
 }
 
 .program-table tr {
-	border-top: 1px dashed black;
+	border-bottom: 1px solid gray;
 }
 
 .program-table td img {
@@ -234,18 +225,18 @@ img#pellet-feedback-led {
 	height: 1.5em;
 }
 
+.dayCol {
+    border-right: 2px solid gray !important;
+}
+
 .copy {
     width: 1em !important;
     height: 1em !important;
 }
 
-.program_now_h {
-	background: green;
-	color: yellow;
-}
 .auto_now_c {
-	background: lightgreen !important;
+	background: coral !important;
 }
 .auto_now_now {
-	background: green !important;
+	background: brown !important;
 }

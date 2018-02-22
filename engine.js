@@ -54,6 +54,7 @@ require([
     "dijit/layout/ContentPane",
     "dijit/layout/TabContainer",
     "dijit/form/Button", 
+    "dijit/form/ToggleButton", 
     "dijit/form/NumberSpinner",
     "dijit/form/Select",
     "dijit/form/HorizontalSlider",
@@ -66,7 +67,7 @@ require([
     "dojox/charting/action2d/MouseIndicator",
     "dojo/domReady!"], 
 function( request, dom, attr, dclass, style, domConstruct, html, query, json, on, win,     // Dojo
-          registry, ConfirmDialog, ContentPane, TabContainer, Button, NumberSpinner, Select, HorizontalSlider, // Dijit
+          registry, ConfirmDialog, ContentPane, TabContainer, Button, ToggleButton, NumberSpinner, Select, HorizontalSlider, // Dijit
           Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator )               // Charing
 {
     var hst = { 
@@ -81,7 +82,17 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             discreteValues: 1,
             onChange: historySetData,
         },"history-sel"),
-        grp: new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25})
+        grp: new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25}),
+        exp: new ToggleButton({ checked: false, onChange: function(v) {
+            if ( v ){
+                dclass.add(dom.byId("history-graph"), "history-big");
+                this.set("label","riduci");
+            } else {
+                dclass.remove(dom.byId("history-graph"), "history-big");
+                this.set("label","espandi");
+            }
+            hst.grp.resize();
+        }}, "history-size"),
     };
     var hstTimer;
     var hstData = null;
@@ -92,16 +103,17 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     var sts = {
         flameout: new Button({
             label: "RESET FLAMEOUT!",
+            disabled: true,
             class:"hidden",
             onClick: function(){confirmCmd("Reset pellet FLAMEOUT?", "reset flameout?","reset-flameout");}
         }, "pellet-flameout-reset-btn"),
         on: new Button({
-            label: "Attiva",
+            label: "Accendi impianto",
             disabled: true,
             onClick: function(){confirmCmd("Attivare l'impianto?","Attiva!","activate");}
         }, "on-btn"),
         off: new Button({
-            label: "Disattiva",
+            label: "Spegni impianto",
             disabled: true,
             onClick: function(){confirmCmd("Disattivare l'impianto?","Disattiva!","deactivate");}
         }, "off-btn"),
@@ -243,22 +255,24 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         }, "program-apply"),
     };
     var today_ref = [[],[],[]];
-    var program_copy_headers = [];
+    var program_copy_d = [];
+    var program_copy_h = [];
     var program_h_headers = [];
-    var program_f_headers = [[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]];
+//    var program_f_headers = [];
     var program_d_headers = [
-        domConstruct.create("th", {innerHTML:"LU"}),
-        domConstruct.create("th", {innerHTML:"MA"}),
-        domConstruct.create("th", {innerHTML:"ME"}),
-        domConstruct.create("th", {innerHTML:"GI"}),
-        domConstruct.create("th", {innerHTML:"VE"}),
-        domConstruct.create("th", {innerHTML:"SA"}),
-        domConstruct.create("th", {innerHTML:"DO"})
+        domConstruct.create("th", {innerHTML:"LUN", colspan:2}),
+        domConstruct.create("th", {innerHTML:"MAR", colspan:2}),
+        domConstruct.create("th", {innerHTML:"MER", colspan:2}),
+        domConstruct.create("th", {innerHTML:"GIO", colspan:2}),
+        domConstruct.create("th", {innerHTML:"VEN", colspan:2}),
+        domConstruct.create("th", {innerHTML:"SAB", colspan:2}),
+        domConstruct.create("th", {innerHTML:"DOM", colspan:2})
     ];
     var program_cels = [];        
     var program_status = null;
     var selected_type;
-    var copyInProgress = null;
+    var copyInProgressD = null;
+    var copyInProgressH = null;
     var programEdited = false;
 
     function confirmCmd(msg,ok,cmd){
@@ -318,11 +332,9 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             }
         }
         if ( !programEdited ){
-            dclass.remove(dom.byId("program-change"), "program-changed");
-            html.set("program-change", "");
+            dclass.add(dom.byId("program-change"), "celated");
         }else{
-            dclass.add(dom.byId("program-change"), "program-changed");
-            html.set("program-change", "Programma modificato!");
+            dclass.remove(dom.byId("program-change"), "celated");
         }
 
         for ( var d = 0; d < 7; d++ ){
@@ -567,11 +579,6 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 	function buildHistory(){
         hst.unit.startup();
         hst.sel.startup();
-        on(dom.byId("history-size"), "click",
-            function() {
-                dclass.toggle(dom.byId("history-graph"), "history-big");
-                hst.grp.resize();   
-            });    
         hst.grp.setTheme(Chris);
         hst.grp.addPlot("tempPlot",{
                             type: Lines,lines: true, areas: false, markers: false,
@@ -630,15 +637,33 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     }
         
     function buildStatus(){
-        on(dom.byId("status-size"), "click", function(){
-            dclass.toggle(dom.byId("status-controls"), "hidden");
-            dclass.toggle(dom.byId("messages"), "messages-big");            
-        });
+        new ToggleButton({ checked: false, onChange: function(v) {
+            if ( v ){
+                dclass.remove(dom.byId("status-controls"), "hidden");
+                dclass.add(dom.byId("messages"), "messages-big");            
+                this.set("label","riduci");
+            } else {
+                dclass.add(dom.byId("status-controls"), "hidden");
+                dclass.remove(dom.byId("messages"), "messages-big");            
+                this.set("label","espandi");
+            }
+        }}, "status-size");
         for ( var p in sts )
             sts[p].startup();
     }
 
     function buildProgram(){
+        new ToggleButton({ checked: false, onChange: function(v) {
+            if ( v ){
+                dclass.remove(dom.byId("program-editor"), "hidden");
+                dclass.add(dom.byId("today-table"), "hidden");
+                this.set("label","riduci");
+            } else {
+                dclass.add(dom.byId("program-editor"), "hidden");
+                dclass.remove(dom.byId("today-table"), "hidden");
+                this.set("label","espandi");
+            }
+        }}, "program-size");
         on(dom.byId("select-off"), "click", function(){selectType('o');});
         on(dom.byId("select-gas"), "click", function(){selectType('g');});
         on(dom.byId("select-pelletgas"), "click", function(){selectType('x');});
@@ -646,11 +671,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         on(dom.byId("select-pellet-minimum"), "click", function(){selectType('m');});
         selectType('o');
         on(dom.byId("program-size"), "click", function(){
-            dclass.toggle(dom.byId("program-editor"), "hidden");
-            dclass.toggle(dom.byId("today-table"), "hidden");
         });
         for ( var p in prg )
             prg[p].startup();
+        
         
         for ( var h = 0; h < 24; h++ ){
             today_ref[0][h] = domConstruct.create("th", { innerHTML: h < 10 ? "0"+h : h } );
@@ -659,7 +683,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             today_ref[2].push( domConstruct.create("td", {} ) );
             today_ref[2][h]["_img"] = domConstruct.create("img", { src: "images/off.png" }, today_ref[2][h] );            
             
-            program_h_headers[h] = domConstruct.create("th", { rowspan: "2", innerHTML: h < 10 ? "0"+h : h } );
+            program_h_headers[h] = domConstruct.create("th", { innerHTML: h < 10 ? "0"+h : h } );
             program_h_headers[h]["_h"] = h;
             on(program_h_headers[h], "click", function(evt){
                 if ( program_status ){
@@ -681,29 +705,31 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     dialog.show();
                 }
             });
+            program_copy_h[h] = domConstruct.create("td", {} );
+            program_copy_h[h]["_h"] = h;
+            program_copy_h[h]["_img"] = domConstruct.create("img", { class:"copy", src: "images/copy.png" }, program_copy_h[h] );            
+            on(program_copy_h[h], "click", function(evt){
+                if ( program_status ){
+                    var i = evt.currentTarget;
+                    var h = i._h;
+                    if ( copyInProgressH === null ){
+                        copyInProgressH = h;
+                        for ( var x = 0; x < 24; x++ )
+                            attr.set(program_copy_h[x]["_img"], "src", (x == copyInProgressH) ? "images/cancel_copy.png" : "images/paste.png");
+                    } else {
+                        for ( var x = 0; x < 24; x++ )
+                            attr.set(program_copy_h[x]["_img"], "src", "images/copy.png" );
+                        for ( var d = 0; d < 7; d++ ){
+                            program_status[d][h*2] = program_status[d][copyInProgressH*2]; 
+                            program_status[d][h*2+1] = program_status[d][copyInProgressH*2+1]; 
+                        }
+                        copyInProgressH = null;
+                    }	
+                    programRefresh();
+                }
+            });
 
             for ( var f = 0; f < 2; f++ ){
-                program_f_headers[h][f] = domConstruct.create("th", { innerHTML: f == 0 ? "00" : "30" } );
-                program_f_headers[h]["_h"] = h;
-                program_f_headers[h]["_f"] = f;
-                on(program_f_headers[h][f], "click", function(evt){
-                    if ( program_status ){
-                        var i = evt.currentTarget;
-                        var h = i._h;
-                        var f = i._f;
-                        var dialog = new ConfirmDialog({title: "Imposta mezz'ora",
-                                                        content: "Imposto la mezz'ora su tutta la settimana?"});
-                        dialog.set("buttonOk", "Si");
-                        dialog.set("buttonCancel", "Annulla");
-                        dialog.on("execute",function(){
-                            for ( var d = 0; d < 7; d++ ){
-                                program_status[d][h*2+f] = selected_type;
-                            }
-                            programRefresh();
-                        });
-                        dialog.show();
-                    }
-                });
                 for ( var d = 0; d < 7; d++ ){
                     if ( !program_cels[d] ) program_cels[d] = [];
                     if ( !program_cels[d][h] ) program_cels[d][h] = [];
@@ -723,24 +749,25 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 }
             }        
         }
+        
         for ( var d = 0; d < 7; d++ ){
-            program_copy_headers[d] = domConstruct.create("td", {} );
-            program_copy_headers[d]["_d"] = d;
-            program_copy_headers[d]["_img"] = domConstruct.create("img", { class:"copy", src: "images/copy.png" }, program_copy_headers[d] );            
-            on(program_copy_headers[d], "click", function(evt){
+            program_copy_d[d] = domConstruct.create("td", { colspan:2 } );
+            program_copy_d[d]["_d"] = d;
+            program_copy_d[d]["_img"] = domConstruct.create("img", { class:"copy", src: "images/copy.png" }, program_copy_d[d] );            
+            on(program_copy_d[d], "click", function(evt){
                 if ( program_status ){
                     var i = evt.currentTarget;
                     var d = i._d;
-                    if ( copyInProgress === null ){
-                        copyInProgress = d;
+                    if ( copyInProgressD === null ){
+                        copyInProgressD = d;
                         for ( var x = 0; x < 7; x++ )
-                            attr.set(program_copy_headers[x]["_img"], "src", (x == copyInProgress) ? "images/cancel_copy.png" : "images/paste.png");
+                            attr.set(program_copy_d[x]["_img"], "src", (x == copyInProgressD) ? "images/cancel_copy.png" : "images/paste.png");
                     } else {
                         for ( var x = 0; x < 7; x++ )
-                            attr.set(program_copy_headers[x]["_img"], "src", "images/copy.png" );
+                            attr.set(program_copy_d[x]["_img"], "src", "images/copy.png" );
                         for ( var n = 0; n < program_status[d].length; n++ )
-                            program_status[d][n] = program_status[copyInProgress][n]; 	
-                        copyInProgress = null;
+                            program_status[d][n] = program_status[copyInProgressD][n]; 	
+                        copyInProgressD = null;
                     }	
                     programRefresh();
                 }
@@ -769,25 +796,30 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         }
         
         domConstruct.empty(dom.byId("program-table"));
+        domConstruct.create("col", { span: 2}, domConstruct.create("colgroup", { class: "dayCol"} , dom.byId("program-table") ) );
+        for ( var d = 0; d < 7; d++ )
+            domConstruct.create("col", { span: 2}, domConstruct.create("colgroup", { class: "dayCol"} , dom.byId("program-table") ) );                 
         var row_node = domConstruct.create("tr", null, dom.byId("program-table") );
-        domConstruct.create("td", { colspan:2, rowspan:2 }, row_node );
-        for ( var d = 0; d < 7; d++ ){
-            domConstruct.place( program_copy_headers[d], row_node );
-        }
+        domConstruct.create("td", { colspan:2, rowspan:3 }, row_node );
+        for ( var d = 0; d < 7; d++ )
+            domConstruct.place( program_copy_d[d], row_node );
         row_node = domConstruct.create("tr", null, dom.byId("program-table") );
-        for ( var d = 0; d < 7; d++ ){
+        for ( var d = 0; d < 7; d++ )
             domConstruct.place( program_d_headers[d], row_node );
-        }
+        row_node = domConstruct.create("tr", null, dom.byId("program-table") );
+        for ( var d = 0; d < 7; d++ )
+            for ( var f = 0; f < 2; f++ )
+                domConstruct.create("th", { innerHTML: f == 0 ? "00" : "30" }, row_node );
         row_node = domConstruct.create("tr", null, dom.byId("program-table") );
         for ( var h = 0; h < 24; h++ ){
+            domConstruct.place(program_copy_h[h], row_node);
             domConstruct.place(program_h_headers[h], row_node);
-            for ( var f = 0; f < 2; f++){
-                domConstruct.place(program_f_headers[h][f], row_node);                
-                for ( var d = 0; d < 7; d++ ){
+            for ( var d = 0; d < 7; d++ ){
+                for ( var f = 0; f < 2; f++){
                     domConstruct.place(program_cels[d][h][f], row_node);
                 }
-                row_node = domConstruct.create("tr", null, dom.byId("program-table") );
             }
+                row_node = domConstruct.create("tr", null, dom.byId("program-table") );
         }
         
         for ( var r = 0; r < 3; r++ ){
