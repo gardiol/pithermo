@@ -373,9 +373,9 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         else
                             dclass.add(program_cels[d][h][f], "auto_now_c" );                         
                     } else {
-                        if ( (h == system_status.now.h) && (f == system_status.now.f) ) {
+/*                        if ( (h == system_status.now.h) && (f == system_status.now.f) ) {
                             dclass.add(program_cels[d][h][f], "auto_now_c" );                         
-                        }
+                        }*/
                     }                        
                 }
             }
