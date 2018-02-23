@@ -11,7 +11,7 @@
 .control-bar {
     padding: 0;
     margin: 0.5em 10% 0.5em 10%;
-    background: linear-gradient(gray,lightgray);
+    background: linear-gradient(RosyBrown,lightgray);
     border: 2px groove gray;
     border-radius: 1em;
 }
@@ -203,7 +203,7 @@ img#pellet-feedback-led {
 	background: coral;
 }
 
-.program-table {
+#program-table {
 	border-collapse: collapse;
 	text-align: center;
     border: 1px solid gray;
@@ -211,22 +211,22 @@ img#pellet-feedback-led {
     margin-right: auto;
 }
 
-.program-table th, td {
+#program-table th, td {
     height: 1.7em;
     width: 1.7em;
 }
 
-.program-table tr {
+#program-table tr {
 	border-bottom: 1px solid gray;
 }
 
-.program-table td img {
+#program-table td img {
 	width: 1.5em;
 	height: 1.5em;
 }
 
 .dayCol {
-    border-right: 2px solid gray !important;
+    border-right: 2px solid black !important;
 }
 
 .copy {
@@ -238,5 +238,31 @@ img#pellet-feedback-led {
 	background: coral !important;
 }
 .auto_now_now {
-	background: brown !important;
+	background: indianred !important;
+}
+
+#today-table {
+	border-collapse: collapse;
+	text-align: center;
+    border: 1px solid gray;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#today-table th, td {
+    height: 1.6em;
+    width: 1.6em;
+}
+
+#today-table td img {
+	width: 1.5em;
+	height: 1.5em;
+}
+
+.dashed-down-sep {
+    border-bottom: 1px dashed gray;
+}
+
+.solid-down-sep {
+    border-bottom: 1px solid black;
 }

@@ -677,8 +677,8 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         
         
         for ( var h = 0; h < 24; h++ ){
-            today_ref[0][h] = domConstruct.create("th", { innerHTML: h < 10 ? "0"+h : h } );
-            today_ref[1][h] = domConstruct.create("td", {} );
+            today_ref[0][h] = domConstruct.create("th", { class: "solid-down-sep", innerHTML: h < 10 ? "0"+h : h } );
+            today_ref[1][h] = domConstruct.create("td", { class: "dashed-down-sep"} );
             today_ref[1][h]["_img"] = domConstruct.create("img", { src: "images/off.png" }, today_ref[1][h] );            
             today_ref[2].push( domConstruct.create("td", {} ) );
             today_ref[2][h]["_img"] = domConstruct.create("img", { src: "images/off.png" }, today_ref[2][h] );            
@@ -822,9 +822,11 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 row_node = domConstruct.create("tr", null, dom.byId("program-table") );
         }
         
+        for ( var d = 0; d < 24; d++ )
+            domConstruct.create("col", {class: "dayCol"}, dom.byId("today-table") );                 
         for ( var r = 0; r < 3; r++ ){
             var row_node = domConstruct.create("tr", null, dom.byId("today-table") );
-            domConstruct.create("th", { innerHTML: (r == 0 ? "" : (r == 1 ? "00" : "30"))}, row_node );            
+            domConstruct.create("th", { class: r < 2 ? "solid-down-sep" : "", innerHTML: (r == 0 ? "" : (r == 1 ? "00" : "30"))}, row_node );            
             today_ref[r].forEach(function(c){
                 domConstruct.place(c, row_node);
             });            
