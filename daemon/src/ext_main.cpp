@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "frameworkutils.h"
 #include "cmdlineparser.h"
@@ -112,6 +113,7 @@ int main(int argc, char** argv)
     int ret = 255;
     CmdlineParser cmd("PiThermo ExtTemp");
     cmd.defineParameter( CmdLineParameter("daemon", "Start as a daemon", CmdLineParameter::single ) );
+    cmd.defineParameter( CmdLineParameter("debug", "Debug on", CmdLineParameter::single ) );
     cmd.defineParameter( CmdLineParameter("remote", "Send data to this remote IP", CmdLineParameter::single, true )
                          .setOptions(1));
     cmd.defineParameter( CmdLineParameter("logs", "Path to history, logs and debug files", CmdLineParameter::single, true )
@@ -133,10 +135,11 @@ int main(int argc, char** argv)
             if (wiringPiSetup () != -1)
 #endif
             {
-		TempSensor temp_sensor( &logger, 1, 0 );
+                TempSensor temp_sensor( &logger, 1, 0 );
 
                 logger.logMessage("Started");
-		logger.enableDebug(true);
+                if ( cmd.hasParameter( "debug" ) )
+                    logger.enableDebug(true);
                 if ( cmd.consumeParameter( "daemon" ).isValid() )
                     daemonize();
 
@@ -146,16 +149,19 @@ int main(int argc, char** argv)
                 UdpSocket remote_client("RemoteClient",remote_host, "",5555,0);
                 if ( remote_client.activateInterface() )
                 {
+                    char send_data[1024];
+                    memcpy( send_data, "ext-temp", 9 );
                     FrameworkTimer timer;
-		    timer.setLoopTime( 500000 );
+                    timer.setLoopTime( 30 * 1000 * 1000 );
                     while ( sig_handler.keepRunning() )
                     {
                         if ( temp_sensor.readSensor() )
-			{
-				printf("T: %f, H: %f\n", temp_sensor.getTemp(), temp_sensor.getHimidity() );
-			}
-			temp_sensor.printStatus();
-			timer.waitLoop();
+                        {
+                            sprintf( &send_data[8], "%f", temp_sensor.getTemp() );
+                            remote_client.writeData( send_data, strlen( send_data ) );
+                        }
+                        temp_sensor.printStatus();
+                        timer.waitLoop();
                     }
                 }
                 else

@@ -1,3 +1,4 @@
+src/ext_main.cpp
 src/tempsensor.cpp
 src/tempsensor.h
 #WiringOP-Zero/wiringPi/wiringPi.c
