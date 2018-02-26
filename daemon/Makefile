@@ -10,7 +10,7 @@ FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./
 FRAMEWORK_OBJS := $(foreach src,$(FRAMEWORK_SRCS),obj/$(basename $(notdir $(src))).o)
 $(foreach o,$(FRAMEWORK_OBJS),$(eval FRAMEWORK_MAPS_$(basename $(notdir $(o))) := framework/$(basename $(notdir $(o))).cpp))
 
-all: obj pithermo_daemon
+all: obj pithermo_daemon pithermo_ext
 
 obj:
 	mkdir obj
@@ -51,8 +51,13 @@ obj/gpiodevice.o: src/gpiodevice.cpp src/gpiodevice.h src/logger.h src/logitem.h
 obj/tempsensor.o: src/tempsensor.cpp src/tempsensor.h src/gpiodevice.h src/logger.h src/logitem.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
+obj/ext_main.o: src/ext_main.cpp src/logitem.h src/logger.h
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -I/usr/local/include
 
 pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o
+	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib -lwiringPi
+
+pithermo_ext: $(FRAMEWORK_OBJS) obj/gpiodevice.o obj/tempsensor.o obj/ext_main.o obj/logger.o obj/logitem.o
 	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib -lwiringPi
 
 .PHONY: clean
