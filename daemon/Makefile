@@ -65,3 +65,4 @@ pithermo_ext: $(FRAMEWORK_OBJS) obj/gpiodevice.o obj/tempsensor.o obj/ext_main.o
 clean:
 	rm -rf obj
 	rm -f pithermo_daemon
+	rm -rf pithermo_ext
