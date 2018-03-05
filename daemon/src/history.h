@@ -14,7 +14,8 @@ public:
     ~History();
 
     void initialize( const std::string& mode, uint32_t len );
-    bool update( float last_temp, float last_humidity, float last_ext_temp );
+    bool update( float last_temp, float last_humidity,
+                 float last_ext_temp, float last_ext_humidity );
 
     void setMode(const std::string& mode);
     std::string getMode() const
@@ -53,6 +54,7 @@ private:
     std::vector<std::vector<std::string> > _time_strs;
     std::vector<std::vector<std::string> > _temp_strs;
     std::vector<std::vector<std::string> > _ext_temp_strs;
+    std::vector<std::vector<std::string> > _ext_humi_strs;
     std::vector<std::vector<std::string> > _humi_strs;
     std::vector<std::vector<bool> > _valid_ptr;
 

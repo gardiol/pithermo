@@ -49,6 +49,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _hour(0),
     _half_hour(0),
     _current_ext_temp(0.0),
+    _current_ext_humidity(0.0),
     _pellet_startup_delay(60*45)
 {
     _status_json_template.push_back("{\"mode\":\"");
@@ -68,6 +69,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _status_json_template.push_back(",\"int\":");
     _status_json_template.push_back(",\"ext\":");
     _status_json_template.push_back(",\"hum\":");
+    _status_json_template.push_back(",\"ext_hum\":");
     _status_json_template.push_back("},\"now\":{\"d\":");
     _status_json_template.push_back(",\"h\":");
     _status_json_template.push_back(",\"f\":");
@@ -208,7 +210,13 @@ bool RunnerThread::_checkCommands()
 
         case Command::EXT_TEMP:
             _logger->logDebug("New EXT TEMP received: " + cmd->getParam());
-            _current_ext_temp = FrameworkUtils::string_tof( cmd->getParam() );
+        {
+            std::vector<std::string> tokens = FrameworkUtils::string_split( cmd->getParam(), ":" );
+            if ( tokens.size() >= 1 )
+                _current_ext_temp = FrameworkUtils::string_tof( tokens[0] );
+            if ( tokens.size() >= 2 )
+                _current_ext_humidity = FrameworkUtils::string_tof( tokens[1] );
+        }
             break;
 
         case Command::FLAMEOUT_RESET:
@@ -364,7 +372,7 @@ bool RunnerThread::_checkFlameout()
         _logger->logDebug(std::string("Pellet temp changed! now ") + (pellet_hot ? "HOT" : "COLD" ) );
         // Check for flameout:
         if ( !_pellet_flameout && // we are NOT in flameout condition...
-                 // Pellet is ON, was HOT, now it's cold
+             // Pellet is ON, was HOT, now it's cold
              (_pellet->isOn() && _prev_pellet_hot && !pellet_hot ) )
         {
             _pellet_flameout = true;
@@ -380,7 +388,7 @@ bool RunnerThread::_checkFlameout()
             _logger->logDebug("pellet flameout end");
             _logger->logEvent( LogItem::PELLET_FLAMEOUT_OFF );
         }
-         _prev_pellet_hot = pellet_hot;
+        _prev_pellet_hot = pellet_hot;
     }
     else // Pellet temperature still unchanged, check for missed start:
     {
@@ -504,7 +512,8 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
         // We save the temperatures only every minute
         if ( _sensor_success_reads > 0 )
         {
-            if ( !_history.update( _temp_sensor->getTemp(), _temp_sensor->getHimidity(), _current_ext_temp ) )
+            if ( !_history.update( _temp_sensor->getTemp(), _temp_sensor->getHimidity(),
+                                   _current_ext_temp, _current_ext_humidity ) )
                 _logger->logDebug("Unable to write to history file");
         }
     }
@@ -656,6 +665,7 @@ void RunnerThread::_saveConfig()
 void RunnerThread::_updateStatus()
 {
     std::string str_ext_temp = FrameworkUtils::ftostring( _current_ext_temp );
+    std::string str_ext_humidity = FrameworkUtils::ftostring( _current_ext_humidity );
     std::string str_temp = FrameworkUtils::ftostring( _temp_sensor->getTemp() );
     std::string str_humidity = FrameworkUtils::ftostring( _temp_sensor->getHimidity() );
     std::string str_min_t = FrameworkUtils::ftostring( _min_temp );
@@ -769,15 +779,18 @@ void RunnerThread::_updateStatus()
                 fwrite( str_humidity.c_str(), str_humidity.length(), 1, status_file);
                 break;
             case 17:
-                fwrite( str_day.c_str(), str_day.length(), 1, status_file);
+                fwrite( str_ext_humidity.c_str(), str_ext_humidity.length(), 1, status_file);
                 break;
             case 18:
-                fwrite( str_h.c_str(), str_h.length(), 1, status_file);
+                fwrite( str_day.c_str(), str_day.length(), 1, status_file);
                 break;
             case 19:
-                fwrite( str_f.c_str(), str_f.length(), 1, status_file);
+                fwrite( str_h.c_str(), str_h.length(), 1, status_file);
                 break;
             case 20:
+                fwrite( str_f.c_str(), str_f.length(), 1, status_file);
+                break;
+            case 21:
                 break;
             }
         }

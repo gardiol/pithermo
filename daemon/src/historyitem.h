@@ -13,15 +13,22 @@ public:
 
     HistoryItem();
     HistoryItem( FILE* file );
-    HistoryItem( uint64_t last_time, float last_temp, float last_humidity, float last_ext_temp );
+    HistoryItem( uint64_t last_time,
+                 float last_temp, float last_humidity,
+                 float last_ext_temp,
+                 float last_ext_humidity );
     HistoryItem( const HistoryItem& other );
 
-    bool getStrings( std::string& ti, std::string& te, std::string&h, std::string& ext_te ) const
+    bool getStrings( std::string& ti,
+                     std::string& te, std::string&h,
+                     std::string& ext_te,
+                     std::string& ext_hu) const
     {
         ti = _time_str;
         te = _temp_str;
         h = _humidity_str;
         ext_te = _ext_temp_str;
+        ext_hu = _ext_humidity_str;
         return _valid;
     }
 
@@ -79,11 +86,13 @@ private:
     uint64_t _time;
     float _temp;
     float _ext_temp;
+    float _ext_humidity;
     float _humidity;
     bool _valid;
     std::string _time_str;
     std::string _temp_str;
     std::string _ext_temp_str;
+    std::string _ext_humidity_str;
     std::string _humidity_str;
 
     void updateStr();

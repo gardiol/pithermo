@@ -126,10 +126,11 @@ void History::initialize(const std::string &mode, uint32_t len)
     setMode( mode );
 }
 
-bool History::update(float last_temp, float last_humidity, float last_ext_temp)
+bool History::update(float last_temp, float last_humidity,
+                     float last_ext_temp, float last_ext_humidity)
 {
     _readNow();
-    HistoryItem new_item( _now, last_temp, last_humidity, last_ext_temp );
+    HistoryItem new_item( _now, last_temp, last_humidity, last_ext_temp, last_ext_humidity );
     //              w    d    h
     _history_cache[ 0 ][ _now_day ][ _now_hour ][ _now_min ] = new_item;
     _writeJson();
@@ -170,6 +171,8 @@ void History::setMode(const std::string &mode)
     _temp_strs.resize( _num_lines );
     _ext_temp_strs.clear();
     _ext_temp_strs.resize( _num_lines );
+    _ext_humi_strs.clear();
+    _ext_humi_strs.resize( _num_lines );
     _humi_strs.clear();
     _humi_strs.resize( _num_lines );
     _valid_ptr.clear();
@@ -179,6 +182,7 @@ void History::setMode(const std::string &mode)
         _time_strs[l].resize( _points_per_line );
         _temp_strs[l].resize( _points_per_line );
         _ext_temp_strs[l].resize( _points_per_line );
+        _ext_humi_strs[l].resize( _points_per_line );
         _humi_strs[l].resize( _points_per_line );
         _valid_ptr[l].resize( _points_per_line );
     }
@@ -207,11 +211,12 @@ void History::_writeJson()
             case 'h':
                 for ( jMin = 0; jMin < num_mins; ++jMin )
                 {
-                    std::string ti, te, hu, ex_te;
-                    _valid_ptr[l][jMin] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu, ex_te );
+                    std::string ti, te, hu, ex_te, ex_hu;
+                    _valid_ptr[l][jMin] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu, ex_te, ex_hu );
                     _time_strs[l][jMin] = ti;
                     _temp_strs[l][jMin] = te;
                     _ext_temp_strs[l][jMin] = ex_te;
+                    _ext_humi_strs[l][jMin] = ex_hu;
                     _humi_strs[l][jMin] = hu;
                 }
                 if ( jHour > 0 )
@@ -234,11 +239,12 @@ void History::_writeJson()
                 jHour = 0;
                 for ( uint32_t p = 0; p < _points_per_line; ++p )
                 {
-                    std::string ti, te, hu, ex_te;
-                    _valid_ptr[l][p] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu, ex_te );
+                    std::string ti, te, hu, ex_te, ex_hu;
+                    _valid_ptr[l][p] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu, ex_te, ex_hu );
                     _time_strs[l][p] = ti;
                     _temp_strs[l][p] = te;
                     _ext_temp_strs[l][p] = ex_te;
+                    _ext_humi_strs[l][p] = ex_hu;
                     _humi_strs[l][p] = hu;
                     jMin += _skip_minutes;
                     if ( jMin >= num_mins )
@@ -262,11 +268,12 @@ void History::_writeJson()
                 jDay = 0;
                 for ( uint32_t p = 0; p < _points_per_line; ++p )
                 {
-                    std::string ti, te, ex_te, hu;
-                    _valid_ptr[l][p] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu, ex_te );
+                    std::string ti, te, ex_te, hu, ex_hu;
+                    _valid_ptr[l][p] = _history_cache[jWweek][jDay][jHour][jMin].getStrings( ti, te, hu, ex_te, ex_hu );
                     _time_strs[l][p] = ti;
                     _temp_strs[l][p] = te;
                     _ext_temp_strs[l][p] = ex_te;
+                    _ext_humi_strs[l][p] = ex_hu;
                     _humi_strs[l][p] = hu;
                     jMin += _skip_minutes;
                     if ( jMin >= num_mins )
@@ -295,7 +302,7 @@ void History::_writeJson()
         {
             if ( l > 0 )
                 fwrite( ",", 1, 1, history_json );
-            fwrite("{\"time\":[",9, 1, history_json );
+            fwrite("{\"ti\":[",7, 1, history_json );
             bool not_first = false;
             for ( uint32_t p = 0; p < _points_per_line; ++p )
             {
@@ -308,7 +315,7 @@ void History::_writeJson()
                     fwrite( time_str.c_str(), time_str.length(), 1, history_json );
                 }
             }
-            fwrite("],\"temp\":[",10, 1, history_json );
+            fwrite("],\"te\":[",8, 1, history_json );
             not_first = false;
             for ( uint32_t p = 0; p < _points_per_line; ++p )
             {
@@ -321,7 +328,7 @@ void History::_writeJson()
                     fwrite( temp_str.c_str(), temp_str.length(), 1, history_json );
                 }
             }
-            fwrite("],\"ext_temp\":[",14, 1, history_json );
+            fwrite("],\"e_te\":[",10, 1, history_json );
             not_first = false;
             for ( uint32_t p = 0; p < _points_per_line; ++p )
             {
@@ -334,13 +341,26 @@ void History::_writeJson()
                     fwrite( temp_str.c_str(), temp_str.length(), 1, history_json );
                 }
             }
-            fwrite( "],\"humidity\":[", 14, 1, history_json );
+            fwrite( "],\"hu\":[", 8, 1, history_json );
             not_first = false;
             for ( uint32_t p = 0; p < _points_per_line; ++p )
             {
                 if ( _valid_ptr[l][p] )
                 {
                     std::string humidity_str = _humi_strs[l][p];
+                    if ( not_first )
+                        fwrite(",",1,1,history_json);
+                    not_first = true;
+                    fwrite( humidity_str.c_str(), humidity_str.length(), 1, history_json );
+                }
+            }
+            fwrite( "],\"e_hu\":[", 10, 1, history_json );
+            not_first = false;
+            for ( uint32_t p = 0; p < _points_per_line; ++p )
+            {
+                if ( _valid_ptr[l][p] )
+                {
+                    std::string humidity_str = _ext_humi_strs[l][p];
                     if ( not_first )
                         fwrite(",",1,1,history_json);
                     not_first = true;

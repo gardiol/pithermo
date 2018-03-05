@@ -190,7 +190,7 @@ if(i>0){
 px=i;
 py=_2a[i-1];
 }
-}else{
+}else if ( r ){
 x=r.x;
 y=r.y;
 if(i>0){

@@ -73,6 +73,7 @@ private:
     int32_t _half_hour;
 
     float _current_ext_temp;
+    float _current_ext_humidity;
 
     uint64_t _pellet_startup_delay;
 };

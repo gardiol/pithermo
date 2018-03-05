@@ -55,6 +55,7 @@ require([
     "dijit/layout/TabContainer",
     "dijit/form/Button", 
     "dijit/form/ToggleButton", 
+    "dijit/form/CheckBox",
     "dijit/form/NumberSpinner",
     "dijit/form/Select",
     "dijit/form/HorizontalSlider",
@@ -67,7 +68,7 @@ require([
     "dojox/charting/action2d/MouseIndicator",
     "dojo/domReady!"], 
 function( request, dom, attr, dclass, style, domConstruct, html, query, json, on, win,     // Dojo
-          registry, ConfirmDialog, ContentPane, TabContainer, Button, ToggleButton, NumberSpinner, Select, HorizontalSlider, // Dijit
+          registry, ConfirmDialog, ContentPane, TabContainer, Button, ToggleButton, CheckBox, NumberSpinner, Select, HorizontalSlider, // Dijit
           Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator )               // Charing
 {
     var hst = { 
@@ -82,6 +83,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             discreteValues: 1,
             onChange: historySetData,
         },"history-sel"),
+        hck: new CheckBox({
+            checked:false,
+            onChange: function(b){historySetData()},
+        }, "humi-check"),
         grp: new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25}),
         exp: new ToggleButton({ checked: false, onChange: function(v) {
             if ( v ){
@@ -97,6 +102,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     var hstTimer;
     var hstData = null;
     var extTempData = {};
+    var extHumiData = {};
 
     var stsTimer;
     var system_events = [];
@@ -258,7 +264,6 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     var program_copy_d = [];
     var program_copy_h = [];
     var program_h_headers = [];
-//    var program_f_headers = [];
     var program_d_headers = [
         domConstruct.create("th", {innerHTML:"LUN", colspan:2}),
         domConstruct.create("th", {innerHTML:"MAR", colspan:2}),
@@ -505,17 +510,19 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 
 	function historySetData(){
         extTempData = {};
-        var ext_zeros = 0;
-        var t = [], h = [], x = [];
+        extHumiData = {};
+        var t = [], h = [], x = [], y = [];
         var s = hst.sel.get("value");
+        var show_h = hst.hck.get("checked");
         if ( hstData ){
-            var te = [], ex = [], hu = [], ti = [];
+            var te = [], ex = [], hu = [], ti = [], hx = [];
             for ( var v = 0; (v < s) || (ti.length < 15); v++ ){
                 if ( hstData[v] ){
-                    te = hstData[v].temp.concat(te);
-                    ex = hstData[v].ext_temp.concat(ex);
-                    hu = hstData[v].humidity.concat(hu);
-                    ti = hstData[v].time.concat(ti);
+                    te = hstData[v].te.concat(te);
+                    ex = hstData[v].e_te.concat(ex);
+                    hu = hstData[v].hu.concat(hu);
+                    hx = hstData[v].e_hu.concat(hx);
+                    ti = hstData[v].ti.concat(ti);
                 } else {
                     break;
                 }
@@ -523,19 +530,20 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             var n_pts = ti.length;
             for ( p = 0; p < n_pts; p++ ){
                 t.push( {x:ti[p], y:te[p] } );
-                h.push( {x:ti[p], y:hu[p] } );
+                if ( show_h ){
+                    h.push( {x:ti[p], y:hu[p] } );
+                    y.push( {x:ti[p], y:hx[p] } );
+                }
                 x.push( {x:ti[p], y:ex[p] } );
-                if ( ex[p] == 0 ) ext_zeros++;
                 extTempData[ti[p]] = ex[p];
+                extHumiData[ti[p]] = hx[p];
             }            
         }
         html.set("history-label", s);
-        hst.grp.updateSeries("Temperatura", t.length == 0 ? [{x:0,y:0}] : t );
-        if ( ext_zeros != x.length )
-            hst.grp.updateSeries("Esterna", x.length == 0 ? [{x:0,y:0}] : x );
-        else
-            hst.grp.updateSeries("Esterna", [] );
-        hst.grp.updateSeries("Umidita", h.length == 0 ? [{x:0,y:0}] : h );
+        hst.grp.updateSeries("Temperatura", t );
+        hst.grp.updateSeries("Esterna", x );
+        hst.grp.updateSeries("Umidita", h );
+        hst.grp.updateSeries("EsternaUmidita", y );
         var ts = 60; // 1 min
         if ( t.length > 0 ){
             var d = t[ t.length-1 ].x - t[0].x;
@@ -570,6 +578,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 hst.grp.updateSeries("Temperatura", [] );
                 hst.grp.updateSeries("Esterna", [] );
                 hst.grp.updateSeries("Umidita", [] );
+                hst.grp.updateSeries("EsternaUmidita", []);
                 hst.grp.render();
                 html.set("history-label", "--");
 				hstTimer = window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
@@ -622,16 +631,23 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                             fixLower: "major", fixUpper: "major"
                         });
         hst.grp.addSeries("Umidita",[],{plot: "humiPlot"});
+        hst.grp.addSeries("EsternaUmidita",[],{plot: "humiPlot", stroke: { color: "violet"} });
         new MouseIndicator(hst.grp, "humiPlot",{ 
                             series: "Umidita", start: true, mouseOver: true,
                             labelFunc: function(v){
-                                return "H: "+v.y.toFixed(1)+" (" + (new Date(v.x*1000).toLocaleString())+")";
+                                if ( v.y && v.x )
+                                    return "H: "+v.y.toFixed(1)+"/"+ ((extHumiData[v.x] != null) ? extHumiData[v.x].toFixed(1) : "-");
+                                else
+                                    return "";
                             }
                             });
         new MouseIndicator(hst.grp, "tempPlot",{ 
                             series: "Temperatura",mouseOver: true,
                             labelFunc: function(v){
-                                return "T: "+v.y.toFixed(1)+"/" + ((extTempData[v.x] != null) ? extTempData[v.x].toFixed(1) : "-");
+                                if ( v.y && v.x )
+                                    return "T: "+v.y.toFixed(1)+"/" + ((extTempData[v.x] != null) ? extTempData[v.x].toFixed(1) : "-") +" (" + (new Date(v.x*1000).toLocaleString())+")";
+                                else
+                                    return "";
                             }
                             });
     }

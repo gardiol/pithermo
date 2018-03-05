@@ -242,7 +242,7 @@ define("dojox/charting/action2d/_IndicatorElement", ["dojo/_base/lang", "dojo/_b
 					px = i;
 					py = data[i-1];
 				}
-			}else{
+			}else if ( r ){
 				x = r.x;
 				y = r.y;
 				if(i > 0){

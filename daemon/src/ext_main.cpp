@@ -149,7 +149,7 @@ int main(int argc, char** argv)
                 UdpSocket remote_client("RemoteClient",remote_host, "",5555,0);
                 if ( remote_client.activateInterface() )
                 {
-                    char send_data[1024];
+                    char send_data[2048];
                     memcpy( send_data, "ext-temp", 9 );
                     FrameworkTimer timer;
                     timer.setLoopTime( 30 * 1000 * 1000 );
@@ -157,7 +157,9 @@ int main(int argc, char** argv)
                     {
                         if ( temp_sensor.readSensor() )
                         {
-                            sprintf( &send_data[8], "%f", temp_sensor.getTemp() );
+                            sprintf( &send_data[8], "%f:%f",
+                                    temp_sensor.getTemp(),
+                                    temp_sensor.getHimidity() );
                             remote_client.writeData( send_data, strlen( send_data ) );
                         }
                         temp_sensor.printStatus();
