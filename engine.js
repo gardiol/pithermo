@@ -422,6 +422,27 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             return t + " -- " + e_str;            
     }
 	
+	function disableAll(){
+		tempEdited = false;
+		system_status = null;
+		system_events = [];                
+		for ( var p in sts )
+			sts[p].set("disabled", true);                
+		html.set("gas-time", "--");
+		html.set("pellet-time", "--");
+		html.set("pellet-mintime", "--");
+		html.set("pellet-modtime", "--");
+		html.set("temp-label", "--" );
+		html.set("humi-label", "--" );
+		domConstruct.empty("messages-queue");
+		domConstruct.place("<li>Errore di connessione!</li>", "messages-queue","first");
+		attr.set("pellet-feedback-led", "src", "images/min-temp.png");
+		attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
+		attr.set("pellet-status-led", "src", "images/pellet-off.png");
+		attr.set("gas-status-led", "src", "images/gas-off.png");
+		style.set(sts.flameout.domNode, 'display', 'none');		
+	}
+
 	function updateStatus(){
         if ( stsTimer ){
             window.clearTimeout( stsTimer );
@@ -434,110 +455,97 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     system_status = result;
                     for ( var p in sts )
                         sts[p].set("disabled", true); 
-                    sts.tempMin.set("disabled", false );
-                    sts.tempMax.set("disabled", false );
-                    if ( !tempEdited ){
-                        if ( sts.tempMin.get("value") != system_status.temp.min )
-                            sts.tempMin.set("value", system_status.temp.min);
-                        if ( sts.tempMax.get("value") != system_status.temp.max )
-                            sts.tempMax.set("value", system_status.temp.max);
-                    }
-					sts.tempReset.set("disabled", false );
-                    sts.tempApply.set("disabled", false );
-                    if ( system_status.active == "on" )
+                    if ( system_status.active == "on" ){
                         sts.off.set("disabled", false );
-                    else 
+						sts.tempMin.set("disabled", false );
+						sts.tempMax.set("disabled", false );
+						if ( !tempEdited ){
+							if ( sts.tempMin.get("value") != system_status.temp.min )
+								sts.tempMin.set("value", system_status.temp.min);
+							if ( sts.tempMax.get("value") != system_status.temp.max )
+								sts.tempMax.set("value", system_status.temp.max);
+						}
+						sts.tempReset.set("disabled", false );
+						sts.tempApply.set("disabled", false );
+						if ( system_status.mode == "manual" ){
+							sts.auto.set("disabled", false );
+							if ( system_status.pellet.command == "on" ){
+								sts.pelletOff.set("disabled", false );
+								if ( system_status.pellet.minimum == "on" )
+									sts.pelletMinOff.set("disabled", false );
+								else
+									sts.pelletMinOn.set("disabled", false );
+							}else{
+								sts.pelletOn.set("disabled", false );
+							}
+							if ( system_status.gas.command == "on" ){
+								sts.gasOff.set("disabled", false );
+							}else{
+								sts.gasOn.set("disabled", false );
+							}
+						}else if ( system_status.mode == "auto" ) {
+							sts.manual.set("disabled", false );
+						}
+						var p_h = Math.trunc(system_status.pellet.time/3600);
+						var p_m = Math.trunc((system_status.pellet.time/60)%60);
+						var mp_h = Math.trunc(system_status.pellet.mintime/3600);
+						var mp_m = Math.trunc((system_status.pellet.mintime/60)%60);
+						var Mp_h = Math.trunc((system_status.pellet.time-system_status.pellet.mintime)/3600);
+						var Mp_m = Math.trunc(((system_status.pellet.time-system_status.pellet.mintime)/60)%60);
+						html.set("pellet-time", p_h +"h" + p_m  + "m" );
+						html.set("pellet-mintime", mp_h +"h" + mp_m  + "m" );
+						html.set("pellet-modtime", Mp_h +"h" + Mp_m  + "m" );                    
+						html.set("gas-time", Math.trunc(system_status.gas.time/3600) +"h " + Math.trunc((system_status.gas.time/60)%60)  + "m");
+						html.set("temp-label",system_status.temp.int + "° (" + system_status.temp.ext + "°)" );
+						html.set("humi-label", system_status.temp.hum + "% (" + system_status.temp.ext_hum + "%)" );
+						attr.set("mode-led", "src", system_status.mode == "manual" ? "images/manual.png":"images/auto.png");                
+						attr.set("power-led", "src", system_status.active != "on" ? "images/spento.png":"images/acceso.png");                
+						attr.set("pellet-feedback-led", "src", system_status.pellet.status == "on" ? "images/max-temp.png":"images/min-temp.png");                
+						attr.set("pellet-minimum-status-led", "src", system_status.pellet.minimum == "on" ? "images/pellet-minimo.png":"images/pellet-modulazione.png");
+						attr.set("pellet-status-led", "src", system_status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
+						attr.set("gas-status-led", "src", system_status.gas.command == "on" ? "images/gas-on.png":"images/gas-off.png");                
+						style.set(sts.flameout.domNode, 'display', system_status.pellet.flameout == "on" ? 'inline' : 'none' );		
+						if ( !programEdited ){
+							program_status = [];
+							for ( var d = 0; d < system_status.program.length; d++ ){
+								program_status[d] = [];
+								for ( var h = 0; h < system_status.program[d].length; h++ )                                
+									program_status[d][h] = system_status.program[d][h];
+							}
+							programRefresh();
+						}
+						getRequest("cgi-bin/events",
+							function(events){
+								var s = system_events.length;
+								var e = events.length;
+								if ( (system_events == []) || 
+									(events.length < system_events.length) ){
+									domConstruct.empty("messages-queue");
+									s = 0;
+								}	
+								system_events = events;                 
+								for ( var x = s; x < events.length; x++ ){
+									var str = buildEventStr(x);
+									domConstruct.place("<li>" + str + "</li>", "messages-queue","first");
+								}
+							},
+							function(err){
+								domConstruct.empty("messages-queue");
+								domConstruct.place("<li>Impossibile leggere la lista degli eventi!</li>", "messages-queue","first");
+							});						
+						stsTimer = window.setTimeout( function(){ updateStatus(); }, 2000 );
+					} else {
+						disableAll();
                         sts.on.set("disabled", false );
-                    if ( system_status.mode == "manual" ){
-                        sts.auto.set("disabled", false );
-                        if ( system_status.pellet.command == "on" ){
-                            sts.pelletOff.set("disabled", false );
-                            if ( system_status.pellet.minimum == "on" )
-                                sts.pelletMinOff.set("disabled", false );
-                            else
-                                sts.pelletMinOn.set("disabled", false );
-                        }else{
-                            sts.pelletOn.set("disabled", false );
-                        }
-                        if ( system_status.gas.command == "on" )
-                            sts.gasOff.set("disabled", false );
-                        else
-                            sts.gasOn.set("disabled", false );
-                    }else if ( system_status.mode == "auto" ) {
-                        sts.manual.set("disabled", false );
-                    }
-                    var p_h = Math.trunc(system_status.pellet.time/3600);
-                    var p_m = Math.trunc((system_status.pellet.time/60)%60);
-                    var mp_h = Math.trunc(system_status.pellet.mintime/3600);
-                    var mp_m = Math.trunc((system_status.pellet.mintime/60)%60);
-                    var Mp_h = Math.trunc((system_status.pellet.time-system_status.pellet.mintime)/3600);
-                    var Mp_m = Math.trunc(((system_status.pellet.time-system_status.pellet.mintime)/60)%60);
-                    html.set("pellet-time", p_h +"h" + p_m  + "m" );
-                    html.set("pellet-mintime", mp_h +"h" + mp_m  + "m" );
-                    html.set("pellet-modtime", Mp_h +"h" + Mp_m  + "m" );                    
-                    html.set("gas-time", Math.trunc(system_status.gas.time/3600) +"h " + Math.trunc((system_status.gas.time/60)%60)  + "m");
-                    html.set("temp-label",system_status.temp.int + "° (" + system_status.temp.ext + "°)" );
-                    html.set("humi-label", system_status.temp.hum + "% (" + system_status.temp.ext_hum + "%)" );
-					attr.set("mode-led", "src", system_status.mode == "manual" ? "images/manual.png":"images/auto.png");                
-					attr.set("power-led", "src", system_status.active != "on" ? "images/spento.png":"images/acceso.png");                
-                    attr.set("pellet-feedback-led", "src", system_status.pellet.status == "on" ? "images/max-temp.png":"images/min-temp.png");                
-                    attr.set("pellet-minimum-status-led", "src", system_status.pellet.minimum == "on" ? "images/pellet-minimo.png":"images/pellet-modulazione.png");
-                    attr.set("pellet-status-led", "src", system_status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
-                    attr.set("gas-status-led", "src", system_status.gas.command == "on" ? "images/gas-on.png":"images/gas-off.png");                
-                    style.set(sts.flameout.domNode, 'display', system_status.pellet.flameout == "on" ? 'inline' : 'none' );		
-                    if ( !programEdited ){
-                        program_status = [];
-                        for ( var d = 0; d < system_status.program.length; d++ ){
-                            program_status[d] = [];
-                            for ( var h = 0; h < system_status.program[d].length; h++ )                                
-                                program_status[d][h] = system_status.program[d][h];
-                        }
-                        programRefresh();
-                    }
-					getRequest("cgi-bin/events",
-                        function(events){
-                            var s = system_events.length;
-                            var e = events.length;
-                            if ( (system_events == []) || 
-                                (events.length < system_events.length) ){
-                                domConstruct.empty("messages-queue");
-                                s = 0;
-                            }
-                            system_events = events;                 
-                            for ( var x = s; x < events.length; x++ ){
-                                var str = buildEventStr(x);
-                                domConstruct.place("<li>" + str + "</li>", "messages-queue","first");
-                            }
-                        },
-                        function(err){
-							domConstruct.empty("messages-queue");
-							domConstruct.place("<li>Impossibile leggere la lista degli eventi!</li>", "messages-queue","first");
-                        });
-                }
-				updating = false;
-                stsTimer = window.setTimeout( function(){ updateStatus(); }, 2000 );
+					stsTimer = window.setTimeout( function(){ updateStatus(); }, 15000 );
+					}
+					updating = false;
+                } // result is valid
             }, 
-            function(err){
-                tempEdited = false;
-                system_status = null;
-                system_events = [];                
-                for ( var p in sts )
-                    sts[p].set("disabled", true);                
-                html.set("gas-time", "Oggi: --h --m");
-                html.set("pellet-time", "Oggi: --h --m");
-                html.set("temp-label", "Temperatura: --(--)" );
-                html.set("humi-label", "Umidità: --" );
-				domConstruct.empty("messages-queue");
-				domConstruct.place("<li>Connessione persa!</li>", "messages-queue","first");
-                attr.set("pellet-feedback-led", "src", "images/min-temp.png");
-                attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
-                attr.set("pellet-status-led", "src", "images/pellet-off.png");
-                attr.set("gas-status-led", "src", "images/gas-off.png");
-                style.set(sts.flameout.domNode, 'display', 'none');		
-                domConstruct.empty("messages-queue");
-                domConstruct.place("<li>Connessione persa!</li>","messages-queue","first");
-                stsTimer = window.setTimeout( function(){ updateStatus(); }, 5000 );
-            });
+			function(err){
+				disableAll();
+				stsTimer = window.setTimeout( function(){ updateStatus(); }, 5000 );
+			});
 	}
 
 	function historySetData(){
@@ -711,8 +719,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         });
         for ( var p in prg )
             prg[p].startup();
-        
-        
+                
         for ( var h = 0; h < 24; h++ ){
             today_ref[0][h] = domConstruct.create("th", { class: "solid-down-sep", innerHTML: h < 10 ? "0"+h : h } );
             today_ref[1][h] = domConstruct.create("td", { class: "dashed-down-sep"} );
