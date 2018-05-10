@@ -54,16 +54,12 @@
 	margin-left: 3em;
 	margin-right: 3em;
 	border: 1px solid gray;
-	height: 3em;
+	height: 5em;
 	overflow-y: scroll;
 	background: lightyellow;
 	color: blue;
-}
-
-.messages-big {
-    height: 8em !important;
-}
-
+}   display: inline-block;
+ 
 #messages-queue {
 	list-style: none;
     vertical-align: middle;
@@ -72,7 +68,7 @@
 #status-info {
     text-align: center;
     vertical-align: middle;
-    padding: 1em;
+	margin-bottom: 0.5em;
 }
 
 #status-info > div {
@@ -81,23 +77,18 @@
     vertical-align: middle;
 }
 
-/*#status-info > div > div {
-    text-align: center;
-    vertical-align: middle;
-}*/
-
 #status-main {
     text-align: center;
     width: 100%;
 }
 
 .status-boxes {
-	padding: 1em;
+	padding: 0.2em;
     display: inline-table;
 	background: peru;
 	text-align: center;
-	height: 16em;
-    width: 20%;
+	height: 18em;
+    width: 30%;
 	border: 1px dashed black;
 }
 
@@ -105,8 +96,8 @@
     margin-bottom: 1em;
 }
 
-#temp-buttons {
-    margin-top: 1em;
+#temp-label #humi-label {
+	font-size: 140%;
 }
 
 p.status-title {
@@ -119,6 +110,35 @@ img.status-icon {
 	height: 5em;
 }
 
+img.info-icon {
+	height: 2.5em;
+	vertical-align: middle;
+}
+
+#power-box {
+	border: 1px solid black;
+	margin: 0.2em;
+	padding: 0.2em;
+	background: lightyellow;
+}
+
+#power-box > div {
+	display: inline-block;
+    vertical-align: middle;
+}
+
+#mode-box {
+	border: 1px solid black;
+	margin: 0.2em;
+	padding: 0.2em;
+	background: lightyellow;
+}
+
+#mode-box > div {
+	display: inline-block;
+    vertical-align: middle;
+}
+
 img.status-icon-sub {
 	height: 1em;
 }
@@ -127,7 +147,7 @@ img#pellet-feedback-led {
 	height: 2em;
 }
 
-#pellet-status > div {
+div.col {
 	display: inline-block;
     vertical-align: middle;
 }

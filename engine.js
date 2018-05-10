@@ -2,8 +2,6 @@
 var prev_mode;
 var minTemp;
 var maxTemp;
-var tempResetBtn;
-var tempApplyBtn;
 var prgResetBtn;
 var prgApplyBtn;
 var p_str = [];
@@ -71,6 +69,27 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
           registry, ConfirmDialog, ContentPane, TabContainer, Button, ToggleButton, CheckBox, NumberSpinner, Select, HorizontalSlider, // Dijit
           Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator )               // Charing
 {
+	var updating = false;
+	
+	if ( !putRequest ){
+		putRequest = function( req, data, ok_func, ko_func ){
+			request.put(req, {data:data}).then(ok_func,ko_func);
+		};
+	}
+	if ( !postRequest ){
+		postRequest = function( req, data, ok_func, ko_func ){
+			if ( data.json )
+				data = json.stringify(data.json);
+			request.post(req, {data:data}).then(ok_func,ko_func);
+		};
+	}
+	
+	if ( !getRequest ){
+		getRequest = function( req, ok_func, ko_func ){
+			request(req,{handleAs :"json"}).then(ok_func,ko_func);
+		};
+	}
+
     var hst = { 
         unit:new Select({
             onChange: changeHistory,
@@ -168,7 +187,11 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             disabled: true,
             smallDelta: 0.1,
             style: "width: 6em;",
-            onChange: function(){ tempEdited = true; },
+            onChange: function(){
+				if ( !updating ){
+					tempEdited = true;
+				}
+			},
             constraints: { min:-100, max:100, places:1 }
         }, "min-temp"),
         tempMax: new NumberSpinner({
@@ -176,13 +199,17 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             disabled: true,
             smallDelta: 0.1,
             style: "width: 6em;",
-            onChange: function(){ tempEdited = true; },
+            onChange: function(){ 
+				if ( !updating ){
+					tempEdited = true;
+				}
+			},
             constraints: { min:-100, max:100, places:1 }
         }, "max-temp"),
         tempReset: new Button({
             label: "Ripristina",
             disabled: true,
-            onClick: 	
+            onClick:
                 function(){
                     var dialog = new ConfirmDialog({
                         title: "ATTENZIONE!",
@@ -210,11 +237,13 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     dialog.set("buttonOk", "Salva");
                     dialog.set("buttonCancel", "Continua a modificare");
                     dialog.on("execute", function() {
-                        request.post("cgi-bin/set_min_temp",{data:sts.tempMin.value}).then(
-                        function(result){},
-                        function(err){alert("Command error: " + err );});
-                        request.post("cgi-bin/set_max_temp",{data:sts.tempMax.value}).then(
-                        function(result){tempEdited = false;},
+					postRequest("cgi-bin/set_min_temp",{data:sts.tempMin.value},
+						function(result){},
+						function(err){alert("Command error: " + err );});
+					postRequest("cgi-bin/set_max_temp",{data:sts.tempMax.value},
+                        function(result){
+							tempEdited = false;
+						},
                         function(err){alert("Command error: " + err );});
                     });
                     dialog.show();
@@ -252,7 +281,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 dialog.set("buttonCancel", "Continua a modificare");
                 dialog.on("execute", function() {
                     var ps = json.stringify(program_status);
-                    request.post("cgi-bin/program",{data:ps}).then(
+					postRequest("cgi-bin/program",{json: program_status},
                         function(result){programEdited = false;},
                         function(err){alert("Command error: " + err );});
                 });
@@ -287,7 +316,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 		dialog.set("buttonOk", ok);
 		dialog.set("buttonCancel", "Annulla");
 		dialog.on("execute", function(){
-       		request.put("cgi-bin/command", {data:cmd}).then(
+		putRequest("cgi-bin/command", {data:cmd}, 
 			function(result){
 				updateStatus();
 			},
@@ -299,7 +328,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     }
          
     function changeHistory(){
-        request.post("cgi-bin/set_history",{data:hst.unit.get("value")}).then(
+		postRequest("cgi-bin/set_history",{data:hst.unit.get("value")},
             function(result){
                 updateHistory();
             },
@@ -398,9 +427,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             window.clearTimeout( stsTimer );
             stsTimer = null;
         }
-        request("cgi-bin/status",{handleAs :"json"}).then(
+		getRequest("cgi-bin/status",
             function(result){
                 if ( result ){
+					updating = true;
                     system_status = result;
                     for ( var p in sts )
                         sts[p].set("disabled", true); 
@@ -412,15 +442,14 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         if ( sts.tempMax.get("value") != system_status.temp.max )
                             sts.tempMax.set("value", system_status.temp.max);
                     }
+					sts.tempReset.set("disabled", false );
                     sts.tempApply.set("disabled", false );
-                    sts.tempReset.set("disabled", false );
                     if ( system_status.active == "on" )
                         sts.off.set("disabled", false );
                     else 
                         sts.on.set("disabled", false );
                     if ( system_status.mode == "manual" ){
                         sts.auto.set("disabled", false );
-                        html.set("mode-label", "Impianto in MANUALE");
                         if ( system_status.pellet.command == "on" ){
                             sts.pelletOff.set("disabled", false );
                             if ( system_status.pellet.minimum == "on" )
@@ -436,9 +465,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                             sts.gasOn.set("disabled", false );
                     }else if ( system_status.mode == "auto" ) {
                         sts.manual.set("disabled", false );
-                        html.set("mode-label", "Impianto in AUTOMATICO");
-                    }else
-                        html.set("mode-label", "Impianto SPENTO");
+                    }
                     var p_h = Math.trunc(system_status.pellet.time/3600);
                     var p_m = Math.trunc((system_status.pellet.time/60)%60);
                     var mp_h = Math.trunc(system_status.pellet.mintime/3600);
@@ -450,7 +477,9 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     html.set("pellet-modtime", Mp_h +"h" + Mp_m  + "m" );                    
                     html.set("gas-time", Math.trunc(system_status.gas.time/3600) +"h " + Math.trunc((system_status.gas.time/60)%60)  + "m");
                     html.set("temp-label",system_status.temp.int + "° (" + system_status.temp.ext + "°)" );
-                    html.set("humi-label", system_status.temp.hum );
+                    html.set("humi-label", system_status.temp.hum + "% (" + system_status.temp.ext_hum + "%)" );
+					attr.set("mode-led", "src", system_status.mode == "manual" ? "images/manual.png":"images/auto.png");                
+					attr.set("power-led", "src", system_status.active != "on" ? "images/spento.png":"images/acceso.png");                
                     attr.set("pellet-feedback-led", "src", system_status.pellet.status == "on" ? "images/max-temp.png":"images/min-temp.png");                
                     attr.set("pellet-minimum-status-led", "src", system_status.pellet.minimum == "on" ? "images/pellet-minimo.png":"images/pellet-modulazione.png");
                     attr.set("pellet-status-led", "src", system_status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
@@ -465,7 +494,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         }
                         programRefresh();
                     }
-                    request("cgi-bin/events",{handleAs :"json"}).then(
+					getRequest("cgi-bin/events",
                         function(events){
                             var s = system_events.length;
                             var e = events.length;
@@ -481,9 +510,11 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                             }
                         },
                         function(err){
-                            html.set("mode-label", "Impossibile leggere la lista degli eventi!");
+							domConstruct.empty("messages-queue");
+							domConstruct.place("<li>Impossibile leggere la lista degli eventi!</li>", "messages-queue","first");
                         });
                 }
+				updating = false;
                 stsTimer = window.setTimeout( function(){ updateStatus(); }, 2000 );
             }, 
             function(err){
@@ -496,7 +527,8 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 html.set("pellet-time", "Oggi: --h --m");
                 html.set("temp-label", "Temperatura: --(--)" );
                 html.set("humi-label", "Umidità: --" );
-                html.set("mode-label", "Connessione persa!");
+				domConstruct.empty("messages-queue");
+				domConstruct.place("<li>Connessione persa!</li>", "messages-queue","first");
                 attr.set("pellet-feedback-led", "src", "images/min-temp.png");
                 attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
                 attr.set("pellet-status-led", "src", "images/pellet-off.png");
@@ -558,7 +590,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 window.clearTimeout( hstTimer );
                 hstTimer = null;
             }
-       		request("cgi-bin/history" , {handleAs :"json"}).then(
+			getRequest("cgi-bin/history",
 			function(result){
                 if ( result ) {
                     hstData = result.data;
@@ -653,17 +685,6 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     }
         
     function buildStatus(){
-        new ToggleButton({ checked: false, onChange: function(v) {
-            if ( v ){
-                dclass.remove(dom.byId("status-controls"), "hidden");
-                dclass.add(dom.byId("messages"), "messages-big");            
-                this.set("label","riduci");
-            } else {
-                dclass.add(dom.byId("status-controls"), "hidden");
-                dclass.remove(dom.byId("messages"), "messages-big");            
-                this.set("label","espandi");
-            }
-        }}, "status-size");
         for ( var p in sts )
             sts[p].startup();
     }
