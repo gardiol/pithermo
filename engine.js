@@ -422,7 +422,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             return t + " -- " + e_str;            
     }
 	
-	function disableAll(){
+	function disableAll(msg){
 		tempEdited = false;
 		system_status = null;
 		system_events = [];                
@@ -435,7 +435,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 		html.set("temp-label", "--" );
 		html.set("humi-label", "--" );
 		domConstruct.empty("messages-queue");
-		domConstruct.place("<li>Errore di connessione!</li>", "messages-queue","first");
+		domConstruct.place("<li>" + msg + "</li>", "messages-queue","first");
 		attr.set("pellet-feedback-led", "src", "images/min-temp.png");
 		attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
 		attr.set("pellet-status-led", "src", "images/pellet-off.png");
@@ -535,7 +535,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 							});						
 						stsTimer = window.setTimeout( function(){ updateStatus(); }, 2000 );
 					} else {
-						disableAll();
+						disableAll("Impianto spento");
                         sts.on.set("disabled", false );
 					stsTimer = window.setTimeout( function(){ updateStatus(); }, 15000 );
 					}
@@ -543,7 +543,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 } // result is valid
             }, 
 			function(err){
-				disableAll();
+				disableAll("Errore di connessione");
 				stsTimer = window.setTimeout( function(){ updateStatus(); }, 5000 );
 			});
 	}
