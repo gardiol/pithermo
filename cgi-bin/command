@@ -6,3 +6,5 @@ echo "Content-type: text/html"
 echo ""
 read COMMAND
 echo -n "$COMMAND" >&3
+
+echo $COMMAND >> test

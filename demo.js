@@ -2,7 +2,7 @@ var postRequest = null;
 var putRequest = null;
 var getRequest = null;
 
-require([
+/*require([
     "dojo/request",
     "dojo/dom", 
     "dojo/dom-attr",
@@ -113,3 +113,4 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 	}
 
 });
+*/

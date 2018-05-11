@@ -237,10 +237,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     dialog.set("buttonOk", "Salva");
                     dialog.set("buttonCancel", "Continua a modificare");
                     dialog.on("execute", function() {
-					postRequest("cgi-bin/set_min_temp",{data:sts.tempMin.value},
+					postRequest("cgi-bin/set_min_temp",sts.tempMin.value,
 						function(result){},
 						function(err){alert("Command error: " + err );});
-					postRequest("cgi-bin/set_max_temp",{data:sts.tempMax.value},
+					postRequest("cgi-bin/set_max_temp",sts.tempMax.value,
                         function(result){
 							tempEdited = false;
 						},
@@ -316,7 +316,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 		dialog.set("buttonOk", ok);
 		dialog.set("buttonCancel", "Annulla");
 		dialog.on("execute", function(){
-		putRequest("cgi-bin/command", {data:cmd}, 
+		putRequest("cgi-bin/command", cmd, 
 			function(result){
 				updateStatus();
 			},
@@ -328,7 +328,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
     }
          
     function changeHistory(){
-		postRequest("cgi-bin/set_history",{data:hst.unit.get("value")},
+		postRequest("cgi-bin/set_history",hst.unit.get("value"),
             function(result){
                 updateHistory();
             },
@@ -452,6 +452,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             function(result){
                 if ( result ){
 					updating = true;
+			var next_update = 999999;
                     system_status = result;
                     for ( var p in sts )
                         sts[p].set("disabled", true); 
@@ -505,15 +506,6 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 						attr.set("pellet-status-led", "src", system_status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
 						attr.set("gas-status-led", "src", system_status.gas.command == "on" ? "images/gas-on.png":"images/gas-off.png");                
 						style.set(sts.flameout.domNode, 'display', system_status.pellet.flameout == "on" ? 'inline' : 'none' );		
-						if ( !programEdited ){
-							program_status = [];
-							for ( var d = 0; d < system_status.program.length; d++ ){
-								program_status[d] = [];
-								for ( var h = 0; h < system_status.program[d].length; h++ )                                
-									program_status[d][h] = system_status.program[d][h];
-							}
-							programRefresh();
-						}
 						getRequest("cgi-bin/events",
 							function(events){
 								var s = system_events.length;
@@ -533,12 +525,22 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 								domConstruct.empty("messages-queue");
 								domConstruct.place("<li>Impossibile leggere la lista degli eventi!</li>", "messages-queue","first");
 							});						
-						stsTimer = window.setTimeout( function(){ updateStatus(); }, 2000 );
+						next_update = 2000;
 					} else {
 						disableAll("Impianto spento");
                         sts.on.set("disabled", false );
-					stsTimer = window.setTimeout( function(){ updateStatus(); }, 15000 );
+						next_update = 15000;
 					}
+						if ( !programEdited ){
+							program_status = [];
+							for ( var d = 0; d < system_status.program.length; d++ ){
+								program_status[d] = [];
+								for ( var h = 0; h < system_status.program[d].length; h++ )                                
+									program_status[d][h] = system_status.program[d][h];
+							}
+							programRefresh();
+						}
+					stsTimer = window.setTimeout( function(){ updateStatus(); }, next_update );
 					updating = false;
                 } // result is valid
             }, 
