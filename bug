@@ -1,0 +1,241 @@
+
+2018/05/17-15:17.10 Started
+2018/05/17-15:17.20  -debug- gas ON
+2018/05/17-15:17.20  -debug- gas LOW
+2018/05/17-15:17.20  -debug- pellet ON
+2018/05/17-15:17.20  -debug- pellet LOW
+2018/05/17-15:17.20  -debug- Pellet temp changed! now COLD
+2018/05/17-15:17.20  -debug- pellet flameout detected - pellet has gone cold
+2018/05/17-15:17.20  -debug- pellet is ON
+2018/05/17-15:17.20  -debug- pellet power is LOW
+2018/05/17-15:17.20  -debug- pellet status is COLD
+2018/05/17-15:17.20  -debug- gas is ON
+2018/05/17-15:17.20  -debug- Sensor reads - t: 0 h: 0 - Last successful read: 0
+2018/05/17-15:17.28  -debug- Appending command: ext-temp
+2018/05/17-15:17.28  -debug- New EXT TEMP received: 25.299999:59.299999
+2018/05/17-15:17.58  -debug- Appending command: ext-temp
+2018/05/17-15:17.58  -debug- New EXT TEMP received: 25.100000:60.799999
+2018/05/17-15:18.20  -debug- Time interval (1526563100 - 1526563040 >= 60)
+2018/05/17-15:18.20  -debug- pellet is ON
+2018/05/17-15:18.20  -debug- pellet power is LOW
+2018/05/17-15:18.20  -debug- pellet status is COLD
+2018/05/17-15:18.20  -debug- gas is ON
+2018/05/17-15:18.20  -debug- Sensor reads - t: 19.2 h: 58.9 - Last successful read: 1526563088
+2018/05/17-15:34.46  -debug- Time interval (1526564086 - 1526563100 >= 60)
+2018/05/17-15:34.46  -debug- pellet is ON
+2018/05/17-15:34.46  -debug- pellet power is LOW
+2018/05/17-15:34.46  -debug- pellet status is COLD
+2018/05/17-15:34.46  -debug- gas is ON
+2018/05/17-15:34.46  -debug- Sensor reads - t: 19.2 h: 58.9 - Last successful read: 1526563088
+2018/05/17-15:35.46  -debug- Time interval (1526564146 - 1526564086 >= 60)
+2018/05/17-15:35.46  -debug- pellet is ON
+2018/05/17-15:35.46  -debug- pellet power is LOW
+2018/05/17-15:35.46  -debug- pellet status is COLD
+2018/05/17-15:35.46  -debug- gas is ON
+2018/05/17-15:35.46  -debug- Sensor reads - t: 19.2 h: 58.9 - Last successful read: 1526563088
+2018/05/17-15:35.50  -debug- Appending command: ext-temp
+2018/05/17-15:35.50  -debug- New EXT TEMP received: 24.600000:63.599998
+2018/05/17-15:36.20  -debug- Appending command: ext-temp
+2018/05/17-15:36.20  -debug- New EXT TEMP received: 24.600000:63.500000
+2018/05/17-15:36.46  -debug- Time interval (1526564206 - 1526564146 >= 60)
+2018/05/17-15:36.46  -debug- pellet is ON
+2018/05/17-15:36.46  -debug- pellet power is LOW
+2018/05/17-15:36.46  -debug- pellet status is COLD
+2018/05/17-15:36.46  -debug- gas is ON
+2018/05/17-15:36.46  -debug- Sensor reads - t: 19.2 h: 58.9 - Last successful read: 1526563088
+2018/05/17-15:36.50  -debug- Appending command: ext-temp
+2018/05/17-15:36.50  -debug- New EXT TEMP received: 24.400000:63.000000
+2018/05/17-15:37.20  -debug- Appending command: ext-temp
+2018/05/17-15:37.20  -debug- New EXT TEMP received: 24.299999:63.400002
+2018/05/17-15:37.46  -debug- Time interval (1526564266 - 1526564206 >= 60)
+2018/05/17-15:37.46  -debug- pellet is ON
+2018/05/17-15:37.46  -debug- pellet power is LOW
+2018/05/17-15:37.46  -debug- pellet status is COLD
+2018/05/17-15:37.46  -debug- gas is ON
+2018/05/17-15:37.46  -debug- Sensor reads - t: 19.2 h: 59.4 - Last successful read: 1526564247
+2018/05/17-15:37.50  -debug- Appending command: ext-temp
+2018/05/17-15:37.50  -debug- New EXT TEMP received: 24.200001:63.500000
+2018/05/17-15:38.20  -debug- Appending command: ext-temp
+2018/05/17-15:38.20  -debug- New EXT TEMP received: 24.100000:63.500000
+2018/05/17-15:38.46  -debug- Time interval (1526564326 - 1526564266 >= 60)
+2018/05/17-15:38.46  -debug- pellet is ON
+2018/05/17-15:38.46  -debug- pellet power is LOW
+2018/05/17-15:38.46  -debug- pellet status is COLD
+2018/05/17-15:38.46  -debug- gas is ON
+2018/05/17-15:38.46  -debug- Sensor reads - t: 19.2 h: 59.4 - Last successful read: 1526564295
+2018/05/17-15:38.50  -debug- Appending command: ext-temp
+2018/05/17-15:38.50  -debug- New EXT TEMP received: 24.000000:64.300003
+2018/05/17-15:39.20  -debug- Appending command: ext-temp
+2018/05/17-15:39.20  -debug- New EXT TEMP received: 23.900000:64.199997
+2018/05/17-15:39.46  -debug- Time interval (1526564386 - 1526564326 >= 60)
+2018/05/17-15:39.46  -debug- pellet is ON
+2018/05/17-15:39.46  -debug- pellet power is LOW
+2018/05/17-15:39.46  -debug- pellet status is COLD
+2018/05/17-15:39.46  -debug- gas is ON
+2018/05/17-15:39.46  -debug- Sensor reads - t: 19.2 h: 59.4 - Last successful read: 1526564295
+2018/05/17-15:39.50  -debug- Appending command: ext-temp
+2018/05/17-15:39.50  -debug- New EXT TEMP received: 23.799999:64.099998
+2018/05/17-15:40.20  -debug- Appending command: ext-temp
+2018/05/17-15:40.20  -debug- New EXT TEMP received: 23.700001:64.199997
+2018/05/17-15:40.46  -debug- Time interval (1526564446 - 1526564386 >= 60)
+2018/05/17-15:40.46  -debug- pellet is ON
+2018/05/17-15:40.46  -debug- pellet power is LOW
+2018/05/17-15:40.46  -debug- pellet status is COLD
+2018/05/17-15:40.46  -debug- gas is ON
+2018/05/17-15:40.46  -debug- Sensor reads - t: 19.2 h: 59.4 - Last successful read: 1526564295
+2018/05/17-15:40.50  -debug- Appending command: ext-temp
+2018/05/17-15:40.50  -debug- New EXT TEMP received: 23.700001:64.699997
+2018/05/17-15:41.20  -debug- Appending command: ext-temp
+2018/05/17-15:41.20  -debug- New EXT TEMP received: 23.700001:64.800003
+2018/05/17-15:41.46  -debug- Time interval (1526564506 - 1526564446 >= 60)
+2018/05/17-15:41.46  -debug- pellet is ON
+2018/05/17-15:41.46  -debug- pellet power is LOW
+2018/05/17-15:41.46  -debug- pellet status is COLD
+2018/05/17-15:41.46  -debug- gas is ON
+2018/05/17-15:41.46  -debug- Sensor reads - t: 19.2 h: 59.4 - Last successful read: 1526564295
+2018/05/17-15:41.50  -debug- Appending command: ext-temp
+2018/05/17-15:41.50  -debug- New EXT TEMP received: 23.700001:65.099998
+2018/05/17-15:42.20  -debug- Appending command: ext-temp
+2018/05/17-15:42.20  -debug- New EXT TEMP received: 23.700001:65.599998
+2018/05/17-15:42.46  -debug- Time interval (1526564566 - 1526564506 >= 60)
+2018/05/17-15:42.46  -debug- pellet is ON
+2018/05/17-15:42.46  -debug- pellet power is LOW
+2018/05/17-15:42.46  -debug- pellet status is COLD
+2018/05/17-15:42.46  -debug- gas is ON
+2018/05/17-15:42.46  -debug- Sensor reads - t: 19.2 h: 59.4 - Last successful read: 1526564544
+2018/05/17-15:42.50  -debug- Appending command: ext-temp
+2018/05/17-15:42.50  -debug- New EXT TEMP received: 23.700001:66.000000
+2018/05/17-15:43.20  -debug- Appending command: ext-temp
+2018/05/17-15:43.20  -debug- New EXT TEMP received: 23.700001:65.900002
+2018/05/17-15:43.46  -debug- Time interval (1526564626 - 1526564566 >= 60)
+2018/05/17-15:43.46  -debug- pellet is ON
+2018/05/17-15:43.46  -debug- pellet power is LOW
+2018/05/17-15:43.46  -debug- pellet status is COLD
+2018/05/17-15:43.46  -debug- gas is ON
+2018/05/17-15:43.46  -debug- Sensor reads - t: 19.2 h: 59.4 - Last successful read: 1526564608
+2018/05/17-15:43.50  -debug- Appending command: ext-temp
+2018/05/17-15:43.50  -debug- New EXT TEMP received: 23.799999:65.800003
+2018/05/17-15:44.20  -debug- Appending command: ext-temp
+2018/05/17-15:44.20  -debug- New EXT TEMP received: 23.799999:66.699997
+2018/05/17-15:44.46  -debug- Time interval (1526564686 - 1526564626 >= 60)
+2018/05/17-15:44.46  -debug- pellet is ON
+2018/05/17-15:44.46  -debug- pellet power is LOW
+2018/05/17-15:44.46  -debug- pellet status is COLD
+2018/05/17-15:44.46  -debug- gas is ON
+2018/05/17-15:44.46  -debug- Sensor reads - t: 19.2 h: 59.4 - Last successful read: 1526564608
+2018/05/17-15:44.50  -debug- Appending command: ext-temp
+2018/05/17-15:44.50  -debug- New EXT TEMP received: 23.900000:68.199997
+2018/05/17-15:45.20  -debug- Appending command: ext-temp
+2018/05/17-15:45.20  -debug- New EXT TEMP received: 24.000000:68.099998
+2018/05/17-15:45.46  -debug- Time interval (1526564746 - 1526564686 >= 60)
+2018/05/17-15:45.46  -debug- pellet is ON
+2018/05/17-15:45.46  -debug- pellet power is LOW
+2018/05/17-15:45.46  -debug- pellet status is COLD
+2018/05/17-15:45.46  -debug- gas is ON
+2018/05/17-15:45.46  -debug- Sensor reads - t: 19.2 h: 59.4 - Last successful read: 1526564608
+2018/05/17-15:45.50  -debug- Appending command: ext-temp
+2018/05/17-15:45.50  -debug- New EXT TEMP received: 24.100000:68.000000
+2018/05/17-15:46.20  -debug- Appending command: ext-temp
+2018/05/17-15:46.20  -debug- New EXT TEMP received: 24.299999:68.099998
+2018/05/17-15:46.46  -debug- Time interval (1526564806 - 1526564746 >= 60)
+2018/05/17-15:46.46  -debug- pellet is ON
+2018/05/17-15:46.46  -debug- pellet power is LOW
+2018/05/17-15:46.46  -debug- pellet status is COLD
+2018/05/17-15:46.46  -debug- gas is ON
+2018/05/17-15:46.46  -debug- Sensor reads - t: 19.2 h: 59.4 - Last successful read: 1526564608
+2018/05/17-15:46.50  -debug- Appending command: ext-temp
+2018/05/17-15:46.50  -debug- New EXT TEMP received: 24.500000:68.300003
+2018/05/17-15:47.20  -debug- Appending command: ext-temp
+2018/05/17-15:47.20  -debug- New EXT TEMP received: 24.600000:67.000000
+2018/05/17-15:47.46  -debug- Time interval (1526564866 - 1526564806 >= 60)
+2018/05/17-15:47.46  -debug- pellet is ON
+2018/05/17-15:47.46  -debug- pellet power is LOW
+2018/05/17-15:47.46  -debug- pellet status is COLD
+2018/05/17-15:47.46  -debug- gas is ON
+2018/05/17-15:47.46  -debug- Sensor reads - t: 19.3 h: 59.3 - Last successful read: 1526564817
+2018/05/17-15:47.50  -debug- Appending command: ext-temp
+2018/05/17-15:47.50  -debug- New EXT TEMP received: 24.600000:65.699997
+2018/05/17-15:48.20  -debug- Appending command: ext-temp
+2018/05/17-15:48.20  -debug- New EXT TEMP received: 24.400000:63.400002
+2018/05/17-15:48.46  -debug- Time interval (1526564926 - 1526564866 >= 60)
+2018/05/17-15:48.46  -debug- pellet is ON
+2018/05/17-15:48.46  -debug- pellet power is LOW
+2018/05/17-15:48.46  -debug- pellet status is COLD
+2018/05/17-15:48.46  -debug- gas is ON
+2018/05/17-15:48.46  -debug- Sensor reads - t: 19.3 h: 59.3 - Last successful read: 1526564817
+2018/05/17-15:48.50  -debug- Appending command: ext-temp
+2018/05/17-15:48.50  -debug- New EXT TEMP received: 24.200001:62.599998
+2018/05/17-15:49.20  -debug- Appending command: ext-temp
+2018/05/17-15:49.20  -debug- New EXT TEMP received: 23.900000:61.099998
+2018/05/17-15:49.46  -debug- Time interval (1526564986 - 1526564926 >= 60)
+2018/05/17-15:49.46  -debug- pellet is ON
+2018/05/17-15:49.46  -debug- pellet power is LOW
+2018/05/17-15:49.46  -debug- pellet status is COLD
+2018/05/17-15:49.46  -debug- gas is ON
+2018/05/17-15:49.46  -debug- Sensor reads - t: 19.3 h: 59.3 - Last successful read: 1526564817
+2018/05/17-15:49.50  -debug- Appending command: ext-temp
+2018/05/17-15:49.50  -debug- New EXT TEMP received: 23.600000:60.500000
+2018/05/17-15:50.20  -debug- Appending command: ext-temp
+2018/05/17-15:50.20  -debug- New EXT TEMP received: 23.400000:61.400002
+2018/05/17-15:50.46  -debug- Time interval (1526565046 - 1526564986 >= 60)
+2018/05/17-15:50.46  -debug- pellet is ON
+2018/05/17-15:50.46  -debug- pellet power is LOW
+2018/05/17-15:50.46  -debug- pellet status is COLD
+2018/05/17-15:50.46  -debug- gas is ON
+2018/05/17-15:50.46  -debug- Sensor reads - t: 19.3 h: 60 - Last successful read: 1526564986
+2018/05/17-15:50.50  -debug- Appending command: ext-temp
+2018/05/17-15:50.50  -debug- New EXT TEMP received: 23.200001:61.700001
+2018/05/17-15:51.20  -debug- Appending command: ext-temp
+2018/05/17-15:51.20  -debug- New EXT TEMP received: 23.200001:63.599998
+2018/05/17-15:51.46  -debug- Time interval (1526565106 - 1526565046 >= 60)
+2018/05/17-15:51.46  -debug- pellet is ON
+2018/05/17-15:51.46  -debug- pellet power is LOW
+2018/05/17-15:51.46  -debug- pellet status is COLD
+2018/05/17-15:51.46  -debug- gas is ON
+2018/05/17-15:51.46  -debug- Sensor reads - t: 19.4 h: 59.6 - Last successful read: 1526565098
+2018/05/17-15:51.50  -debug- Appending command: ext-temp
+2018/05/17-15:51.50  -debug- New EXT TEMP received: 23.200001:64.400002
+2018/05/17-15:52.20  -debug- Appending command: ext-temp
+2018/05/17-15:52.20  -debug- New EXT TEMP received: 23.200001:65.699997
+2018/05/17-15:52.46  -debug- Time interval (1526565166 - 1526565106 >= 60)
+2018/05/17-15:52.46  -debug- pellet is ON
+2018/05/17-15:52.46  -debug- pellet power is LOW
+2018/05/17-15:52.46  -debug- pellet status is COLD
+2018/05/17-15:52.46  -debug- gas is ON
+2018/05/17-15:52.46  -debug- Sensor reads - t: 19.4 h: 59.6 - Last successful read: 1526565098
+2018/05/17-15:52.50  -debug- Appending command: ext-temp
+2018/05/17-15:52.50  -debug- New EXT TEMP received: 23.200001:66.500000
+2018/05/17-15:53.20  -debug- Appending command: ext-temp
+2018/05/17-15:53.20  -debug- New EXT TEMP received: 23.200001:66.099998
+2018/05/17-15:53.46  -debug- Time interval (1526565226 - 1526565166 >= 60)
+2018/05/17-15:53.46  -debug- pellet is ON
+2018/05/17-15:53.46  -debug- pellet power is LOW
+2018/05/17-15:53.46  -debug- pellet status is COLD
+2018/05/17-15:53.46  -debug- gas is ON
+2018/05/17-15:53.46  -debug- Sensor reads - t: 19.4 h: 59.6 - Last successful read: 1526565098
+2018/05/17-15:53.50  -debug- Appending command: ext-temp
+2018/05/17-15:53.50  -debug- New EXT TEMP received: 23.100000:62.900002
+2018/05/17-15:54.20  -debug- Appending command: ext-temp
+2018/05/17-15:54.20  -debug- New EXT TEMP received: 23.000000:62.799999
+2018/05/17-15:54.46  -debug- Time interval (1526565286 - 1526565226 >= 60)
+2018/05/17-15:54.46  -debug- pellet is ON
+2018/05/17-15:54.46  -debug- pellet power is LOW
+2018/05/17-15:54.46  -debug- pellet status is COLD
+2018/05/17-15:54.46  -debug- gas is ON
+2018/05/17-15:54.46  -debug- Sensor reads - t: 19.4 h: 59.6 - Last successful read: 1526565098
+2018/05/17-15:54.50  -debug- Appending command: ext-temp
+2018/05/17-15:54.50  -debug- New EXT TEMP received: 22.900000:62.599998
+2018/05/17-15:55.20  -debug- Appending command: ext-temp
+2018/05/17-15:55.20  -debug- New EXT TEMP received: 22.900000:63.500000
+2018/05/17-15:55.46  -debug- Time interval (1526565346 - 1526565286 >= 60)
+2018/05/17-15:55.46  -debug- pellet is ON
+2018/05/17-15:55.46  -debug- pellet power is LOW
+2018/05/17-15:55.46  -debug- pellet status is COLD
+2018/05/17-15:55.46  -debug- gas is ON
+2018/05/17-15:55.46  -debug- Sensor reads - t: 19.4 h: 59.6 - Last successful read: 1526565098
+2018/05/17-15:55.50  -debug- Appending command: ext-temp
+2018/05/17-15:55.50  -debug- New EXT TEMP received: 22.900000:64.000000
+2018/05/17-15:56.20  -debug- Appending command: ext-temp
+2018/05/17-15:56.20  -debug- New EXT TEMP received: 22.900000:63.400002
+2018/05/17-15:56.46  -debug- Time interval (1526565406 - 1526565346 >= 60)
+2018/05/17-15:56.46  -debug- pellet is ON
