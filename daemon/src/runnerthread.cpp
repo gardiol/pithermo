@@ -16,9 +16,9 @@
 // GPIO
 // 5 = minimo
 // 4 = ???
-// 6 = quarto relé libero
+// 6 = pellet
 // 0 = gas
-// 2 = pellet
+// 2 = quarto relé libero
 // 7 = pellet feedback
 RunnerThread::RunnerThread(const std::string &cfg,
                            const std::string &exchange_path,
@@ -119,7 +119,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
                           gas_on_since, 0,
                           LogItem::GAS_ON, LogItem::GAS_OFF,
                           LogItem::NO_EVENT, LogItem::NO_EVENT ); // command is GPIO 0
-    _pellet = new Generator( "pellet", _logger, 2, 7, 5,
+    _pellet = new Generator( "pellet", _logger, 6, 7, 5,
                              pellet_on_time, pellet_min_time,
                              pellet_on_since, pellet_low_on_since,
                              LogItem::PELLET_ON, LogItem::PELLET_OFF,
