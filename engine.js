@@ -5,6 +5,7 @@ var maxTemp;
 var prgResetBtn;
 var prgApplyBtn;
 var p_str = [];
+var week_day = ["domenica", "lunedi","martedi","mercoledi","giovedi","venerdi", "sabato"];
 
 var MessageStr = {
     0: "No event",
@@ -289,7 +290,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             },
         }, "program-apply"),
     };
-    var today_ref = [[],[],[]];
+    var today_ref = [];
     var program_copy_d = [];
     var program_copy_h = [];
     var program_h_headers = [];
@@ -371,8 +372,22 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             dclass.remove(dom.byId("program-change"), "celated");
         }
 
+		for ( var h = 0; h < 24; h++ ){
+			dclass.remove(today_ref[h]["h"], "auto_now_c" );
+			dclass.remove(today_ref[h]["c"], "auto_now_c" );
+		}
+		var today_base = system_status.now.h - 6;
+		if ( today_base < 0 )
+			today_base = 0;
+		if ( today_base > 17 )
+			today_base = 17;
+		for ( var h = 0; h < 12; h++ ){
+			var rh = h + today_base;
+			html.set(today_ref[h*2]["h"], (rh < 10 ? "0"+rh:rh)+":00" );
+			html.set(today_ref[h*2+1]["h"], (rh < 10 ? "0"+rh:rh)+":30" );
+		}
+		html.set(today_ref["day"], week_day[ system_status.now.d ] );
         for ( var d = 0; d < 7; d++ ){
-            
             for ( var h = 0; h < 24; h++ ){
                 
                 for ( var f = 0; f < 2; f++ ){
@@ -394,23 +409,23 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     dclass.remove(program_cels[d][h][f], "auto_now_now" )                                
                     dclass.remove(program_cels[d][h][f], "auto_now_c" );
                     if ( d == system_status.now.d ){
-                        dclass.remove(today_ref[1+f][h], "auto_now_c" );
-                        attr.set(today_ref[1+f][h]["_img"], "src", src );
+						var today_cell = (h - today_base)*2 + f;
+						if ( (today_cell < 0) || (today_cell > 23 ) )
+							today_cell = null;
+						if ( today_cell )
+							attr.set(today_ref[today_cell]["img"], "src", src );
                         if ( h == system_status.now.h ){
                             if ( f == system_status.now.f ){
                                 dclass.add(program_cels[d][h][f], "auto_now_now" );                         
-                                dclass.add(today_ref[1+f][h], "auto_now_c" );
+								dclass.add(today_ref[today_cell]["c"], "auto_now_c" );
+								dclass.add(today_ref[today_cell]["h"], "auto_now_c" );
                             } else {
                                 dclass.add(program_cels[d][h][f], "auto_now_c" );     
                             }
                         }
                         else
                             dclass.add(program_cels[d][h][f], "auto_now_c" );                         
-                    } else {
-/*                        if ( (h == system_status.now.h) && (f == system_status.now.f) ) {
-                            dclass.add(program_cels[d][h][f], "auto_now_c" );                         
-                        }*/
-                    }                        
+                    } 
                 }
             }
         }
@@ -531,15 +546,15 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         sts.on.set("disabled", false );
 						next_update = 15000;
 					}
-						if ( !programEdited ){
-							program_status = [];
-							for ( var d = 0; d < system_status.program.length; d++ ){
-								program_status[d] = [];
-								for ( var h = 0; h < system_status.program[d].length; h++ )                                
-									program_status[d][h] = system_status.program[d][h];
-							}
-							programRefresh();
+					if ( !programEdited ){
+						program_status = [];
+						for ( var d = 0; d < system_status.program.length; d++ ){
+							program_status[d] = [];
+							for ( var h = 0; h < system_status.program[d].length; h++ )                                
+								program_status[d][h] = system_status.program[d][h];
 						}
+						programRefresh();
+					}
 					stsTimer = window.setTimeout( function(){ updateStatus(); }, next_update );
 					updating = false;
                 } // result is valid
@@ -703,12 +718,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         new ToggleButton({ checked: false, onChange: function(v) {
             if ( v ){
                 dclass.remove(dom.byId("program-editor"), "hidden");
-                dclass.add(dom.byId("today-table"), "hidden");
-                this.set("label","riduci");
+                this.set("label","Chiudi settimana");
             } else {
                 dclass.add(dom.byId("program-editor"), "hidden");
-                dclass.remove(dom.byId("today-table"), "hidden");
-                this.set("label","espandi");
+                this.set("label","Espandi settimana");
             }
         }}, "program-size");
         on(dom.byId("select-off"), "click", function(){selectType('o');});
@@ -717,18 +730,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         on(dom.byId("select-pellet"), "click", function(){selectType('p');});
         on(dom.byId("select-pellet-minimum"), "click", function(){selectType('m');});
         selectType('o');
-        on(dom.byId("program-size"), "click", function(){
-        });
         for ( var p in prg )
             prg[p].startup();
                 
-        for ( var h = 0; h < 24; h++ ){
-            today_ref[0][h] = domConstruct.create("th", { class: "solid-down-sep", innerHTML: h < 10 ? "0"+h : h } );
-            today_ref[1][h] = domConstruct.create("td", { class: "dashed-down-sep"} );
-            today_ref[1][h]["_img"] = domConstruct.create("img", { src: "images/off.png" }, today_ref[1][h] );            
-            today_ref[2].push( domConstruct.create("td", {} ) );
-            today_ref[2][h]["_img"] = domConstruct.create("img", { src: "images/off.png" }, today_ref[2][h] );            
-            
+        for ( var h = 0; h < 24; h++ ){            
             program_h_headers[h] = domConstruct.create("th", { innerHTML: h < 10 ? "0"+h : h } );
             program_h_headers[h]["_h"] = h;
             on(program_h_headers[h], "click", function(evt){
@@ -790,7 +795,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                             var x = i._h*2+i._f;
                             program_status[i._d][x] = program_status[i._d][x] == selected_type ? 'o' : selected_type;
                             programRefresh();
-                        }
+						}
 					});
                 }
             }        
@@ -816,7 +821,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                         copyInProgressD = null;
                     }	
                     programRefresh();
-                }
+				}
             });
                                 
             program_d_headers[d]["_d"] = d;
@@ -840,7 +845,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                 }
             });
         }
-        
+        		
         domConstruct.empty(dom.byId("program-table"));
         domConstruct.create("col", { span: 2}, domConstruct.create("colgroup", { class: "dayCol"} , dom.byId("program-table") ) );
         for ( var d = 0; d < 7; d++ )
@@ -867,18 +872,23 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             }
                 row_node = domConstruct.create("tr", null, dom.byId("program-table") );
         }
-        
-        for ( var d = 0; d < 24; d++ )
-            domConstruct.create("col", {class: "dayCol"}, dom.byId("today-table") );                 
-        for ( var r = 0; r < 3; r++ ){
-            var row_node = domConstruct.create("tr", null, dom.byId("today-table") );
-            domConstruct.create("th", { class: r < 2 ? "solid-down-sep" : "", innerHTML: (r == 0 ? "" : (r == 1 ? "00" : "30"))}, row_node );            
-            today_ref[r].forEach(function(c){
-                domConstruct.place(c, row_node);
-            });            
-        };
-    }
-    
+
+		var table = dom.byId("today-table");
+        for ( var h = 0; h < 24; h++ ){
+            domConstruct.create("col", {class: "dayCol"}, table );                 
+		}
+        var top_row = domConstruct.create("tr", null, table );
+		today_ref["day"] = domConstruct.create("th", { colspan: 24, innerHTML: "..." }, top_row );
+		var h_row = domConstruct.create( "tr", { class: "solid-down-sep" }, table );
+		var c_row = domConstruct.create( "tr", { class: "solid-down-sep" }, table );
+        for ( var h = 0; h < 24; h++ ){
+			today_ref[h] = [];
+			today_ref[h]["h"] = domConstruct.create("td", { innerHTML: ""}, h_row );                 
+			today_ref[h]["c"] = domConstruct.create("td", { innerHTML: ""}, c_row );                 
+			today_ref[h]["img"] = domConstruct.create("img", { src: "images/off.png" }, today_ref[h]["c"] );            
+		}		
+	}
+	
     buildHistory();
     buildStatus();
     buildProgram();                
