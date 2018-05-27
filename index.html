@@ -5,7 +5,7 @@
 	<meta charset="UTF-8"/>
 	<link rel="stylesheet" href="js/dijit/themes/claro/claro.css"/>
 	<link rel="stylesheet" href="js/dgrid/css/dgrid.css"/>
-	<link rel="stylesheet" href="index.css?ver=0"/>
+	<link rel="stylesheet" href="index.css?ver=9"/>
 	<script>dojoConfig = {parseOnLoad: true}</script>
 	<script src="js/dojo/dojo.js" data-dojo-config="async: true"></script>
 </head>
@@ -102,11 +102,11 @@
     
 <div id="program-area">
     <div id="program-header-row" class="control-bar">
-		<button id="program-size">Espandi settimana</button>
         <div>
             <table id="today-table">
             </table>
         </div>
+		<button id="program-size">Espandi programma</button>
     </div><!-- today row-->
     <div id="program-editor" class="hidden">
         <div id="program-selector">
@@ -157,7 +157,7 @@
             <option value="w">settimane</option>
         </select>
         <input id="humi-check" /><label for="checkBox">Umidità</label>
-        <button id="history-size">espandi</button>
+        <button id="history-size">Zoom</button>
         </div>
     </div><!-- history controls-->
     <div id="history-graph">

@@ -103,8 +103,9 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 	getRequest = function( req, ok_func, ko_func ){
 		if ( req == "cgi-bin/status" ){
 			var dat = new Date();
-			
-			local_status.now = { d: dat.getDay(), h: dat.getHours(), f: dat.getMinutes() > 30 ? 30 : 0 };
+			var dy = dat.getDay()-1;
+			if ( dy < 0 ) dy = 6;
+			local_status.now = { d: dy, h: dat.getHours(), f: dat.getMinutes() > 30 ? 30 : 0 };
 			ok_func( local_status );
 		}	
 		else if ( req == "cgi-bin/history" ){

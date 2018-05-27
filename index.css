@@ -232,8 +232,8 @@ div.col {
 }
 
 #program-table th, td {
-    height: 1.7em;
-    width: 1.7em;
+    height: 1.5em;
+    width: 1.5em;
 }
 
 #program-table tr {
@@ -241,12 +241,16 @@ div.col {
 }
 
 #program-table td img {
-	width: 1.5em;
-	height: 1.5em;
+	width: 1.3em;
+	height: 1.3em;
+}
+
+.smallNo {
+	font-size: 80%;
 }
 
 .dayCol {
-    border-right: 2px solid black !important;
+    border-right: 1px solid black !important;
 }
 
 .copy {
