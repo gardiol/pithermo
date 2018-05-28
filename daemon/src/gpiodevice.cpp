@@ -33,7 +33,11 @@ bool GPIODevice::readPGIObool(int gpio_no)
     if ( gpio_no > -1 )
     {
 #ifndef DEMO
-        pinMode( gpio_no, _mode[ gpio_no ] );
+        // First read, always in input:
+        if ( _values.find( gpio_no ) == _values.end() )
+            pinMode( gpio_no, INPUT );
+        else
+            pinMode( gpio_no, _mode[ gpio_no ] );
         _values[ gpio_no ] = (digitalRead( gpio_no ) == HIGH);
 #else
         if ( _values.find( gpio_no ) == _values.end() )
