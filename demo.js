@@ -32,52 +32,52 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 			local_status.pellet.flameout = "off";
 			ok_func();
 		}
-		else if ( data.data == "activate" ){
+		else if ( data == "activate" ){
 			local_status.active = "on";
 			ok_func();
 		}
-		else if ( data.data == "deactivate" ){
+		else if ( data == "deactivate" ){
 			local_status.active = "off";
 			ok_func();
 		}
-		else if ( data.data == "manual" ){
+		else if ( data == "manual" ){
 			local_status.mode = "manual";
 			ok_func();
 		}
-		else if ( data.data == "auto" ){
+		else if ( data == "auto" ){
 			local_status.mode = "auto";
 			ok_func();
 		}
-		else if ( data.data == "pellet-on" ){
+		else if ( data == "pellet-on" ){
 			local_status.pellet.command = "on";
 			local_status.pellet.status = "on";
 			ok_func();
 		}
-		else if ( data.data == "pellet-off" ){
+		else if ( data == "pellet-off" ){
 			local_status.pellet.command = "off";
 			local_status.pellet.status = "off";
 			ok_func();
 		}
-		else if ( data.data == "pellet-minimum-on" ){
+		else if ( data == "pellet-minimum-on" ){
 			local_status.pellet.minimum = "on";
 			ok_func();
 		}
-		else if ( data.data == "pellet-minimum-off" ){
+		else if ( data == "pellet-minimum-off" ){
 			local_status.pellet.minimum = "off";
 			ok_func();
 		}
-		else if ( data.data == "gas-on" ){
+		else if ( data == "gas-on" ){
 			local_status.gas.command = "on";
 			local_status.gas.status = "on";
 			ok_func();
 		}
-		else if ( data.data == "gas-off" ){
+		else if ( data == "gas-off" ){
 			local_status.gas.command = "off";
 			local_status.gas.status = "off";
 			ok_func();
 		}
 		else{
-			alert( data.data );
+			alert( data );
 			ko_func();
 		}
 	}
@@ -105,7 +105,7 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 			var dat = new Date();
 			var dy = dat.getDay()-1;
 			if ( dy < 0 ) dy = 6;
-			local_status.now = { d: dy, h: dat.getHours(), f: dat.getMinutes() > 30 ? 30 : 0 };
+			local_status.now = { d: dy, h: dat.getHours(), f: dat.getMinutes() > 30 ? 1 : 0 };
 			ok_func( local_status );
 		}	
 		else if ( req == "cgi-bin/history" ){

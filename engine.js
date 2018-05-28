@@ -447,24 +447,6 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
     }
 	
 	function disableAll(msg){
-		tempEdited = false;
-		system_status = null;
-		system_events = [];                
-		for ( var p in sts )
-			sts[p].set("disabled", true);                
-		html.set("gas-time", "--");
-		html.set("pellet-time", "--");
-		html.set("pellet-mintime", "--");
-		html.set("pellet-modtime", "--");
-		html.set("temp-label", "--" );
-		html.set("humi-label", "--" );
-		dc.empty("messages-queue");
-		dc.place("<li>" + msg + "</li>", "messages-queue","first");
-		attr.set("pellet-feedback-led", "src", "images/min-temp.png");
-		attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
-		attr.set("pellet-status-led", "src", "images/pellet-off.png");
-		attr.set("gas-status-led", "src", "images/gas-off.png");
-		style.set(sts.flameout.domNode, 'display', 'none');		
 	}
 
 	function updateStatus(){
@@ -476,7 +458,7 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
             function(result){
                 if ( result ){
 					updating = true;
-			var next_update = 999999;
+					var next_update = 999999;
                     system_status = result;
                     for ( var p in sts )
                         sts[p].set("disabled", true); 
@@ -500,17 +482,14 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 									sts.pelletMinOff.set("disabled", false );
 								else
 									sts.pelletMinOn.set("disabled", false );
-							}else{
+							}else
 								sts.pelletOn.set("disabled", false );
-							}
-							if ( system_status.gas.command == "on" ){
+							if ( system_status.gas.command == "on" )
 								sts.gasOff.set("disabled", false );
-							}else{
+							else
 								sts.gasOn.set("disabled", false );
-							}
-						}else if ( system_status.mode == "auto" ) {
+						}else if ( system_status.mode == "auto" )
 							sts.manual.set("disabled", false );
-						}
 						var p_h = Math.trunc(system_status.pellet.time/3600);
 						var p_m = Math.trunc((system_status.pellet.time/60)%60);
 						var mp_h = Math.trunc(system_status.pellet.mintime/3600);
@@ -521,8 +500,6 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 						html.set("pellet-mintime", mp_h +"h" + mp_m  + "m" );
 						html.set("pellet-modtime", Mp_h +"h" + Mp_m  + "m" );                    
 						html.set("gas-time", Math.trunc(system_status.gas.time/3600) +"h " + Math.trunc((system_status.gas.time/60)%60)  + "m");
-						html.set("temp-label",system_status.temp.int + "° (" + system_status.temp.ext + "°)" );
-						html.set("humi-label", system_status.temp.hum + "% (" + system_status.temp.ext_hum + "%)" );
 						attr.set("mode-led", "src", system_status.mode == "manual" ? "images/manual.png":"images/auto.png");                
 						attr.set("power-led", "src", system_status.active != "on" ? "images/spento.png":"images/acceso.png");                
 						attr.set("pellet-feedback-led", "src", system_status.pellet.status == "on" ? "images/max-temp.png":"images/min-temp.png");                
@@ -530,31 +507,13 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 						attr.set("pellet-status-led", "src", system_status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
 						attr.set("gas-status-led", "src", system_status.gas.command == "on" ? "images/gas-on.png":"images/gas-off.png");                
 						style.set(sts.flameout.domNode, 'display', system_status.pellet.flameout == "on" ? 'inline' : 'none' );		
-						getRequest("cgi-bin/events",
-							function(events){
-								var s = system_events.length;
-								var e = events.length;
-								if ( (system_events == []) || 
-									(events.length < system_events.length) ){
-									dc.empty("messages-queue");
-									s = 0;
-								}	
-								system_events = events;                 
-								for ( var x = s; x < events.length; x++ ){
-									var str = buildEventStr(x);
-									dc.place("<li>" + str + "</li>", "messages-queue","first");
-								}
-							},
-							function(err){
-								dc.empty("messages-queue");
-								dc.place("<li>Impossibile leggere la lista degli eventi!</li>", "messages-queue","first");
-							});						
 						next_update = 2000;
 					} else {
-						disableAll("Impianto spento");
                         sts.on.set("disabled", false );
 						next_update = 15000;
 					}
+					html.set("temp-label",system_status.temp.int + "° (" + system_status.temp.ext + "°)" );
+					html.set("humi-label", system_status.temp.hum + "% (" + system_status.temp.ext_hum + "%)" );
 					if ( !programEdited ){
 						program_status = [];
 						for ( var d = 0; d < system_status.program.length; d++ ){
@@ -564,12 +523,49 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 						}
 						programRefresh();
 					}
+					getRequest("cgi-bin/events",
+						function(events){
+							var s = system_events.length;
+							var e = events.length;
+							if ( (system_events == []) || 
+								(events.length < system_events.length) ){
+								dc.empty("messages-queue");
+								s = 0;
+							}	
+							system_events = events;                 
+							for ( var x = s; x < events.length; x++ ){
+								var str = buildEventStr(x);
+								dc.place("<li>" + str + "</li>", "messages-queue","first");
+							}
+						},
+						function(err){
+							dc.empty("messages-queue");
+							dc.place("<li>Impossibile leggere la lista degli eventi!</li>", "messages-queue","first");
+						});						
 					stsTimer = window.setTimeout( function(){ updateStatus(); }, next_update );
 					updating = false;
                 } // result is valid
             }, 
 			function(err){
+				tempEdited = false;
+				system_status = null;
+				system_events = [];                
+				html.set("temp-label", "--" );
+				html.set("humi-label", "--" );
+				for ( var p in sts )
+					sts[p].set("disabled", true);                
 				disableAll("Errore di connessione");
+				html.set("gas-time", "--");
+				html.set("pellet-time", "--");
+				html.set("pellet-mintime", "--");
+				html.set("pellet-modtime", "--");
+				dc.empty("messages-queue");
+				dc.place("<li>Errore di connessione</li>", "messages-queue","first");
+				attr.set("pellet-feedback-led", "src", "images/min-temp.png");
+				attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
+				attr.set("pellet-status-led", "src", "images/pellet-off.png");
+				attr.set("gas-status-led", "src", "images/gas-off.png");
+				style.set(sts.flameout.domNode, 'display', 'none');		
 				stsTimer = window.setTimeout( function(){ updateStatus(); }, 5000 );
 			});
 	}
@@ -746,7 +742,7 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 		var ptable = dom.byId("program-table");
 		dc.create("col", {colspan:2}, ptable );
         for ( var h = 0; h < 48; h++ ){
-            dc.create("col", {class: "dayCol"}, ptable );                 
+            dc.create("col", {class: h%2 ? "halfCol" : "hourCol"}, ptable );                 
 		}
 		var ch_row = dc.create("tr", null, ptable );
 		dc.create("th", {colspan:2}, ch_row );
@@ -805,7 +801,7 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
             });
 			prgrf["hdr_f"][h] = [];
 			for (var f = 0; f < 2; f++){
-				prgrf["hdr_f"][h][f] = dc.create("th", {innerHTML: (f*30),class:"smallNo"}, pf_row ); 				
+				prgrf["hdr_f"][h][f] = dc.create("th", {innerHTML: f == 0 ? "00":"30",class:"smallNo"}, pf_row ); 				
 			}
 		}
 		
@@ -877,7 +873,7 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 
 		var table = dom.byId("today-table");
         for ( var h = 0; h < 24; h++ ){
-            dc.create("col", {class: "dayCol"}, table );                 
+            dc.create("col", {class: h%2 ? "halfCol" : "hourCol"}, table );                 
 		}
         var top_row = dc.create("tr", null, table );
 		tdr["day"] = dc.create("th", { colspan: 24, innerHTML: "..." }, top_row );
