@@ -67,7 +67,7 @@ require([
     "dojox/charting/plot2d/Markers",
     "dojox/charting/action2d/MouseIndicator",
     "dojo/domReady!"], 
-function( request, dom, attr, dclass, style, domConstruct, html, query, json, on, win,     // Dojo
+function( request, dom, attr, dclass, style, dc, html, query, json, on, win,     // Dojo
           registry, ConfirmDialog, ContentPane, TabContainer, Button, ToggleButton, CheckBox, NumberSpinner, Select, HorizontalSlider, // Dijit
           Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator )               // Charing
 {
@@ -291,22 +291,8 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
             },
         }, "program-apply"),
     };
-    var today_ref = [];
-	var program_ref = [];
-/*    var program_copy_d = [];
-    var program_copy_h = [];
-    var program_h_headers = [];
-    var program_d_headers = [
-        domConstruct.create("th", {innerHTML:"LUN", colspan:2}),
-        domConstruct.create("th", {innerHTML:"MAR", colspan:2}),
-        domConstruct.create("th", {innerHTML:"MER", colspan:2}),
-        domConstruct.create("th", {innerHTML:"GIO", colspan:2}),
-        domConstruct.create("th", {innerHTML:"VEN", colspan:2}),
-        domConstruct.create("th", {innerHTML:"SAB", colspan:2}),
-        domConstruct.create("th", {innerHTML:"DOM", colspan:2})
-    ];
-    var program_cels = [];        
-	*/
+    var tdr = [];
+	var prgrf = [];
     var program_status = null;
     var selected_type;
     var copyInProgressD = null;
@@ -376,17 +362,17 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         }
 
 		for ( var h = 0; h < 24; h++ ){
-			dclass.remove(today_ref[h]["h"], "auto_now_c" );
-			dclass.remove(today_ref[h]["c"], "auto_now_c" );
-			dclass.remove(program_ref["hdr_h"][h], "auto_now_c" );
-			dclass.remove(program_ref["hdr_ch"][h], "auto_now_c" );
+			dclass.remove(tdr[h]["h"], "auto_now_c" );
+			dclass.remove(tdr[h]["c"], "auto_now_c" );
+			dclass.remove(prgrf["hdr_h"][h], "auto_now_c" );
+			dclass.remove(prgrf["hdr_ch"][h], "auto_now_c" );
 			for ( var f = 0; f < 2; f++ ){
-				dclass.remove(program_ref["hdr_f"][h][f], "auto_now_c" );
+				dclass.remove(prgrf["hdr_f"][h][f], "auto_now_c" );
 			}
 		}
 		for ( var d = 0; d < 7; d++ ){
-			dclass.remove(program_ref["hdr_d"][d], "auto_now_c" );
-			dclass.remove(program_ref["hdr_cd"][d], "auto_now_c" );
+			dclass.remove(prgrf["hdr_d"][d], "auto_now_c" );
+			dclass.remove(prgrf["hdr_cd"][d], "auto_now_c" );
 		}
 		var today_base = system_status.now.h - 6;
 		if ( today_base < 0 )
@@ -395,10 +381,10 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 			today_base = 17;
 		for ( var h = 0; h < 12; h++ ){
 			var rh = h + today_base;
-			html.set(today_ref[h*2]["h"], (rh < 10 ? "0"+rh:rh)+":00" );
-			html.set(today_ref[h*2+1]["h"], (rh < 10 ? "0"+rh:rh)+":30" );
+			html.set(tdr[h*2]["h"], (rh < 10 ? "0"+rh:rh)+":00" );
+			html.set(tdr[h*2+1]["h"], (rh < 10 ? "0"+rh:rh)+":30" );
 		}
-		html.set(today_ref["day"], week_day[ system_status.now.d ] );
+		html.set(tdr["day"], week_day[ system_status.now.d ] );
         for ( var d = 0; d < 7; d++ ){
             for ( var h = 0; h < 24; h++ ){
                 
@@ -416,36 +402,36 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     } else {
                         src += "off.png";
                     }
-                    attr.set(program_ref["cell"][d][h][f]["_img"], "src", src );   
+                    attr.set(prgrf["cell"][d][h][f]["_img"], "src", src );   
                     
-                    dclass.remove(program_ref["cell"][d][h][f], "auto_now_now" )                                
-                    dclass.remove(program_ref["cell"][d][h][f], "auto_now_c" );
+                    dclass.remove(prgrf["cell"][d][h][f], "auto_now_now" )                                
+                    dclass.remove(prgrf["cell"][d][h][f], "auto_now_c" );
                     if ( d == system_status.now.d ){
 						var today_cell = (h - today_base)*2 + f;
 						if ( (today_cell < 0) || (today_cell > 23 ) )
 							today_cell = null;
 						if ( today_cell )
-							attr.set(today_ref[today_cell]["img"], "src", src );
+							attr.set(tdr[today_cell]["img"], "src", src );
                         if ( h == system_status.now.h ){
                             if ( f == system_status.now.f ){
-								dclass.add(program_ref["hdr_h"][h], "auto_now_c" );
-								dclass.add(program_ref["hdr_ch"][h], "auto_now_c" );
-								dclass.add(program_ref["hdr_d"][d], "auto_now_c" );
-								dclass.add(program_ref["hdr_cd"][d], "auto_now_c" );
-								dclass.add(program_ref["hdr_f"][h][f], "auto_now_c" );
-                                dclass.add(program_ref["cell"][d][h][f], "auto_now_now" );                         
-								dclass.add(today_ref[today_cell]["c"], "auto_now_c" );
-								dclass.add(today_ref[today_cell]["h"], "auto_now_c" );
+								dclass.add(prgrf["hdr_h"][h], "auto_now_c" );
+								dclass.add(prgrf["hdr_ch"][h], "auto_now_c" );
+								dclass.add(prgrf["hdr_d"][d], "auto_now_c" );
+								dclass.add(prgrf["hdr_cd"][d], "auto_now_c" );
+								dclass.add(prgrf["hdr_f"][h][f], "auto_now_c" );
+                                dclass.add(prgrf["cell"][d][h][f], "auto_now_now" );                         
+								dclass.add(tdr[today_cell]["c"], "auto_now_c" );
+								dclass.add(tdr[today_cell]["h"], "auto_now_c" );
                             } else {
-                                dclass.add(program_ref["cell"][d][h][f], "auto_now_c" );     
+                                dclass.add(prgrf["cell"][d][h][f], "auto_now_c" );     
                             }
                         }
                         else
-                            dclass.add(program_ref["cell"][d][h][f], "auto_now_c" );                         
+                            dclass.add(prgrf["cell"][d][h][f], "auto_now_c" );                         
                     } else {
                         if ( h == system_status.now.h ){
                             if ( f == system_status.now.f ){
-                                dclass.add(program_ref["cell"][d][h][f], "auto_now_c" );                         
+                                dclass.add(prgrf["cell"][d][h][f], "auto_now_c" );                         
 							}
 						}
 					}
@@ -472,8 +458,8 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 		html.set("pellet-modtime", "--");
 		html.set("temp-label", "--" );
 		html.set("humi-label", "--" );
-		domConstruct.empty("messages-queue");
-		domConstruct.place("<li>" + msg + "</li>", "messages-queue","first");
+		dc.empty("messages-queue");
+		dc.place("<li>" + msg + "</li>", "messages-queue","first");
 		attr.set("pellet-feedback-led", "src", "images/min-temp.png");
 		attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
 		attr.set("pellet-status-led", "src", "images/pellet-off.png");
@@ -550,18 +536,18 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 								var e = events.length;
 								if ( (system_events == []) || 
 									(events.length < system_events.length) ){
-									domConstruct.empty("messages-queue");
+									dc.empty("messages-queue");
 									s = 0;
 								}	
 								system_events = events;                 
 								for ( var x = s; x < events.length; x++ ){
 									var str = buildEventStr(x);
-									domConstruct.place("<li>" + str + "</li>", "messages-queue","first");
+									dc.place("<li>" + str + "</li>", "messages-queue","first");
 								}
 							},
 							function(err){
-								domConstruct.empty("messages-queue");
-								domConstruct.place("<li>Impossibile leggere la lista degli eventi!</li>", "messages-queue","first");
+								dc.empty("messages-queue");
+								dc.place("<li>Impossibile leggere la lista degli eventi!</li>", "messages-queue","first");
 							});						
 						next_update = 2000;
 					} else {
@@ -756,37 +742,37 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
         for ( var p in prg )
             prg[p].startup();
                         		
-        domConstruct.empty(dom.byId("program-table"));
+        dc.empty(dom.byId("program-table"));
 		var ptable = dom.byId("program-table");
-		domConstruct.create("col", {colspan:2}, ptable );
+		dc.create("col", {colspan:2}, ptable );
         for ( var h = 0; h < 48; h++ ){
-            domConstruct.create("col", {class: "dayCol"}, ptable );                 
+            dc.create("col", {class: "dayCol"}, ptable );                 
 		}
-		var ch_row = domConstruct.create("tr", null, ptable );
-		domConstruct.create("th", {colspan:2}, ch_row );
-		var ph_row = domConstruct.create("tr", null, ptable );
-		domConstruct.create("th", {colspan:2}, ph_row );
-		var pf_row = domConstruct.create("tr", null, ptable );
-		domConstruct.create("th", {colspan:2}, pf_row );
+		var ch_row = dc.create("tr", null, ptable );
+		dc.create("th", {colspan:2}, ch_row );
+		var ph_row = dc.create("tr", null, ptable );
+		dc.create("th", {colspan:2}, ph_row );
+		var pf_row = dc.create("tr", null, ptable );
+		dc.create("th", {colspan:2}, pf_row );
 
-		program_ref["hdr_ch"] = [];
-		program_ref["hdr_h"] = [];
-		program_ref["hdr_f"] = [];
+		prgrf["hdr_ch"] = [];
+		prgrf["hdr_h"] = [];
+		prgrf["hdr_f"] = [];
 		for (var h = 0; h < 24; h++ ){
 			var h_str = h < 10 ? "0"+h : ""+h;
-			var copy_h = program_ref["hdr_ch"][h] = domConstruct.create("td", {colspan:2}, ch_row );
-			program_ref["hdr_ch"][h]["_h"] = h;
-			program_ref["hdr_ch"][h]["_img"] = domConstruct.create("img", { class:"copy", src: "images/copy.png" }, copy_h );            
+			var copy_h = prgrf["hdr_ch"][h] = dc.create("td", {colspan:2}, ch_row );
+			prgrf["hdr_ch"][h]["_h"] = h;
+			prgrf["hdr_ch"][h]["_img"] = dc.create("img", { class:"copy", src: "images/copy.png" }, copy_h );            
             on(copy_h, "click", function(evt){
                 if ( program_status ){
                     var h = evt.currentTarget._h;
                     if ( copyInProgressH === null ){
                         copyInProgressH = h;
                         for ( var x = 0; x < 24; x++ )
-                            attr.set(program_ref["hdr_ch"][x]["_img"], "src", (x == copyInProgressH) ? "images/cancel_copy.png" : "images/paste.png");
+                            attr.set(prgrf["hdr_ch"][x]["_img"], "src", (x == copyInProgressH) ? "images/cancel_copy.png" : "images/paste.png");
                     } else {
                         for ( var x = 0; x < 24; x++ )
-                            attr.set(program_ref["hdr_ch"][x]["_img"], "src", "images/copy.png" );
+                            attr.set(prgrf["hdr_ch"][x]["_img"], "src", "images/copy.png" );
                         for ( var d = 0; d < 7; d++ ){
                             program_status[d][h*2] = program_status[d][copyInProgressH*2]; 
                             program_status[d][h*2+1] = program_status[d][copyInProgressH*2+1]; 
@@ -796,9 +782,9 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     programRefresh();
                 }
             });						
-			program_ref["hdr_h"][h] = domConstruct.create("th", {innerHTML: h_str, colspan:2}, ph_row );
-			program_ref["hdr_h"][h]["_h"] = h;
-            on(program_ref["hdr_h"][h], "click", function(evt){
+			prgrf["hdr_h"][h] = dc.create("th", {innerHTML: h_str, colspan:2}, ph_row );
+			prgrf["hdr_h"][h]["_h"] = h;
+            on(prgrf["hdr_h"][h], "click", function(evt){
                 if ( program_status ){
                     var h = evt.currentTarget._h;
                     var dialog = new ConfirmDialog({title: "Imposta ora intera",
@@ -817,30 +803,30 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     dialog.show();
                 }
             });
-			program_ref["hdr_f"][h] = [];
+			prgrf["hdr_f"][h] = [];
 			for (var f = 0; f < 2; f++){
-				program_ref["hdr_f"][h][f] = domConstruct.create("th", {innerHTML: (f*30),class:"smallNo"}, pf_row ); 				
+				prgrf["hdr_f"][h][f] = dc.create("th", {innerHTML: (f*30),class:"smallNo"}, pf_row ); 				
 			}
 		}
 		
-		program_ref["hdr_d"] = [];
-		program_ref["hdr_cd"] = [];
-		program_ref["cell"] = [];
+		prgrf["hdr_d"] = [];
+		prgrf["hdr_cd"] = [];
+		prgrf["cell"] = [];
 		for ( var d = 0; d < 7; d++ ){
-			var row = domConstruct.create("tr", null, ptable );
-			var copy_d = program_ref["hdr_cd"][d] = domConstruct.create("td", null, row );			
-            program_ref["hdr_cd"][d]["_d"] = d;
-            program_ref["hdr_cd"][d]["_img"] = domConstruct.create("img", { class:"copy", src: "images/copy.png" }, copy_d );            
+			var row = dc.create("tr", null, ptable );
+			var copy_d = prgrf["hdr_cd"][d] = dc.create("td", null, row );			
+            prgrf["hdr_cd"][d]["_d"] = d;
+            prgrf["hdr_cd"][d]["_img"] = dc.create("img", { class:"copy", src: "images/copy.png" }, copy_d );            
             on(copy_d, "click", function(evt){
                 if ( program_status ){
                     var d = evt.currentTarget._d;
                     if ( copyInProgressD === null ){
                         copyInProgressD = d;
                         for ( var x = 0; x < 7; x++ )
-                            attr.set(program_ref["hdr_cd"][x]["_img"], "src", (x == copyInProgressD) ? "images/cancel_copy.png" : "images/paste.png");
+                            attr.set(prgrf["hdr_cd"][x]["_img"], "src", (x == copyInProgressD) ? "images/cancel_copy.png" : "images/paste.png");
                     } else {
                         for ( var x = 0; x < 7; x++ )
-                            attr.set(program_ref["hdr_cd"][x]["_img"], "src", "images/copy.png" );
+                            attr.set(prgrf["hdr_cd"][x]["_img"], "src", "images/copy.png" );
                         for ( var n = 0; n < program_status[d].length; n++ )
                             program_status[d][n] = program_status[copyInProgressD][n]; 	
                         copyInProgressD = null;
@@ -848,9 +834,9 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     programRefresh();
 				}
             });
-			program_ref["hdr_d"][d] = domConstruct.create("th", { innerHTML:week_day_short[d] }, row );
-			program_ref["hdr_d"][d]["_d"] = d;
-            on(program_ref["hdr_d"][d], "click", function(evt){
+			prgrf["hdr_d"][d] = dc.create("th", { innerHTML:week_day_short[d] }, row );
+			prgrf["hdr_d"][d]["_d"] = d;
+            on(prgrf["hdr_d"][d], "click", function(evt){
                 if ( program_status ){
                     var d = evt.currentTarget._d;
                     var dialog = new ConfirmDialog({title: "Imposta giornata",
@@ -868,16 +854,16 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
                     dialog.show();
                 }
             });
-			program_ref["cell"][d] = [];
+			prgrf["cell"][d] = [];
 			for ( var h = 0; h < 24; h++ ){
-				program_ref["cell"][d][h] = [];
+				prgrf["cell"][d][h] = [];
 				for ( var f = 0; f < 2; f++ ){
-					program_ref["cell"][d][h][f] = domConstruct.create("td", null, row );	
-                    program_ref["cell"][d][h][f]["_img"] = domConstruct.create("img", { src: "images/off.png" }, program_ref["cell"][d][h][f] );            
-                    program_ref["cell"][d][h][f]["_d"] = d;
-                    program_ref["cell"][d][h][f]["_h"] = h;
-                    program_ref["cell"][d][h][f]["_f"] = f;
-                    on(program_ref["cell"][d][h][f], "click", function(evt){
+					prgrf["cell"][d][h][f] = dc.create("td", null, row );	
+                    prgrf["cell"][d][h][f]["_img"] = dc.create("img", { src: "images/off.png" }, prgrf["cell"][d][h][f] );            
+                    prgrf["cell"][d][h][f]["_d"] = d;
+                    prgrf["cell"][d][h][f]["_h"] = h;
+                    prgrf["cell"][d][h][f]["_f"] = f;
+                    on(prgrf["cell"][d][h][f], "click", function(evt){
                         if ( program_status ){
                             var i = evt.currentTarget;
                             var x = i._h*2+i._f;
@@ -891,26 +877,22 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 
 		var table = dom.byId("today-table");
         for ( var h = 0; h < 24; h++ ){
-            domConstruct.create("col", {class: "dayCol"}, table );                 
+            dc.create("col", {class: "dayCol"}, table );                 
 		}
-        var top_row = domConstruct.create("tr", null, table );
-		today_ref["day"] = domConstruct.create("th", { colspan: 24, innerHTML: "..." }, top_row );
-		var h_row = domConstruct.create( "tr", { class: "solid-down-sep" }, table );
-		var c_row = domConstruct.create( "tr", { class: "solid-down-sep" }, table );
+        var top_row = dc.create("tr", null, table );
+		tdr["day"] = dc.create("th", { colspan: 24, innerHTML: "..." }, top_row );
+		var h_row = dc.create( "tr", { class: "solid-down-sep" }, table );
+		var c_row = dc.create( "tr", { class: "solid-down-sep" }, table );
         for ( var h = 0; h < 24; h++ ){
-			today_ref[h] = [];
-			today_ref[h]["h"] = domConstruct.create("td", { innerHTML: ""}, h_row );                 
-			today_ref[h]["c"] = domConstruct.create("td", { innerHTML: ""}, c_row );                 
-			today_ref[h]["img"] = domConstruct.create("img", { src: "images/off.png" }, today_ref[h]["c"] );            
+			tdr[h] = [];
+			tdr[h]["h"] = dc.create("td", { innerHTML: ""}, h_row );                 
+			tdr[h]["c"] = dc.create("td", { innerHTML: ""}, c_row );                 
+			tdr[h]["img"] = dc.create("img", { src: "images/off.png" }, tdr[h]["c"] );            
 		}		
-	}
-	
+	}	
     buildHistory();
     buildStatus();
     buildProgram();                
 	updateHistory();
-	updateStatus();
-    
-//    on(window, "resize", function(){ console.log( win.getBox() ) } );
-    
+	updateStatus();    
 });
