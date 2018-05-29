@@ -71,7 +71,8 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
           registry, ConfirmDialog, ContentPane, TabContainer, Button, ToggleButton, CheckBox, NumberSpinner, Select, HorizontalSlider, // Dijit
           Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator )               // Charing
 {
-	var updating = false;
+	var tempMin_inhibit = false;
+	var tempMax_inhibit = false;
 	
 	if ( !putRequest ){
 		putRequest = function( req, data, ok_func, ko_func ){
@@ -109,16 +110,7 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
             onChange: function(b){historySetData()},
         }, "humi-check"),
         grp: new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25}),
-        exp: new ToggleButton({ checked: false, onChange: function(v) {
-            if ( v ){
-                dclass.add(dom.byId("history-graph"), "history-big");
-                this.set("label","Riduci");
-            } else {
-                dclass.remove(dom.byId("history-graph"), "history-big");
-                this.set("label","Zoom");
-            }
-            hst.grp.resize();
-        }}, "history-size"),
+        exp: dom.byId("history-size") 
     };
     var hstTimer;
     var hstData = null;
@@ -188,11 +180,15 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
             value: 0,
             disabled: true,
             smallDelta: 0.1,
+			intermediateChanges: true,
             style: "width: 6em;",
             onChange: function(){
-				if ( !updating ){
+				if ( !tempMin_inhibit ){
 					tempEdited = true;
-				}
+					dclass.remove(dom.byId("temp-reset"), "celated");
+					dclass.remove(dom.byId("temp-apply"), "celated");
+				} else 
+					tempMin_inhibit = false;
 			},
             constraints: { min:-100, max:100, places:1 }
         }, "min-temp"),
@@ -200,97 +196,29 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
             value: 0,
             disabled: true,
             smallDelta: 0.1,
+			intermediateChanges: true,
             style: "width: 6em;",
             onChange: function(){ 
-				if ( !updating ){
+				if ( !tempMax_inhibit ){
 					tempEdited = true;
-				}
+					dclass.remove(dom.byId("temp-reset"), "celated");
+					dclass.remove(dom.byId("temp-apply"), "celated");
+				} else
+					tempMax_inhibit = false;					
 			},
             constraints: { min:-100, max:100, places:1 }
         }, "max-temp"),
-        tempReset: new Button({
-            label: "Ripristina",
-            disabled: true,
-            onClick:
-                function(){
-                    var dialog = new ConfirmDialog({
-                        title: "ATTENZIONE!",
-                        content: "Annullare le modifiche?"});
-                    dialog.set("buttonOk", "Si, annulla");
-                    dialog.set("buttonCancel", "No, continua");
-                    dialog.on("execute", function() {
-                        if ( system_status ) {
-                            sts.tempMax.set("value", system_status.temp.max );				
-                            sts.tempMin.set("value", system_status.temp.min );		
-                            tempEdited = false;
-                        }
-                    });
-                    dialog.show();
-                }
-        }, "temp-reset"),
-        tempApply: new Button({
-            label: "Applica",
-            disabled: true,
-            onClick: 
-                function(){
-                    var dialog = new ConfirmDialog({
-                            title: "ATTENZIONE!",
-                            content: "Salvare le modifiche?"});
-                    dialog.set("buttonOk", "Salva");
-                    dialog.set("buttonCancel", "Continua a modificare");
-                    dialog.on("execute", function() {
-					postRequest("cgi-bin/set_min_temp",sts.tempMin.value,
-						function(result){},
-						function(err){alert("Command error: " + err );});
-					postRequest("cgi-bin/set_max_temp",sts.tempMax.value,
-                        function(result){
-							tempEdited = false;
-						},
-                        function(err){alert("Command error: " + err );});
-                    });
-                    dialog.show();
-                }
-        }, "temp-apply"),
+		tempReset: dom.byId("temp-reset"),
+		tempApply: dom.byId("temp-apply")
     };   
     var system_status = null;
     var tempEdited = false;
     
     var prg = {
-        reset:  new Button({
-            label: "Ripristina",
-            onClick: function(){
-                var dialog = new ConfirmDialog({
-                        title: "ATTENZIONE!",
-                        content: "Annullare le modifiche?"});
-                dialog.set("buttonOk", "Si, annulla");
-                dialog.set("buttonCancel", "No, continua");
-                dialog.on("execute", function() {
-                    if ( system_status ) {
-                        program_status = system_status.program;
-                        programRefresh();
-                    }
-                });
-                dialog.show();
-            },
-        }, "program-reset"),
-        apply: new Button({
-            label: "Applica",
-            onClick: function(){
-                var dialog = new ConfirmDialog({
-                    title: "ATTENZIONE!",
-                    content: "Salvare le modifiche?"});
-                dialog.set("buttonOk", "Salva");
-                dialog.set("buttonCancel", "Continua a modificare");
-                dialog.on("execute", function() {
-                    var ps = json.stringify(program_status);
-					postRequest("cgi-bin/program",{json: program_status},
-                        function(result){programEdited = false;},
-                        function(err){alert("Command error: " + err );});
-                });
-                dialog.show();
-            },
-        }, "program-apply"),
+		restore: dc.create("img", { src: "images/restore.png", class:"corner hidden" } ),
+		apply: dc.create("img", { src: "images/apply.png", class:"corner hidden" } )
     };
+	
     var tdr = [];
 	var prgrf = [];
     var program_status = null;
@@ -348,17 +276,18 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
         if ( !program_status || !system_status )
             return;
         programEdited = false;
-        for ( var d = 0; (d < 7) && !programEdited; d++ ){
-            for ( var h = 0; (h < 48) && !programEdited; h++ ){
-                if ( program_status[d][h] != system_status.program[d][h] ){
+        for ( var d = 0; (d < 7) && !programEdited; d++ )
+            for ( var h = 0; (h < 48) && !programEdited; h++ )
+                if ( program_status[d][h] != system_status.program[d][h] )
                     programEdited = true;
-                }
-            }
-        }
         if ( !programEdited ){
             dclass.add(dom.byId("program-change"), "celated");
+			dclass.add(prg.restore, "hidden");
+			dclass.add(prg.apply, "hidden");
         }else{
             dclass.remove(dom.byId("program-change"), "celated");
+			dclass.remove(prg.restore, "hidden");
+			dclass.remove(prg.apply, "hidden");
         }
 
 		for ( var h = 0; h < 24; h++ ){
@@ -446,9 +375,6 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
             return t + " -- " + e_str;            
     }
 	
-	function disableAll(msg){
-	}
-
 	function updateStatus(){
         if ( stsTimer ){
             window.clearTimeout( stsTimer );
@@ -457,23 +383,25 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 		getRequest("cgi-bin/status",
             function(result){
                 if ( result ){
-					updating = true;
 					var next_update = 999999;
                     system_status = result;
                     for ( var p in sts )
-                        sts[p].set("disabled", true); 
+						if ( sts[p].set )
+							sts[p].set("disabled", true); 
                     if ( system_status.active == "on" ){
                         sts.off.set("disabled", false );
+						if ( !tempEdited ){
+							if ( sts.tempMin.get("value") != system_status.temp.min ){
+								sts.tempMin.set("value", system_status.temp.min);
+								tempMin_inhibit = true;
+							}
+							if ( sts.tempMax.get("value") != system_status.temp.max ){
+								sts.tempMax.set("value", system_status.temp.max);
+								tempMax_inhibit = true;
+							}
+						}
 						sts.tempMin.set("disabled", false );
 						sts.tempMax.set("disabled", false );
-						if ( !tempEdited ){
-							if ( sts.tempMin.get("value") != system_status.temp.min )
-								sts.tempMin.set("value", system_status.temp.min);
-							if ( sts.tempMax.get("value") != system_status.temp.max )
-								sts.tempMax.set("value", system_status.temp.max);
-						}
-						sts.tempReset.set("disabled", false );
-						sts.tempApply.set("disabled", false );
 						if ( system_status.mode == "manual" ){
 							sts.auto.set("disabled", false );
 							if ( system_status.pellet.command == "on" ){
@@ -543,17 +471,19 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 							dc.place("<li>Impossibile leggere la lista degli eventi!</li>", "messages-queue","first");
 						});						
 					stsTimer = window.setTimeout( function(){ updateStatus(); }, next_update );
-					updating = false;
                 } // result is valid
             }, 
 			function(err){
 				tempEdited = false;
+				dclass.add(dom.byId("temp-reset"), "celated");
+				dclass.add(dom.byId("temp-apply"), "celated");
 				system_status = null;
 				system_events = [];                
 				html.set("temp-label", "--" );
 				html.set("humi-label", "--" );
 				for ( var p in sts )
-					sts[p].set("disabled", true);                
+					if ( sts[p].set )
+						sts[p].set("disabled", true);                
 				disableAll("Errore di connessione");
 				html.set("gas-time", "--");
 				html.set("pellet-time", "--");
@@ -571,6 +501,9 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 	}
 
 	function historySetData(){
+		var mins = { t_i:200, t_e: 200, h_i: 200, h_e: 200 };
+		var maxs = { t_i:-200, t_e:-200, h_i:-200, h_e:-200 };
+		var avgs = { t_i:0, t_e: 0, h_i: 0, h_e: 0 };
         extTempData = {};
         extHumiData = {};
         var t = [], h = [], x = [], y = [];
@@ -591,8 +524,20 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
             }
             var n_pts = ti.length;
             for ( p = 0; p < n_pts; p++ ){
+				if ( mins.t_i > te[p] ) mins.t_i = te[p];
+				if ( mins.t_e > ex[p] ) mins.t_e = ex[p];
+				if ( maxs.t_i < te[p] ) maxs.t_i = te[p];
+				if ( maxs.t_e < ex[p] ) maxs.t_e = ex[p];
+				avgs.t_i = ((avgs.t_i+te[p])/2);
+				avgs.t_e = ((avgs.t_e+ex[p])/2);
                 t.push( {x:ti[p], y:te[p] } );
                 if ( show_h ){
+					if ( mins.h_i > hu[p] ) mins.h_i = hu[p];
+					if ( mins.h_e > hx[p] ) mins.h_e = hx[p];
+					if ( maxs.h_i < hu[p] ) maxs.h_i = hu[p];
+					if ( maxs.h_e < hx[p] ) maxs.h_e = hx[p];
+					avgs.h_i = ((avgs.h_i+hu[p])/2);
+					avgs.h_e = ((avgs.h_e+hx[p])/2);
                     h.push( {x:ti[p], y:hu[p] } );
                     y.push( {x:ti[p], y:hx[p] } );
                 }
@@ -613,6 +558,15 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
         }
         hst.grp.getAxis("x").opt.majorTickStep = ts;
         hst.grp.render();        
+		html.set(dom.byId("history-stats-te"), "T(int): " + mins.t_i + " ...(" + avgs.t_i.toFixed(1) + ")... " + maxs.t_i + "" );
+		html.set(dom.byId("history-stats-ex"), "T(est): " + mins.t_e + " ...(" + avgs.t_e.toFixed(1) + ")... " + maxs.t_e + "" );
+		if ( show_h ){
+			html.set(dom.byId("history-stats-hu"), "H(int): " + mins.h_i + " ...(" + avgs.h_i.toFixed(1) + ")... " + maxs.h_i + "" );
+			html.set(dom.byId("history-stats-hx"), "H(est): " + mins.h_e + " ...(" + avgs.h_e.toFixed(1) + ")... " + maxs.h_e + "" );
+		} else {
+			html.set(dom.byId("history-stats-hu"), "");
+			html.set(dom.byId("history-stats-hx"), "");
+		}
     }
     
 	function updateHistory(){
@@ -712,31 +666,80 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
                                     return "";
                             }
                             });
+		
+		
+		on(hst.exp,"click", function(v) {
+			dclass.toggle(dom.byId("history-graph"), "history-big");
+			hst.grp.resize();
+		});
     }
         
     function buildStatus(){
         for ( var p in sts )
-            sts[p].startup();
+			if ( sts[p].startup )
+				sts[p].startup();
+
+		on(sts.tempReset, "click", function(){
+			var dialog = new ConfirmDialog({
+				title: "ATTENZIONE!",
+				content: "Annullare le modifiche?"});
+			dialog.set("buttonOk", "Si, annulla");
+			dialog.set("buttonCancel", "No, continua");
+			dialog.on("execute", function() {
+				if ( system_status ) {
+					if ( sts.tempMin.get("value") != system_status.temp.min ){
+						tempMin_inhibit = true;
+					}
+					if ( sts.tempMax.get("value") != system_status.temp.max ){
+						tempMax_inhibit = true;
+					}
+					sts.tempMax.set("value", system_status.temp.max );				
+					sts.tempMin.set("value", system_status.temp.min );		
+					tempEdited = false;
+					dclass.add(dom.byId("temp-reset"), "celated");
+					dclass.add(dom.byId("temp-apply"), "celated");
+				}
+			});
+			dialog.show();
+		});
+
+		on(sts.tempApply, "click", function(){
+			var dialog = new ConfirmDialog({
+					title: "ATTENZIONE!",
+					content: "Salvare le modifiche?"});
+			dialog.set("buttonOk", "Salva");
+			dialog.set("buttonCancel", "Continua a modificare");
+			dialog.on("execute", function() {
+			postRequest("cgi-bin/set_min_temp",sts.tempMin.value,
+				function(result){},
+				function(err){alert("Command error: " + err );});
+			postRequest("cgi-bin/set_max_temp",sts.tempMax.value,
+				function(result){
+					tempEdited = false;
+					dclass.add(dom.byId("temp-reset"), "celated");
+					dclass.add(dom.byId("temp-apply"), "celated");
+				},
+				function(err){alert("Command error: " + err );});
+			});
+			dialog.show();
+		});
     }
 
     function buildProgram(){
         new ToggleButton({ checked: false, onChange: function(v) {
             if ( v ){
                 dclass.remove(dom.byId("program-editor"), "hidden");
-                this.set("label","Chiudi programma");
             } else {
                 dclass.add(dom.byId("program-editor"), "hidden");
-                this.set("label","Espandi programma");
             }
-        }}, "program-size");
+        }}, "program-size");		
+		
         on(dom.byId("select-off"), "click", function(){selectType('o');});
         on(dom.byId("select-gas"), "click", function(){selectType('g');});
         on(dom.byId("select-pelletgas"), "click", function(){selectType('x');});
         on(dom.byId("select-pellet"), "click", function(){selectType('p');});
         on(dom.byId("select-pellet-minimum"), "click", function(){selectType('m');});
         selectType('o');
-        for ( var p in prg )
-            prg[p].startup();
                         		
         dc.empty(dom.byId("program-table"));
 		var ptable = dom.byId("program-table");
@@ -745,11 +748,46 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
             dc.create("col", {class: h%2 ? "halfCol" : "hourCol"}, ptable );                 
 		}
 		var ch_row = dc.create("tr", null, ptable );
-		dc.create("th", {colspan:2}, ch_row );
+		var tl_corner = dc.create("th", {colspan:2,rowspan:3}, ch_row );
 		var ph_row = dc.create("tr", null, ptable );
-		dc.create("th", {colspan:2}, ph_row );
-		var pf_row = dc.create("tr", null, ptable );
-		dc.create("th", {colspan:2}, pf_row );
+		var pf_row = dc.create("tr", { class: "tr_br" }, ptable );
+		
+		
+		dc.place( prg.apply, dc.create("div", null, tl_corner) );
+		dc.place( prg.restore, dc.create("div", null, tl_corner) );
+		on( prg.restore,"click", function(){
+			var dialog = new ConfirmDialog({
+					title: "ATTENZIONE!",
+					content: "Annullare le modifiche?"});
+			dialog.set("buttonOk", "Si, annulla");
+			dialog.set("buttonCancel", "No, continua");
+			dialog.on("execute", function() {
+				if ( system_status ) {
+					program_status = system_status.program;
+					programRefresh();
+				}
+			});
+			dialog.show();
+		});
+		
+		on( prg.apply,"click", function(){
+			var dialog = new ConfirmDialog({
+				title: "ATTENZIONE!",
+				content: "Salvare le modifiche?"});
+			dialog.set("buttonOk", "Salva");
+			dialog.set("buttonCancel", "Continua a modificare");
+			dialog.on("execute", function() {
+				var ps = json.stringify(program_status);
+				postRequest("cgi-bin/program",{json: program_status},
+					function(result){
+						programEdited = false;
+						dclass.add(prg.restore, "hidden");
+						dclass.add(prg.apply, "hidden");
+					},
+					function(err){alert("Command error: " + err );});
+			});
+			dialog.show();
+		});
 
 		prgrf["hdr_ch"] = [];
 		prgrf["hdr_h"] = [];
@@ -809,7 +847,7 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 		prgrf["hdr_cd"] = [];
 		prgrf["cell"] = [];
 		for ( var d = 0; d < 7; d++ ){
-			var row = dc.create("tr", null, ptable );
+			var row = dc.create("tr", { class: "tr_br" }, ptable );
 			var copy_d = prgrf["hdr_cd"][d] = dc.create("td", null, row );			
             prgrf["hdr_cd"][d]["_d"] = d;
             prgrf["hdr_cd"][d]["_img"] = dc.create("img", { class:"copy", src: "images/copy.png" }, copy_d );            
@@ -873,7 +911,7 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 
 		var table = dom.byId("today-table");
         for ( var h = 0; h < 24; h++ ){
-            dc.create("col", {class: h%2 ? "halfCol" : "hourCol"}, table );                 
+            dc.create("col", {class: h%2 == 0? "halfCol" : "hourCol"}, table );                 
 		}
         var top_row = dc.create("tr", null, table );
 		tdr["day"] = dc.create("th", { colspan: 24, innerHTML: "..." }, top_row );

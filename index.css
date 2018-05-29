@@ -37,7 +37,6 @@
     vertical-align: middle;
 }
 
-
 .history-big {
     height: 48em !important;
 }
@@ -100,10 +99,15 @@
 	font-size: 140%;
 }
 
-p.status-title {
+.status-title {
 	font-style: bold;
 	font-size: 140%;
 	border-bottom: 1px dotted black;
+}
+
+#temp-buttons {
+	text-align: center;
+	padding: 1em;
 }
 
 img.status-icon {
@@ -188,25 +192,27 @@ div.col {
 
 #program-selector {
 	text-align: center;
+	vertical-align: middle;
+	width: 100%;
+	padding: 0px;
+	margin: 0px;
 }
 
 #program-selector > div {
 	display: inline-block;
 	vertical-align: middle;
-	border: 2px solid black;
-	margin: 1em;
-	padding: 1em 1em 0 1em;
-}
-
-#select-box > div {
-	display: inline-block;
-	vertical-align: middle;
-	width: 5em;
 	height: 100%;
+	border: 2px solid gray;
+    margin: 1 1 0.8em 1;
+	padding: 1em;
 }
 
-#program-selector > div > div > img {
+#program-selector > div  > img {
 	height: 3em;
+	vertical-align: middle;
+}
+#program-selector > div  > span {
+	vertical-align: middle;
 }
 
 #today-table {
@@ -236,7 +242,7 @@ div.col {
     width: 1.5em;
 }
 
-#program-table tr {
+.tr_br {
 	border-bottom: 1px solid gray;
 }
 
@@ -260,6 +266,11 @@ div.col {
 .copy {
     width: 1em !important;
     height: 1em !important;
+}
+
+.corner {
+    width: 2em !important;
+    height: 2em !important;
 }
 
 .auto_now_c {

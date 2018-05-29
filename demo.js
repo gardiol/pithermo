@@ -1,7 +1,7 @@
 var postRequest = null;
 var putRequest = null;
 var getRequest = null;
-
+/*
 require([
     "dojo/request",
     "dojo/dom", 
@@ -115,5 +115,5 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 			ok_func( local_events );
 		}	
 	}
-
 });
+*/

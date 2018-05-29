@@ -5,7 +5,7 @@
 	<meta charset="UTF-8"/>
 	<link rel="stylesheet" href="js/dijit/themes/claro/claro.css"/>
 	<link rel="stylesheet" href="js/dgrid/css/dgrid.css"/>
-	<link rel="stylesheet" href="index.css?ver=9"/>
+	<link rel="stylesheet" href="index.css?ver=20180528"/>
 	<script>dojoConfig = {parseOnLoad: true}</script>
 	<script src="js/dojo/dojo.js" data-dojo-config="async: true"></script>
 </head>
@@ -45,12 +45,12 @@
                     <img alt="maxTemp" class="temp-img" src="images/max-temp.png"/>
                     <div id="max-temp"></div>
                 </div>
-                <div>
-                    <button id="temp-reset"></button>
-                    <button id="temp-apply"></button>
+                <div id="temp-buttons">
+					<img id="temp-reset" src="images/restore.png" class="corner celated" style="margin-right: 1em;" />
+					<img id="temp-apply" src="images/apply.png" class="corner celated" />
                 </div>
-                <p class="status-title"></p>
-				<div>
+                <div class="status-title"></div>
+				<div id="temp-stats">
 					Temperatura:
 					<span id="temp-label"></span>
 				</div>
@@ -106,38 +106,32 @@
             <table id="today-table">
             </table>
         </div>
-		<button id="program-size">Espandi programma</button>
+		<button id="program-size">Programma</button>
     </div><!-- today row-->
     <div id="program-editor" class="hidden">
         <div id="program-selector">
-            <div id="select-box">
-                <div id="select-off">
-                    <img alt="o" id="select-off-img" src="images/off.png"/>
-                    <p>Off</p>
-                </div>
-                <div id="select-gas">
-                    <img alt="g" id="select-gas-img" src="images/gas.png"/>
-                    <p>Gas</p>
-                </div>
-                <div id="select-pelletgas">
-                    <img alt="x" id="select-pelletgas-img" src="images/pellet-gas.png"/>
-                    <p>Pellet + Gas</p>
-                </div>
-                <div id="select-pellet">
-                    <img alt="p" id="select-pellets-img" src="images/pellet.png"/>
-                    <p>Pellet (modula)</p>
-                </div>
-                <div id="select-pellet-minimum">
-                    <img alt="m" id="select-pellet-minimum-img" src="images/pellet-min.png"/>
-                    <p>Pellet (minimo)</p>
-                </div>
-                <div>
-                    <div><button id="program-reset"></button></div>
-                    <div><button id="program-apply"></button></div>
-                </div>
-                <p id="program-change" class="celated">Programma modificato!</p>
-            </div><!-- select box-->
+			<div id="select-off">
+				<img alt="o" id="select-off-img" src="images/off-select.png"/>
+				<span>Off</span>
+			</div>
+			<div id="select-gas">
+				<img alt="g" id="select-gas-img" src="images/gas.png"/>
+				<span>Gas</span>
+			</div>
+			<div id="select-pelletgas">
+				<img alt="x" id="select-pelletgas-img" src="images/pellet-gas.png"/>
+				<span>Pellet + Gas</span>
+			</div>
+			<div id="select-pellet">
+				<img alt="p" id="select-pellets-img" src="images/pellet.png"/>
+				<span>Pellet (modula)</span>
+			</div>
+			<div id="select-pellet-minimum">
+				<img alt="m" id="select-pellet-minimum-img" src="images/pellet-min.png"/>
+				<span>Pellet (minimo)</span>
+			</div>
         </div><!-- program selector-->
+			<p id="program-change" class="celated">Programma modificato!</p>
         <div id="program-content">
             <table id="program-table">
             </table>
@@ -147,18 +141,26 @@
 
 <div id="history-area">
     <div id="history-controls" class="control-bar">
-    <div>
-        <span>Mostra le ultime</span>
-        <span id="history-sel"></span>
-        <span id="history-label"></span>
-        <select id="history-unit">
-            <option value="h" selected="selected">ore</option>
-            <option value="d">giornate</option>
-            <option value="w">settimane</option>
-        </select>
-        <input id="humi-check" /><label for="checkBox">Umidità</label>
-        <button id="history-size">Zoom</button>
+		<div>
+			<span>Mostra le ultime</span>
+			<span id="history-sel"></span>
+			<span id="history-label"></span>
+			<select id="history-unit">
+				<option value="h" selected="selected">ore</option>
+				<option value="d">giornate</option>
+				<option value="w">settimane</option>
+			</select>
+			<input id="humi-check" /><label for="checkBox">Umidità</label>
+			<img id="history-size" src="images/enlarge.png" class="temp-img" style="margin-left: 3em;"/>
         </div>
+		<div>
+			<span id="history-stats-te"></span> --
+			<span id="history-stats-hu"></span>
+		</div>
+		<div>
+			<span id="history-stats-ex"></span> --
+			<span id="history-stats-hx"></span>
+		</div>
     </div><!-- history controls-->
     <div id="history-graph">
     </div>
