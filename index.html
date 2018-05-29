@@ -143,8 +143,8 @@
     <div id="history-controls" class="control-bar">
 		<div>
 			<span>Mostra le ultime</span>
-			<span id="history-sel"></span>
-			<span id="history-label"></span>
+			<select id="history-sel">
+			</select>
 			<select id="history-unit">
 				<option value="h" selected="selected">ore</option>
 				<option value="d">giornate</option>
@@ -154,12 +154,14 @@
 			<img id="history-size" src="images/enlarge.png" class="temp-img" style="margin-left: 3em;"/>
         </div>
 		<div>
-			<span id="history-stats-te"></span> --
-			<span id="history-stats-hu"></span>
-		</div>
-		<div>
-			<span id="history-stats-ex"></span> --
-			<span id="history-stats-hx"></span>
+			<div id="history-stats-t" class="col">
+				<div id="history-stats-te"></div>
+				<div id="history-stats-ex"></div>
+			</div>
+			<div id="history-stats-h" class="col">
+				<div id="history-stats-hu"></div>
+				<div id="history-stats-hx"></div>
+			</div>
 		</div>
     </div><!-- history controls-->
     <div id="history-graph">

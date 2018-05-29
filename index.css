@@ -31,12 +31,6 @@
     text-align: center;
 }
 
-#history-sel {
-    width: 10em;
-    display: inline-block;
-    vertical-align: middle;
-}
-
 .history-big {
     height: 48em !important;
 }
@@ -304,4 +298,8 @@ div.col {
 
 .solid-down-sep {
     border-bottom: 1px solid black;
+}
+
+#history-stats-h {
+	margin-left: 2em;
 }

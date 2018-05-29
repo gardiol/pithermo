@@ -97,12 +97,7 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
         unit:new Select({
             onChange: changeHistory,
         },"history-unit"), 
-        sel:new HorizontalSlider({
-            value:1, 
-            minimum: 1, 
-            maximum:1,
-            intermediateChanges: false, 
-            discreteValues: 1,
+        sel:new Select({
             onChange: historySetData,
         },"history-sel"),
         hck: new CheckBox({
@@ -306,8 +301,8 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 		var today_base = system_status.now.h - 6;
 		if ( today_base < 0 )
 			today_base = 0;
-		if ( today_base > 17 )
-			today_base = 17;
+		if ( today_base > 12 )
+			today_base = 12;
 		for ( var h = 0; h < 12; h++ ){
 			var rh = h + today_base;
 			html.set(tdr[h*2]["h"], (rh < 10 ? "0"+rh:rh)+":00" );
@@ -546,7 +541,6 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
                 extHumiData[ti[p]] = hx[p];
             }            
         }
-        html.set("history-label", s);
         hst.grp.updateSeries("Temperatura", t );
         hst.grp.updateSeries("Esterna", x );
         hst.grp.updateSeries("Umidita", h );
@@ -580,12 +574,17 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
                     hstData = result.data;
                     if ( hst.unit.get("value") != result.mode )
                         hst.unit.set("value", result.mode);
-                    if ( hst.sel.get("value") > result.len )
-                        hst.sel.set("value", result.len);                        
+					var old_val = hst.sel.get("value");
+					hst.sel.reset();
+					for ( var v = 1; v < result.len; v++ )
+						hst.sel.addOption( { value:""+v, label:""+v, selected:false } );
+                    if ( old_val > result.len )
+						old_val = result.len;
+					else
+                        hst.sel.set("value", old_val);     
                     hst.sel.set("maximum", result.len );
                     hst.sel.set("discreteValues", result.len );
                     historySetData();                                
-                    html.set("history-label",  hst.sel.get("value"));
                     hstTimer = window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
                 }
 			},
@@ -596,7 +595,6 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
                 hst.grp.updateSeries("Umidita", [] );
                 hst.grp.updateSeries("EsternaUmidita", []);
                 hst.grp.render();
-                html.set("history-label", "--");
 				hstTimer = window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
 			});
 	}
