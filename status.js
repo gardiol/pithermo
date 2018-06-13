@@ -22,7 +22,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 		inhibitTMax: false,
 		tEdited: false,
 		status: null,
-		events: [],
 		flameout: new Button({
 			label: "RESET FLAMEOUT!",
 			disabled: true,
@@ -189,7 +188,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 				dclass.add(dom.byId("temp-reset"), "celated");
 				dclass.add(dom.byId("temp-apply"), "celated");
 				sts.status = null;
-				sts.events = [];                
 				html.set("temp-label", "--" );
 				html.set("humi-label", "--" );
 				for ( var p in sts )
@@ -260,5 +258,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 				dialog.show();
 			});
     	}
-
+	};
+	
 }
