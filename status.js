@@ -6,8 +6,6 @@ require([
     "dojo/dom-class",
     "dojo/dom-style",
     "dojo/html",
-    "dojo/query",
-    "dojo/json",
     "dojo/on",
     "dijit/ConfirmDialog",
     "dijit/form/Button", 
@@ -21,62 +19,79 @@ function( dom, attr, dclass, style, html, on,// Dojo
 		inhibitTMin: false,
 		inhibitTMax: false,
 		tEdited: false,
-		status: null,
+		status: null,		
+		confirm: function(msg,ok,cmd){
+			var dialog = new ConfirmDialog({
+	        		title: "Conferma comando...",
+	        		content: msg});
+			dialog.set("buttonOk", ok);
+			dialog.set("buttonCancel", "Annulla");
+			dialog.on("execute", function(){
+			putRequest("cgi-bin/command", cmd, 
+				function(result){
+					sts.update();
+				},
+				function(err){
+					alert("Command error: " + err );
+				});
+	      });
+			dialog.show();
+		},
 		flameout: new Button({
 			label: "RESET FLAMEOUT!",
 			disabled: true,
 			class:"hidden",
-			onClick: function(){confirmCmd("Reset pellet FLAMEOUT?", "reset flameout?","reset-flameout");}
+			onClick: function(){sts.confirm("Reset pellet FLAMEOUT?", "reset flameout?","reset-flameout");}
       }, "pellet-flameout-reset-btn"),
       on: new Button({
           label: "Accendi impianto",
           disabled: true,
-          onClick: function(){confirmCmd("Attivare l'impianto?","Attiva!","activate");}
+          onClick: function(){sts.confirm("Attivare l'impianto?","Attiva!","activate");}
       }, "on-btn"),
       off: new Button({
           label: "Spegni impianto",
           disabled: true,
-          onClick: function(){confirmCmd("Disattivare l'impianto?","Disattiva!","deactivate");}
+          onClick: function(){sts.confirm("Disattivare l'impianto?","Disattiva!","deactivate");}
       }, "off-btn"),
       manual: new Button({
           label: "Manuale",
           disabled: true,
-          onClick: function(){confirmCmd("Passare in MANUALE?","Manuale!","manual");}
+          onClick: function(){sts.confirm("Passare in MANUALE?","Manuale!","manual");}
       }, "manual-btn"),
       auto:new Button({
           label: "Automatico",
           disabled: true,
-          onClick: function(){confirmCmd("Passare in AUTOMATICO?" + (sts.status.warnings.modeswitch != "" ? "<p>ATTENZIONE: " + sts.status.warnings.modeswitch+"</p>" : ""),"Automatico!","auto");}
+          onClick: function(){sts.confirm("Passare in AUTOMATICO?" + (sts.status.warnings.modeswitch != "" ? "<p>ATTENZIONE: " + sts.status.warnings.modeswitch+"</p>" : ""),"Automatico!","auto");}
       }, "auto-btn"),
       pelletOn:new Button({
           label: "Accendi",
           disabled: true,
-          onClick: function(){confirmCmd("Accendo il PELLET?","Accendi!","pellet-on");}
+          onClick: function(){sts.confirm("Accendo il PELLET?","Accendi!","pellet-on");}
       }, "pellet-on-btn"),
       pelletOff: new Button({
           label: "Spegni",
           disabled: true,
-          onClick: function(){confirmCmd("Spengo il PELLET?","Spegni!","pellet-off");}
+          onClick: function(){sts.confirm("Spengo il PELLET?","Spegni!","pellet-off");}
       }, "pellet-off-btn"),
       pelletMinOn: new Button({
           label: "minimo",
           disabled: true,
-          onClick: function(){confirmCmd("Pellet al MINIMO?","Minimo!","pellet-minimum-on");}
+          onClick: function(){sts.confirm("Pellet al MINIMO?","Minimo!","pellet-minimum-on");}
       }, "pellet-minimum-on-btn"),
       pelletMinOff: new Button({
           label: "modula",
           disabled: true,
-          onClick: function(){confirmCmd("Pellet in MODULAZIONE?","Modula!","pellet-minimum-off");}
+          onClick: function(){sts.confirm("Pellet in MODULAZIONE?","Modula!","pellet-minimum-off");}
       }, "pellet-minimum-off-btn"),
       gasOn: new Button({
           label: "Accendi",
           disabled: true,
-          onClick: function(){confirmCmd("Accendo il GAS?","Accendi!","gas-on");}
+          onClick: function(){sts.confirm("Accendo il GAS?","Accendi!","gas-on");}
       }, "gas-on-btn"),
       gasOff: new Button({
           label: "Spegni",
           disabled: true,
-          onClick: function(){confirmCmd("Spengo il GAS?","Spegni!","gas-off");}
+          onClick: function(){sts.confirm("Spengo il GAS?","Spegni!","gas-off");}
       }, "gas-off-btn"),          
 		tempReset: dom.byId("temp-reset"),
 		tempApply: dom.byId("temp-apply"),

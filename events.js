@@ -1,9 +1,9 @@
- var evt = null;
+var evt = null;
  
- require([
-    "dojo/dom", 
-    "dojo/dom-construct",
-    "dojo/domReady!"], 
+require([
+   "dojo/dom", 
+   "dojo/dom-construct",
+   "dojo/domReady!"], 
 function( dom, dc)    // Dojo
 {
 	evt = {

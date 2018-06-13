@@ -8,9 +8,17 @@ require([
     "dojo/on",
     "dijit/form/CheckBox",
     "dijit/form/Select",
+    "dojox/charting/Chart",
+    "dojox/charting/axis2d/Default", 
+    "dojox/charting/plot2d/Lines",
+    "dojox/charting/themes/Chris",
+    "dojox/charting/plot2d/Areas",
+    "dojox/charting/plot2d/Markers",
+    "dojox/charting/action2d/MouseIndicator",
     "dojo/domReady!"], 
 function( dom, dclass, style, html, on,// Dojo
-          CheckBox, Select) // Dijit
+          CheckBox, Select, // Dijit
+          Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator )// Charing
 {
     hst = { 
 			timer: null,
