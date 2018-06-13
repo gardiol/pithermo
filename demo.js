@@ -1,20 +1,20 @@
 var postRequest = null;
 var putRequest = null;
 var getRequest = null;
-/*
+
 require([
-    "dojo/request",
-    "dojo/dom", 
-    "dojo/dom-attr",
-    "dojo/dom-class",
-    "dojo/dom-style",
-    "dojo/dom-construct",
-    "dojo/html",
-    "dojo/query",
-    "dojo/json",
-    "dojo/on",
-    "dojo/window",
-    "dojo/domReady!"], 
+ "dojo/request",
+ "dojo/dom", 
+ "dojo/dom-attr",
+ "dojo/dom-class",
+ "dojo/dom-style",
+ "dojo/dom-construct",
+ "dojo/html",
+ "dojo/query",
+ "dojo/json",
+ "dojo/on",
+ "dojo/window",
+ "dojo/domReady!"], 
 function( request, dom, attr, dclass, style, domConstruct, html, query, json, on, win )
 {
 	var local_status = {"mode":"manual","active":"on","antiice":"off",
@@ -116,4 +116,3 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 		}	
 	}
 });
-*/
