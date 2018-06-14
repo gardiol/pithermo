@@ -101,42 +101,47 @@
 </div><!-- status area-->
     
 <div id="program-area">
-    <div id="program-header-row" class="control-bar">
-        <div>
-            <table id="today-table">
-            </table>
-        </div>
-		<button id="program-size">Programma</button>
-    </div><!-- today row-->
-    <div id="program-editor" class="hidden">
-        <div id="program-selector">
-			<div id="select-off">
-				<img alt="o" id="select-off-img" src="images/off-select.png"/>
-				<span>Off</span>
-			</div>
-			<div id="select-gas">
-				<img alt="g" id="select-gas-img" src="images/gas.png"/>
-				<span>Gas</span>
-			</div>
-			<div id="select-pelletgas">
-				<img alt="x" id="select-pelletgas-img" src="images/pellet-gas.png"/>
-				<span>Pellet + Gas</span>
-			</div>
-			<div id="select-pellet">
-				<img alt="p" id="select-pellets-img" src="images/pellet.png"/>
-				<span>Pellet (modula)</span>
-			</div>
-			<div id="select-pellet-minimum">
-				<img alt="m" id="select-pellet-minimum-img" src="images/pellet-min.png"/>
-				<span>Pellet (minimo)</span>
-			</div>
-        </div><!-- program selector-->
-			<p id="program-change" class="celated">Programma modificato!</p>
-        <div id="program-content">
-            <table id="program-table">
-            </table>
-        </div><!-- program table-->
-    </div><!-- program editor-->
+  <div id="program-header-row" class="control-bar">
+    <div>
+      <table id="today-table"></table>
+    </div>
+    <button id="program-size">Programma</button>
+  </div>
+  <div id="program-editor" class="hidden">
+  <div id="program-selector">
+	  <div id="select-off">
+		 <img alt="o" id="select-off-img" src="images/off-select.png"/>
+			<span>Off</span>
+		</div>
+		<div id="select-gas">
+			<img alt="g" id="select-gas-img" src="images/gas.png"/>
+			<span>Gas</span>
+		</div>
+		<div id="select-pelletgas">
+			<img alt="x" id="select-pelletgas-img" src="images/pellet-gas.png"/>
+			<span>Pellet + Gas</span>
+		</div>
+		<div id="select-pellet">
+			<img alt="p" id="select-pellets-img" src="images/pellet.png"/>
+			<span>Pellet (modula)</span>
+		</div>
+		<div id="select-pellet-minimum">
+			<img alt="m" id="select-pellet-minimum-img" src="images/pellet-min.png"/>
+			<span>Pellet (minimo)</span>
+		</div>
+  </div>
+	<p id="program-change" class="celated">
+    <img id="program-apply" src="images/apply.png/">
+    Programma modificato!
+    <img id="program-restore" src="images/restore.png"/>
+  </p>
+  <div id="program-content">
+    <span>Modifica giornata di</span>
+    <select id="program-day-select">
+    </select>
+    <div id="program-table">
+    </div>
+  </div>
 </div><!-- program area-->
 
 <div id="history-area">

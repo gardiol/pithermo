@@ -267,10 +267,10 @@ div.col {
     height: 2em !important;
 }
 
-.auto_now_c {
+.now_col {
 	background: coral !important;
 }
-.auto_now_now {
+.now {
 	background: indianred !important;
 }
 

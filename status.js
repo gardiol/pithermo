@@ -143,12 +143,12 @@ function( dom, attr, dclass, style, html, on,// Dojo
 	               sts.off.set("disabled", false );
 		            if ( !sts.tEdited ){
 							if ( sts.tempMin.get("value") != sts.status.temp.min ){
-								sts.tempMin.set("value", sts.status.temp.min);
 								sts.inhibitTMin = true;
+								sts.tempMin.set("value", sts.status.temp.min);
 							}
 							if ( sts.tempMax.get("value") != sts.status.temp.max ){
-								sts.tempMax.set("value", sts.status.temp.max);
 								sts.inhibitTMax = true;
+								sts.tempMax.set("value", sts.status.temp.max);
 							}
 		            }
 						sts.tempMin.set("disabled", false );
@@ -194,7 +194,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 					}
 					html.set("temp-label",sts.status.temp.int + "° (" + sts.status.temp.ext + "°)" );
 					html.set("humi-label", sts.status.temp.hum + "% (" + sts.status.temp.ext_hum + "%)" );
-					prg.update();
+					prg.update(sts.status.program);
 					evt.update();
 					sts.timer = window.setTimeout( function(){ sts.update(); }, next_update );
 				} // result is valid
@@ -232,7 +232,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 				dialog.set("buttonCancel", "No, continua");
 				dialog.on("execute", function() {
 					if ( sts.status ) {
-						if ( sts.tempMin.get("value") != system_status.temp.min ){
+						if ( sts.tempMin.get("value") != sts.status.temp.min ){
 							sts.inhibitTMin = true;
 						}
 						if ( sts.tempMax.get("value") != system_status.temp.max ){
