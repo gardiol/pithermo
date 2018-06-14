@@ -65,4 +65,4 @@ function( dom, dc)    // Dojo
 					dc.place("<li>Errore di connessione</li>", "messages-queue","first");
 		}
 	};
-}
+});

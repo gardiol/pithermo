@@ -219,7 +219,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 				style.set(sts.flameout.domNode, 'display', 'none');		
 				sts.timer = window.setTimeout( function(){ sts.update(); }, 5000 );
 			});
-		}
+		},
 		build: function(){
 			for ( var p in sts )
 				if ( sts[p].startup ) sts[p].startup();
@@ -275,4 +275,4 @@ function( dom, attr, dclass, style, html, on,// Dojo
     	}
 	};
 	
-}
+});

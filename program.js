@@ -1,42 +1,24 @@
 var prg = null;
 
 require([
-    "dojo/request",
     "dojo/dom", 
     "dojo/dom-attr",
     "dojo/dom-class",
     "dojo/dom-style",
     "dojo/dom-construct",
     "dojo/html",
-    "dojo/query",
     "dojo/json",
     "dojo/on",
-    "dojo/window",
-    "dijit/registry",
     "dijit/ConfirmDialog",
-    "dijit/layout/ContentPane",
-    "dijit/layout/TabContainer",
     "dijit/form/Button", 
-    "dijit/form/ToggleButton", 
-    "dijit/form/CheckBox",
-    "dijit/form/NumberSpinner",
     "dijit/form/Select",
-    "dijit/form/HorizontalSlider",
-    "dojox/charting/Chart",
-    "dojox/charting/axis2d/Default", 
-    "dojox/charting/plot2d/Lines",
-    "dojox/charting/themes/Chris",
-    "dojox/charting/plot2d/Areas",
-    "dojox/charting/plot2d/Markers",
-    "dojox/charting/action2d/MouseIndicator",
     "dojo/domReady!"], 
-function( request, dom, attr, dclass, style, dc, html, query, json, on, win,     // Dojo
-          registry, ConfirmDialog, ContentPane, TabContainer, Button, ToggleButton, CheckBox, NumberSpinner, Select, HorizontalSlider, // Dijit
-          Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator )               // Charing
+function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
+          ConfirmDialog, Button, Select) // Dijit
 {
 	
     prg = {
-		prg.wDay:       ["lunedi","martedi","mercoledi","giovedi","venerdi", "sabato", "domenica"],
+		wDay: ["lunedi","martedi","mercoledi","giovedi","venerdi", "sabato", "domenica"],
 		restore: dom.byId("program-restore"),
 		apply:   dom.byId("program-apply"),
       edited: false,
@@ -51,10 +33,10 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 					dclass.remove(prg.restore, "hidden");
 					dclass.remove(prg.apply, "hidden");
         		}
-      }
+      },
       program: null,
       copyDFrom: null,
-      todayT: ,
+      todayT: {},
       programT: {},
       selOff:    dom.byId("select-off"),
       selGas:    dom.byId("select-gas"),
@@ -339,4 +321,4 @@ function( request, dom, attr, dclass, style, dc, html, query, json, on, win,    
 
 	};
 
-}
+});

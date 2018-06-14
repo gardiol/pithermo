@@ -23,8 +23,8 @@ function( dom, dclass, style, html, on,// Dojo
     hst = { 
 			timer: null,
     		data:  null,
-     		xrefExtTData = {},
-    		xrefExtHData = {},
+     		xrefExtTData: {},
+    		xrefExtHData: {},
 			unit: new Select({onChange: function(){
 					postRequest("cgi-bin/set_history",hst.unit.get("value"),
             	function(result){
@@ -176,7 +176,7 @@ function( dom, dclass, style, html, on,// Dojo
 					dclass.toggle(dom.byId("history-graph"), "history-big");
 					hst.grp.resize();
 				});
-    		}
+    		},
 			disable: function(){
 				hst.data = null;
             hst.grp.updateSeries("Temperatura", [] );
@@ -184,7 +184,7 @@ function( dom, dclass, style, html, on,// Dojo
             hst.grp.updateSeries("Umidita", [] );
             hst.grp.updateSeries("EsternaUmidita", []);
             hst.grp.render();
-			}
+			},
  			update: function(){
 				if ( hst.timer ){
             	window.clearTimeout( hst.timer );
@@ -218,4 +218,4 @@ function( dom, dclass, style, html, on,// Dojo
 
  
     };
-}
+});
