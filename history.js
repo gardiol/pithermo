@@ -34,8 +34,8 @@ function( dom, dclass, style, html, on,// Dojo
             	    alert("Command error: " + err );
             	});
 				}},"history-unit"), 
-        	sel:  new Select({onChange: hst.setData},"history-sel"),
-         hck:  new CheckBox({checked:false,onChange: hst.setData}, "humi-check"),
+        	sel:  new Select({onChange: function(){hst.setData()}},"history-sel"),
+         hck:  new CheckBox({checked:false,onChange: function(){hst.setData()}}, "humi-check"),
 			grp:  new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25}),
          exp:  dom.byId("history-size"),
 			setData: function(){
@@ -208,11 +208,11 @@ function( dom, dclass, style, html, on,// Dojo
 						} else {
 							hst.disable();
 						}
-               	hst.timer = window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
+               	hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
 					},
 					function(err){
 						hst.disable();
-						hst.timer = window.setTimeout( function(){ updateHistory(); }, 60 * 1000 );
+						hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
 					});
 			}
 

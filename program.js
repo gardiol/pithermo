@@ -10,11 +10,11 @@ require([
     "dojo/json",
     "dojo/on",
     "dijit/ConfirmDialog",
-    "dijit/form/Button", 
+    "dijit/form/ToggleButton", 
     "dijit/form/Select",
     "dojo/domReady!"], 
 function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
-          ConfirmDialog, Button, Select) // Dijit
+          ConfirmDialog, ToggleButton, Select) // Dijit
 {
 	
     prg = {
@@ -45,8 +45,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
       selPelMin: dom.byId("select-pellet-minimum"),
       pChange: dom.byId("program-change"),
       daySel: new Select({onChange: function(v){
-      	alert(v);
-      	for ( var d = 0; d < 7; d++ ){      		
+      	for ( var d = 0; d < 7; d++ ){
       		if ( d == v ){      			
 	      		dclass.remove(prg.programT[d]["table"], "hidden");
 	      	} else {
@@ -177,10 +176,10 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 				for ( var h1 = 0; h1 < 12; h1++ ){
 					var hr = dc.create("tr", null, prg.programT[d]["table"] );
 					for ( var h2 = 0; h2 < 2; h2++ ){
-						var h = h1*12+h2;						
+						var h = h1+h2*12;	
 						prg.programT[d][h] = [];
 						prg.programT[d][h]["h"] = dc.create("td", { innerHTML: h < 10 ? "0"+h:h}, hr );
-						for ( var f = 0; d < 2; f++ ){
+						for ( var f = 0; f < 2; f++ ){
 							prg.programT[d][h][f] = dc.create("td", null, hr );            
 							prg.programT[d][h][f]["_d"] = d;        
 							prg.programT[d][h][f]["_h"] = h;        
@@ -216,28 +215,31 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 				prg.todayT[h]["img"] = dc.create("img", { src: "images/off.png" }, prg.todayT[h]["c"] );            
 			}
 		},    
-
-		refresh: function(){
+		fillDaysFirst: true,
+		fillDays: function(w){
 			var old_d = prg.daySel.get("value");
 			prg.daySel.removeOption( prg.daySel.getOptions() );
-			if ( sts.status ){
-				for ( var d = 0; d < 7; d++ ){
-					var v = prg.wDay[d];
-					var w = sts.status.now.d;
-					if ( d == w ){
-						v += "(oggi)";						
-					} else if ( d == (w+1)%7 ){
-						v += "(domani)";
-					} else if ( d == (w+2)%7 ){
-						v += "(dopodomani)";
-					} else if ( d == (w-1)%7 ){
-						v += "(ieri)";
-					} else if ( d == (w-2)%7 ){
-						v += "(l'altroieri)";
-					}
-					prg.daySel.addOption( { value:""+d, label:""+v, selected: (d==w) } );
+			for ( var d = 0; d < 7; d++ ){
+				var v = prg.wDay[d];
+				if ( d == w ){
+					v += "(oggi)";						
+				} else if ( d == (w+1)%7 ){
+					v += "(domani)";
+				} else if ( d == (w+2)%7 ){
+					v += "(dopodomani)";
+				} else if ( d == (w-1)%7 ){
+					v += "(ieri)";
+				} else if ( d == (w-2)%7 ){
+					v += "(l'altroieri)";
 				}
-				prg.daySel.setValue(old_d);
+				prg.daySel.addOption( { value:""+d, label:""+v, selected: (d==w) } );
+			}
+			prg.daySel.setValue( prg.fillDaysFirst ? w : old_d );
+			prg.fillDaysFirst = false;
+		},
+		refresh: function(){
+			if ( sts.status ){
+				prg.fillDays( sts.status.now.d);
 				for ( var x = 0; x < 12; x++ ){
 					dclass.remove(prg.todayT[x]["h"], "now_col" );
 					dclass.remove(prg.todayT[x]["c"], "now_col" );
@@ -261,7 +263,6 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 								    src += "off.png";
 								}
 								attr.set(prg.programT[d][h][f]["_img"], "src", src );   
-
 							}
 						}
 					}

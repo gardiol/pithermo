@@ -138,7 +138,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 					var next_update = 999999;
                sts.status = result;
                for ( var p in sts )
-						if ( sts[p].set ) sts[p].set("disabled", true); 
+						if ( sts[p] && sts[p].set ) sts[p].set("disabled", true); 
 	            if ( sts.status.active == "on" ){
 	               sts.off.set("disabled", false );
 		            if ( !sts.tEdited ){
@@ -221,8 +221,9 @@ function( dom, attr, dclass, style, html, on,// Dojo
 			});
 		},
 		build: function(){
-			for ( var p in sts )
-				if ( sts[p].startup ) sts[p].startup();
+			for ( var p in sts ){				
+				if ( sts[p] && sts[p].startup ) sts[p].startup();
+			}
 
 			on(sts.tempReset, "click", function(){
 				var dialog = new ConfirmDialog({
