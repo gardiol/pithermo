@@ -263,7 +263,15 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 	for ( var d = 0; d < 7; d++ ){
 		prg.programT[d] = [];
 		prg.programT[d]["table"] = dc.create("table", {class:"program-table hidden"}, dom.byId("program-table"));
-		var dr = dc.create("tr", {}, prg.programT[d]["table"] );
+      dc.create("col", {class:"hourCol"}, prg.programT[d]["table"] );                 
+      dc.create("col", {class:"halfCol"}, prg.programT[d]["table"] );                 
+      dc.create("col", {class:"hourCol" }, prg.programT[d]["table"] );                 
+      dc.create("col", {class:"hourCol"}, prg.programT[d]["table"] );                 
+      dc.create("col", {class:"hourCol"}, prg.programT[d]["table"] );                 
+      dc.create("col", {class:"halfCol"}, prg.programT[d]["table"] );                 
+      dc.create("col", {class:"hourCol" }, prg.programT[d]["table"] );                 
+      
+		var dr = dc.create("tr", {class: "header-row"}, prg.programT[d]["table"] );
 		prg.programT[d]["copy"] = dc.create("td", null, dr );
 		prg.programT[d]["copy"]["_d"] = d;
 		prg.programT[d]["copy"]["_img"] = dc.create("img", { class:"copy", src: "images/copy.png" }, prg.programT[d]["copy"] );

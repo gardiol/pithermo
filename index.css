@@ -17,9 +17,6 @@
     vertical-align: middle;
 }
 
-#program-changed {
-   vertical-align: middle;
-}
 
 /* Program specific */
 #program-area {
@@ -64,6 +61,10 @@
 
 .program-selected {
 	background: coral;
+}
+
+#program-changed {
+   vertical-align: middle;
 }
 
 .hourCol {
