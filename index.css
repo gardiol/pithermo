@@ -14,8 +14,12 @@
 .button-img {
     width: 2em !important;
     height: 2em !important;
+    vertical-align: middle;
 }
 
+#program-changed {
+   vertical-align: middle;
+}
 
 /* Program specific */
 #program-area {

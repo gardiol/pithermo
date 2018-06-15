@@ -57,7 +57,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 		}},"program-day-select"), 
 		selectedType: 'o',
       selectType: function(t){
-			selected_type = t;
+			prg.selectedType = t;
 			[prg.selOff, prg.selGas, prg.selAuto, prg.selPel, prg.selPelMin].forEach(function(o){
 				dclass.remove(o,"program-selected");
 			});
@@ -125,6 +125,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 					v += "(l'altroieri)";
 				}
 				prg.daySel.addOption( { value:""+d, label:""+v, selected: (d==w) } );
+				html.set(prg.programT[d]["day"], v );
 			}
 			prg.daySel.setValue( prg.fillDaysFirst ? w : old_d );
 			prg.fillDaysFirst = false;
@@ -236,6 +237,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 		dialog.set("buttonCancel", "No, continua");
 		dialog.on("execute", function() {
 			if ( sts.status ) {
+					prg.setEdited(false);
 				prg.update(sts.status.program);
 			}
 		});
@@ -260,8 +262,8 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 
 	for ( var d = 0; d < 7; d++ ){
 		prg.programT[d] = [];
-		prg.programT[d]["table"] = dc.create("table", {class:"program-table"}, dom.byId("program-table"));
-		var dr = dc.create("tr", {class: "hidden"}, prg.programT[d]["table"] );
+		prg.programT[d]["table"] = dc.create("table", {class:"program-table hidden"}, dom.byId("program-table"));
+		var dr = dc.create("tr", {}, prg.programT[d]["table"] );
 		prg.programT[d]["copy"] = dc.create("td", null, dr );
 		prg.programT[d]["copy"]["_d"] = d;
 		prg.programT[d]["copy"]["_img"] = dc.create("img", { class:"copy", src: "images/copy.png" }, prg.programT[d]["copy"] );
@@ -278,11 +280,13 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 			        for ( var n = 0; n < prg.program[d].length; n++ )
 			            prg.program[d][n] = prg.program[prg.copyDFrom][n]; 	
 			        prg.copyDFrom = null;
+						prg.setEdited(true);
 			    }	
 			    prg.refresh();
 			}
 		});	
 		prg.programT[d]["day"] = dc.create("th", { colspan: 5 }, dr );
+		prg.programT[d]["day"]["_d"] = d;
 		on(prg.programT[d]["day"], "click", function(evt){
           if ( prg.program ){
               var d = evt.currentTarget._d;
@@ -296,6 +300,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
                           prg.program[d][h*2+f] = prg.selectedType;
                       }
                   }
+						prg.setEdited(true);
                   prg.refresh();
               });
               dialog.show();
@@ -310,14 +315,15 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 				prg.programT[d][h]["h"] = dc.create("td", { innerHTML: h < 10 ? "0"+h:h}, hr );
 				for ( var f = 0; f < 2; f++ ){
 					prg.programT[d][h][f] = dc.create("td", null, hr );            
-					prg.programT[d][h][f]["_d"] = d;        
-					prg.programT[d][h][f]["_h"] = h;        
-					prg.programT[d][h][f]["_f"] = f;        
 					prg.programT[d][h][f]["_img"] = dc.create("img", { src: "images/off.png" }, prg.programT[d][h][f] );  
-					on(prg.programT[d][h][f], "click", function(evt){
+					prg.programT[d][h][f]["_img"]["_d"] = d;        
+					prg.programT[d][h][f]["_img"]["_h"] = h;        
+					prg.programT[d][h][f]["_img"]["_f"] = f;
+					on(prg.programT[d][h][f]["_img"], "click", function(evt){
                   if ( prg.program ){
 							var i = evt.currentTarget;
 							var x = i._h*2+i._f;
+							prg.setEdited(true);
 							prg.program[i._d][x] = prg.program[i._d][x] == prg.selectedType ? 'o' : prg.selectedType;
 							prg.refresh();
 						}
