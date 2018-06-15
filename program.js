@@ -136,7 +136,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 				for ( var x = 0; x < prg.todayH; x++ ){
 					var h = x + prg.todayBase;		
 					for ( var f = 0; f < 2; f++ ){
-						html.set(prg.todayT[x*2+f]["_h"], (h < 10 ? "0"+h:h)+":"+(f*30) );
+						html.set(prg.todayT[x*2+f]["_h"],(h<10?"0"+h:h)+":"+(f*30<10?"0"+(f*30):f*30));
 						attr.set(prg.todayT[ x*2+f ]["_img"], "src", prg.srcCalc(n.d,h,f) );   
 					}
 					var t = x*2+n.f;
@@ -260,7 +260,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 
 	for ( var d = 0; d < 7; d++ ){
 		prg.programT[d] = [];
-		prg.programT[d]["table"] = dc.create("table", null, dom.byId("program-table"));
+		prg.programT[d]["table"] = dc.create("table", {class:"program-table"}, dom.byId("program-table"));
 		var dr = dc.create("tr", {class: "hidden"}, prg.programT[d]["table"] );
 		prg.programT[d]["copy"] = dc.create("td", null, dr );
 		prg.programT[d]["copy"]["_d"] = d;
@@ -329,14 +329,14 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 		}
   	}
  
-	prg.todayT["table"] = dom.byId("today-table");
+	prg.todayT["table"] = dc.create("table", {class:"program-table"}, dom.byId("today-table-div"));
      for ( var h = 0; h < prg.todayH*2; h++ ){
          dc.create("col", {class: h%2 == 0? "halfCol" : "hourCol"}, prg.todayT["table"] );                 
 	}
 	var top_row = dc.create("tr", null, prg.todayT["table"] );
 	prg.todayT["day"] = dc.create("th", { colspan: 24, innerHTML: "..." }, top_row );
-	var h_row = dc.create( "tr", { class: "solid-down-sep" }, prg.todayT["table"] );
-	var c_row = dc.create( "tr", { class: "solid-down-sep" }, prg.todayT["table"] );
+	var h_row = dc.create( "tr", { class: "header-row" }, prg.todayT["table"] );
+	var c_row = dc.create( "tr", {}, prg.todayT["table"] );
 	for ( var h = 0; h < prg.todayH*2; h++ ){
 		prg.todayT[h] = [];
 		prg.todayT[h]["_h"] = dc.create("td", { innerHTML: ""}, h_row );                 

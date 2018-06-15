@@ -1,203 +1,38 @@
 
-/* general */
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 .celated {
-    visibility: hidden;
+    visibility: hidden !important;
 }
 
-.control-bar {
-    padding: 0;
-    margin: 0.5em 10% 0.5em 10%;
-    background: linear-gradient(RosyBrown,lightgray);
-    border: 2px groove gray;
-    border-radius: 1em;
-}
-
-/* History area specific */
-#history-area {
-    background: AliceBlue;
-}
-
-#history-graph {
-    height: 14em;
-}
-
-#history-controls {
-    border-bottom: 1px inset black;
-    vertical-align: middle;
-    text-align: center;
-}
-
-.history-big {
-    height: 48em !important;
-}
-
-/* Status are specific */
-#status-area {
-    padding: 1em 0 1em 0;
-    border-top: 1px inset black;
-    border-bottom: 1px inset black;
-    background: beige;
-}
-
-#messages {
-	margin-left: 3em;
-	margin-right: 3em;
-	border: 1px solid gray;
-	height: 5em;
-	overflow-y: scroll;
-	background: lightyellow;
-	color: blue;
-}   display: inline-block;
- 
-#messages-queue {
-	list-style: none;
-    vertical-align: middle;
-}
-
-#status-info {
-    text-align: center;
-    vertical-align: middle;
-	margin-bottom: 0.5em;
-}
-
-#status-info > div {
-    text-align: center;
-    display: inline-block;
-    vertical-align: middle;
-}
-
-#status-main {
-    text-align: center;
-    width: 100%;
-}
-
-.status-boxes {
-	padding: 0.2em;
-    display: inline-table;
-	background: peru;
-	text-align: center;
-	height: 18em;
-    width: 30%;
-	border: 1px dashed black;
-}
-
-#status-onoff{
-    margin-bottom: 1em;
-}
-
-#temp-label #humi-label {
-	font-size: 140%;
-}
-
-.status-title {
-	font-style: bold;
-	font-size: 140%;
-	border-bottom: 1px dotted black;
-}
-
-#temp-buttons {
-	text-align: center;
-	padding: 1em;
-}
-
-img.status-icon {
-	height: 5em;
-}
-
-img.info-icon {
-	height: 2.5em;
-	vertical-align: middle;
-}
-
-#power-box {
-	border: 1px solid black;
-	margin: 0.2em;
-	padding: 0.2em;
-	background: lightyellow;
-}
-
-#power-box > div {
+.col {
 	display: inline-block;
-    vertical-align: middle;
 }
 
-#mode-box {
-	border: 1px solid black;
-	margin: 0.2em;
-	padding: 0.2em;
-	background: lightyellow;
-}
-
-#mode-box > div {
-	display: inline-block;
-    vertical-align: middle;
-}
-
-img.status-icon-sub {
-	height: 1em;
-}
-
-img#pellet-feedback-led {
-	height: 2em;
-}
-
-div.col {
-	display: inline-block;
-    vertical-align: middle;
-}
-
-.temp-img {
-	height: 2em;
-        vertical-align: middle;
+.button-img {
+    width: 2em !important;
+    height: 2em !important;
 }
 
 
 /* Program specific */
 #program-area {
-    background: PeachPuff;
-    padding: 1em 0 1em 0;
+   background: linear-gradient(beige,PeachPuff);
+   padding: 1em 0 1em 0;
+   text-align: center;
+    border-top: 2px groove gray;
 }
 
-#program-header-row {
-    text-align: center;
-    vertical-align: middle;
-}
-
-#program-header-row > div {
-    display: inline-block;
-    vertical-align: middle;
-}
-
-#program-header-row > img {
-    display: inline-block;
-    vertical-align: middle;
-}
-
-#program-change {
-    padding: 0;
-    text-align: center;
-    margin: 0 0 0.2em 0;
-    background: yellow !important;
-}
-
-#program-selector {
-	text-align: center;
-	vertical-align: middle;
-	width: 100%;
-	padding: 0px;
-	margin: 0px;
+#program-editor {
+   border-top: 1px solid gray;
+   padding: 0.4em;
 }
 
 #program-selector > div {
 	display: inline-block;
-	vertical-align: middle;
-	height: 100%;
 	border: 2px solid gray;
-    margin: 1 1 0.8em 1;
 	padding: 1em;
 }
 
@@ -205,48 +40,26 @@ div.col {
 	height: 3em;
 	vertical-align: middle;
 }
+
 #program-selector > div  > span {
 	vertical-align: middle;
 }
 
-#today-table {
-    margin-top: 1em;
-    margin-bottom: 1em;
-    background: LemonChiffon;
+.program-table {
+   display: inline-block;
+   margin-top: 1em;
+   background: LemonChiffon;
+	border-collapse: collapse;
+   border: 1px solid black;
 }
 
-#program-content {
-	text-align: center;
+.program-table td img {
+	width: 1.5em;
+	height: 1.5em;
 }
 
 .program-selected {
 	background: coral;
-}
-
-#program-table {
-	border-collapse: collapse;
-	text-align: center;
-    border: 1px solid gray;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-#program-table th, td {
-    height: 1.5em;
-    width: 1.5em;
-}
-
-.tr_br {
-	border-bottom: 1px solid gray;
-}
-
-#program-table td img {
-	width: 1.3em;
-	height: 1.3em;
-}
-
-.smallNo {
-	font-size: 80%;
 }
 
 .hourCol {
@@ -257,24 +70,31 @@ div.col {
     border-right: 1px dashed gray !important;
 }
 
-.copy {
-    width: 1em !important;
-    height: 1em !important;
-}
-
-.corner {
-    width: 2em !important;
-    height: 2em !important;
-}
-
 .now_col {
 	background: coral !important;
 }
-.now {
-	background: indianred !important;
+
+.header-row {
+    border-bottom: 1px solid black;
 }
 
-#today-table {
+
+
+
+
+
+
+
+#program-change {
+    padding: 0;
+    text-align: center;
+    margin: 0 0 0.2em 0;
+    background: yellow !important;
+}
+
+
+#program_-table {
+    display: inline-block;
 	border-collapse: collapse;
 	text-align: center;
     border: 1px solid gray;
@@ -282,24 +102,144 @@ div.col {
     margin-right: auto;
 }
 
-#today-table th, td {
-    height: 1.6em;
-    width: 1.6em;
+#program_-table th, td {
+    height: 1.5em;
+    width: 1.5em;
 }
 
-#today-table td img {
-	width: 1.5em;
-	height: 1.5em;
+#program_-table td img {
+	width: 1.3em;
+	height: 1.3em;
 }
 
-.dashed-down-sep {
-    border-bottom: 1px dashed gray;
+.copy {
+    width: 1em !important;
+    height: 1em !important;
 }
 
-.solid-down-sep {
-    border-bottom: 1px solid black;
+
+
+
+
+
+
+
+
+
+
+
+
+/* History area specific */
+#history-graph {
+    height: 14em;
+}
+.history-big {
+    height: 48em !important;
+}
+
+#history-controls {
+    text-align: center;
+    padding: 1em 0 1em 0;
+    background: linear-gradient(PeachPuff,LightGrey);
+    border-top: 2px groove gray;
+}
+
+#history-stats {
+   margin-top: 0.2em;
+   border: 1px dashed black;
+   display: inline-block;
+   padding: 0.4em;
 }
 
 #history-stats-h {
-	margin-left: 2em;
+	margin-left: 1em;
+   display: inline-block;
+}
+
+#history-stats-t {
+   display: inline-block;
+}
+
+
+/* Status are specific */
+#status-area {
+   padding: 1em 0 1em 0;
+   border-top: 2px groove gray;
+   background: beige;
+}
+
+#power-box, #mode-box {
+	border: 1px solid black;
+	margin: 0.2em;
+	padding: 0.2em;
+	background: lightyellow;
+}
+
+#status-main {
+    text-align: center;
+}
+
+#status-info {
+   text-align: center;
+   margin-bottom: 0.5em;
+}
+
+.status-boxes {
+   padding: 0.2em;
+   display: inline-table;
+   background: peru;
+   height: 18em;
+   width: 30%;
+   border: 1px dashed black;
+}
+
+.status-title {
+	font-style: bold;
+	font-size: 140%;
+	border-bottom: 1px dotted black;
+}
+
+.temp-img {
+   height: 2em;
+   vertical-align: middle;
+}
+
+#temp-buttons {
+	padding: 1em;
+}
+
+#temp-label, #humi-label {
+	font-size: 140%;
+}
+
+img.status-icon {
+	height: 5em;
+}
+
+img.status-icon-sub {
+	height: 1em;
+}
+
+img.info-icon {
+	height: 2.5em;
+	vertical-align: middle;
+}
+
+img#pellet-feedback-led {
+	height: 2em;
+}
+
+#messages {
+	margin-left: 3em;
+	margin-right: 3em;
+	border: 1px solid gray;
+	height: 5em;
+	overflow-y: scroll;
+	background: lightyellow;
+	color: blue;
+}
+ 
+#messages-queue {
+	list-style: none;
+    vertical-align: middle;
 }

@@ -104,8 +104,8 @@ function( dom, attr, dclass, style, html, on,// Dojo
          onChange: function(){
 				if ( !sts.inhibitTMin ){
 					sts.tEdited = true;
-					dclass.remove(tempReset, "celated");
-					dclass.remove(tempApply, "celated");
+					dclass.remove(sts.tempReset, "celated");
+					dclass.remove(sts.tempApply, "celated");
 				} else 
 					sts.inhibitTMin = false;
 			},
@@ -120,8 +120,8 @@ function( dom, attr, dclass, style, html, on,// Dojo
          onChange: function(){ 
 				if ( !sts.inhibitTMax ){
 					sts.tEdited = true;
-					dclass.remove(tempReset, "celated");
-					dclass.remove(tempApply, "celated");
+					dclass.remove(sts.tempReset, "celated");
+					dclass.remove(sts.tempApply, "celated");
 				} else
 					sts.inhibitTMax = false;					
 			},
@@ -237,11 +237,11 @@ function( dom, attr, dclass, style, html, on,// Dojo
 				if ( sts.tempMin.get("value") != sts.status.temp.min ){
 					sts.inhibitTMin = true;
 				}
-				if ( sts.tempMax.get("value") != system_status.temp.max ){
+				if ( sts.tempMax.get("value") != sts.status.temp.max ){
 					sts.inhibitTMax = true;
 				}
-				sts.tempMax.set("value", system_status.temp.max );				
-				sts.tempMin.set("value", system_status.temp.min );		
+				sts.tempMax.set("value", sts.status.temp.max );				
+				sts.tempMin.set("value", sts.status.temp.min );		
 				sts.tEdited = false;
 				dclass.add(dom.byId("temp-reset"), "celated");
 				dclass.add(dom.byId("temp-apply"), "celated");

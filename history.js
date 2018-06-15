@@ -100,9 +100,11 @@ function( dom, dclass, style, html, on,// Dojo
 				if ( show_h ){
 					html.set(dom.byId("history-stats-hu"), "H(int): " + mins.h_i + " ...(" + avgs.h_i.toFixed(1) + ")... " + maxs.h_i + "" );
 					html.set(dom.byId("history-stats-hx"), "H(est): " + mins.h_e + " ...(" + avgs.h_e.toFixed(1) + ")... " + maxs.h_e + "" );
+					dclass.remove( dom.byId("history-stats-h"), "hidden" );
 				} else {
 					html.set(dom.byId("history-stats-hu"), "");
 					html.set(dom.byId("history-stats-hx"), "");
+					dclass.add( dom.byId("history-stats-h"), "hidden" );
 				}
     		},
 			disable: function(){
