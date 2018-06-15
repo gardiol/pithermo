@@ -36,6 +36,8 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
       },
       program: null,
       copyDFrom: null,
+      todayBase: 0,
+      todayH: 8,
       todayT: {},
       programT: {},
       selOff:    dom.byId("select-off"),
@@ -80,141 +82,31 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 						prg.program[d][h] = p[d][h];
 				}
 				prg.setEdited(false);
+			}
+			if ( sts.status ){
+				prg.todayBase = Math.max(Math.min( sts.status.now.h-prg.todayH/2, 24-prg.todayH ),0);
 				prg.refresh();
 			}
 		},
-		build: function(){
-	      new ToggleButton({ checked: false, onChange: function(v) {
-	          if ( v ){
-	              dclass.remove(dom.byId("program-editor"), "hidden");
-	          } else {
-	              dclass.add(dom.byId("program-editor"), "hidden");
-	          }
-	      }}, "program-size");		
-
-			on(prg.selOff, "click", function(){prg.selectType('o');});
-			on(prg.selGas, "click", function(){prg.selectType('g');});
-			on(prg.selAuto, "click", function(){prg.selectType('x');});
-			on(prg.selPel, "click", function(){prg.selectType('p');});
-			on(prg.selPelMin, "click", function(){prg.selectType('m');});
-			prg.selectType('o');
-        
-   		on( prg.restore,"click", function(){
-				var dialog = new ConfirmDialog({
-						title: "ATTENZIONE!",
-						content: "Annullare le modifiche?"});
-				dialog.set("buttonOk", "Si, annulla");
-				dialog.set("buttonCancel", "No, continua");
-				dialog.on("execute", function() {
-					if ( sts.status ) {
-						prg.update(sts.status.program);
-					}
-				});
-				dialog.show();
-			});
-			on( prg.apply,"click", function(){
-				var dialog = new ConfirmDialog({
-					title: "ATTENZIONE!",
-					content: "Salvare le modifiche?"});
-				dialog.set("buttonOk", "Salva");
-				dialog.set("buttonCancel", "Continua a modificare");
-				dialog.on("execute", function() {
-					var ps = json.stringify(prg.program);
-					postRequest("cgi-bin/program",{json: prg.program},
-						function(result){
-							prg.setEdited(false);
-						},
-						function(err){alert("Command error: " + err );});
-				});
-				dialog.show();
-			});
-
-			for ( var d = 0; d < 7; d++ ){
-				prg.programT[d] = [];
-				prg.programT[d]["table"] = dc.create("table", null, dom.byId("program-table"));
-				var dr = dc.create("tr", {class: "hidden"}, prg.programT[d]["table"] );
-				prg.programT[d]["copy"] = dc.create("td", null, dr );
-				prg.programT[d]["copy"]["_d"] = d;
-				prg.programT[d]["copy"]["_img"] = dc.create("img", { class:"copy", src: "images/copy.png" }, prg.programT[d]["copy"] );
-				on(prg.programT[d]["copy"], "click", function(evt){
-					if ( prg.program ){
-					    var d = evt.currentTarget._d;
-					    if ( prg.copyDFrom === null ){
-					        prg.copyDFrom = d;
-					        for ( var x = 0; x < 7; x++ )
-					            attr.set(prg.programT[x]["copy"]["_img"], "src", (x==d) ? "images/cancel_copy.png" : "images/paste.png");
-					    } else {
-					        for ( var x = 0; x < 7; x++ )
-					            attr.set(prg.programT[x]["copy"]["_img"], "src", "images/copy.png" );
-					        for ( var n = 0; n < prg.program[d].length; n++ )
-					            prg.program[d][n] = prg.program[prg.copyDFrom][n]; 	
-					        prg.copyDFrom = null;
-					    }	
-					    prg.refresh();
-					}
-				});	
-				prg.programT[d]["day"] = dc.create("th", { colspan: 5 }, dr );
-				on(prg.programT[d]["day"], "click", function(evt){
-                if ( prg.program ){
-                    var d = evt.currentTarget._d;
-                    var dialog = new ConfirmDialog({title: "Imposta giornata",
-                                                    content: "Imposto l'intero giorno?"});
-                    dialog.set("buttonOk", "Si");
-                    dialog.set("buttonCancel", "Annulla");
-                    dialog.on("execute",function() {
-                        for ( var h = 0; h < 24; h++ ){
-                            for ( var f = 0; f < 2; f++ ){
-                                prg.program[d][h*2+f] = prg.selectedType;
-                            }
-                        }
-                        prg.refresh();
-                    });
-                    dialog.show();
-                }
-            });
-				prg.programT[d]["extr"] = dc.create("td", null, dr );
-				for ( var h1 = 0; h1 < 12; h1++ ){
-					var hr = dc.create("tr", null, prg.programT[d]["table"] );
-					for ( var h2 = 0; h2 < 2; h2++ ){
-						var h = h1+h2*12;	
-						prg.programT[d][h] = [];
-						prg.programT[d][h]["h"] = dc.create("td", { innerHTML: h < 10 ? "0"+h:h}, hr );
-						for ( var f = 0; f < 2; f++ ){
-							prg.programT[d][h][f] = dc.create("td", null, hr );            
-							prg.programT[d][h][f]["_d"] = d;        
-							prg.programT[d][h][f]["_h"] = h;        
-							prg.programT[d][h][f]["_f"] = f;        
-							prg.programT[d][h][f]["_img"] = dc.create("img", { src: "images/off.png" }, prg.programT[d][h][f] );  
-							on(prg.programT[d][h][f], "click", function(evt){
-                        if ( prg.program ){
-									var i = evt.currentTarget;
-									var x = i._h*2+i._f;
-									prg.program[i._d][x] = prg.program[i._d][x] == prg.selectedType ? 'o' : prg.selectedType;
-									prg.refresh();
-								}
-							});          							
-						}
-						if ( h2 == 0 )
-							dc.create("td", null, hr );            					
-					}
+		srcCalc: function(d,h,f){
+			if ( prg.program ){					
+				var c = prg.program[d][h*2+f];
+				var src = "images/";
+				if ( c == 'p' ){
+				    src += "pellet.png";
+				} else if ( c == 'g' ){
+				    src += "gas.png";
+				} else if ( c == 'x' ){
+				    src += "pellet-gas.png";
+				} else if ( c == 'm' ){
+				    src += "pellet-min.png";
+				} else {
+				    src += "off.png";
 				}
-        	}
- 
-			prg.todayT["table"] = dom.byId("today-table");
-	        for ( var h = 0; h < 12; h++ ){
-	            dc.create("col", {class: h%2 == 0? "halfCol" : "hourCol"}, prg.todayT["table"] );                 
+				return src;
 			}
-			var top_row = dc.create("tr", null, prg.todayT["table"] );
-			prg.todayT["day"] = dc.create("th", { colspan: 24, innerHTML: "..." }, top_row );
-			var h_row = dc.create( "tr", { class: "solid-down-sep" }, prg.todayT["table"] );
-			var c_row = dc.create( "tr", { class: "solid-down-sep" }, prg.todayT["table"] );
-			for ( var h = 0; h < 12; h++ ){
-				prg.todayT[h] = [];
-				prg.todayT[h]["h"] = dc.create("td", { innerHTML: ""}, h_row );                 
-				prg.todayT[h]["c"] = dc.create("td", { innerHTML: ""}, c_row );                 
-				prg.todayT[h]["img"] = dc.create("img", { src: "images/off.png" }, prg.todayT[h]["c"] );            
-			}
-		},    
+			return "";
+		},
 		fillDaysFirst: true,
 		fillDays: function(w){
 			var old_d = prg.daySel.get("value");
@@ -239,30 +131,37 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 		},
 		refresh: function(){
 			if ( sts.status ){
-				prg.fillDays( sts.status.now.d);
-				for ( var x = 0; x < 12; x++ ){
-					dclass.remove(prg.todayT[x]["h"], "now_col" );
-					dclass.remove(prg.todayT[x]["c"], "now_col" );
+				var n = sts.status.now;
+				prg.fillDays(n.d);
+				for ( var x = 0; x < prg.todayH; x++ ){
+					var h = x + prg.todayBase;		
+					for ( var f = 0; f < 2; f++ ){
+						html.set(prg.todayT[x*2+f]["_h"], (h < 10 ? "0"+h:h)+":"+(f*30) );
+						attr.set(prg.todayT[ x*2+f ]["_img"], "src", prg.srcCalc(n.d,h,f) );   
+					}
+					var t = x*2+n.f;
+					if ( h == n.h ){
+						dclass.add(prg.todayT[t]["_c"], "now_col" );
+						dclass.add(prg.todayT[t]["_h"], "now_col" );									
+					} else {
+						dclass.remove(prg.todayT[t]["_c"], "now_col" );
+						dclass.remove(prg.todayT[t]["_h"], "now_col" );									
+					}
 				}
 					
 				if ( prg.program ){
 					for ( var d = 0; d < 7; d++ ){
 						for ( var h = 0; h < 24; h++ ){
 	               	for ( var f = 0; f < 2; f++ ){
-								var c = prg.program[d][h*2+f];
-								var src = "images/";
-								if ( c == 'p' ){
-								    src += "pellet.png";
-								} else if ( c == 'g' ){
-								    src += "gas.png";
-								} else if ( c == 'x' ){
-								    src += "pellet-gas.png";
-								} else if ( c == 'm' ){
-								    src += "pellet-min.png";
-								} else {
-								    src += "off.png";
+								attr.set(prg.programT[d][h][f]["_img"], "src", prg.srcCalc(d,h,f) );   
+								if ( d == n.d ){
+									if ( h == n.h ){
+									
+										if ( f == n.f ){
+											
+										}	
+									}
 								}
-								attr.set(prg.programT[d][h][f]["_img"], "src", src );   
 							}
 						}
 					}
@@ -276,17 +175,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 			
 			/*
 			
-				var today_base = system_status.now.h - 12;
-				if ( today_base < 0 )
-					today_base = 0;
-				if ( today_base > 18 )
-					today_base = 18;
-				for ( var h = 0; h < 12; h++ ){
-					var rh = h + today_base;					
-					html.set(tdr[h*2]["h"], (rh < 10 ? "0"+rh:rh)+":00" );
-					html.set(tdr[h*2+1]["h"], (rh < 10 ? "0"+rh:rh)+":30" );
-				}
-				
+
 				
 				
                     
@@ -321,5 +210,138 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 */
 
 	};
+
+
+
+   new ToggleButton({ checked: false, onChange: function(v) {
+       if ( v ){
+           dclass.remove(dom.byId("program-editor"), "hidden");
+       } else {
+           dclass.add(dom.byId("program-editor"), "hidden");
+       }
+   }}, "program-size");		
+
+	on(prg.selOff, "click", function(){prg.selectType('o');});
+	on(prg.selGas, "click", function(){prg.selectType('g');});
+	on(prg.selAuto, "click", function(){prg.selectType('x');});
+	on(prg.selPel, "click", function(){prg.selectType('p');});
+	on(prg.selPelMin, "click", function(){prg.selectType('m');});
+	prg.selectType('o');
+        
+	on( prg.restore,"click", function(){
+		var dialog = new ConfirmDialog({
+				title: "ATTENZIONE!",
+				content: "Annullare le modifiche?"});
+		dialog.set("buttonOk", "Si, annulla");
+		dialog.set("buttonCancel", "No, continua");
+		dialog.on("execute", function() {
+			if ( sts.status ) {
+				prg.update(sts.status.program);
+			}
+		});
+		dialog.show();
+	});
+	on( prg.apply,"click", function(){
+		var dialog = new ConfirmDialog({
+			title: "ATTENZIONE!",
+			content: "Salvare le modifiche?"});
+		dialog.set("buttonOk", "Salva");
+		dialog.set("buttonCancel", "Continua a modificare");
+		dialog.on("execute", function() {
+			var ps = json.stringify(prg.program);
+			postRequest("cgi-bin/program",{json: prg.program},
+				function(result){
+					prg.setEdited(false);
+				},
+				function(err){alert("Command error: " + err );});
+		});
+		dialog.show();
+	});
+
+	for ( var d = 0; d < 7; d++ ){
+		prg.programT[d] = [];
+		prg.programT[d]["table"] = dc.create("table", null, dom.byId("program-table"));
+		var dr = dc.create("tr", {class: "hidden"}, prg.programT[d]["table"] );
+		prg.programT[d]["copy"] = dc.create("td", null, dr );
+		prg.programT[d]["copy"]["_d"] = d;
+		prg.programT[d]["copy"]["_img"] = dc.create("img", { class:"copy", src: "images/copy.png" }, prg.programT[d]["copy"] );
+		on(prg.programT[d]["copy"], "click", function(evt){
+			if ( prg.program ){
+			    var d = evt.currentTarget._d;
+			    if ( prg.copyDFrom === null ){
+			        prg.copyDFrom = d;
+			        for ( var x = 0; x < 7; x++ )
+			            attr.set(prg.programT[x]["copy"]["_img"], "src", (x==d) ? "images/cancel_copy.png" : "images/paste.png");
+			    } else {
+			        for ( var x = 0; x < 7; x++ )
+			            attr.set(prg.programT[x]["copy"]["_img"], "src", "images/copy.png" );
+			        for ( var n = 0; n < prg.program[d].length; n++ )
+			            prg.program[d][n] = prg.program[prg.copyDFrom][n]; 	
+			        prg.copyDFrom = null;
+			    }	
+			    prg.refresh();
+			}
+		});	
+		prg.programT[d]["day"] = dc.create("th", { colspan: 5 }, dr );
+		on(prg.programT[d]["day"], "click", function(evt){
+          if ( prg.program ){
+              var d = evt.currentTarget._d;
+              var dialog = new ConfirmDialog({title: "Imposta giornata",
+                                              content: "Imposto l'intero giorno?"});
+              dialog.set("buttonOk", "Si");
+              dialog.set("buttonCancel", "Annulla");
+              dialog.on("execute",function() {
+                  for ( var h = 0; h < 24; h++ ){
+                      for ( var f = 0; f < 2; f++ ){
+                          prg.program[d][h*2+f] = prg.selectedType;
+                      }
+                  }
+                  prg.refresh();
+              });
+              dialog.show();
+          }
+      });
+		prg.programT[d]["extr"] = dc.create("td", null, dr );
+		for ( var h1 = 0; h1 < 12; h1++ ){
+			var hr = dc.create("tr", null, prg.programT[d]["table"] );
+			for ( var h2 = 0; h2 < 2; h2++ ){
+				var h = h1+h2*12;	
+				prg.programT[d][h] = [];
+				prg.programT[d][h]["h"] = dc.create("td", { innerHTML: h < 10 ? "0"+h:h}, hr );
+				for ( var f = 0; f < 2; f++ ){
+					prg.programT[d][h][f] = dc.create("td", null, hr );            
+					prg.programT[d][h][f]["_d"] = d;        
+					prg.programT[d][h][f]["_h"] = h;        
+					prg.programT[d][h][f]["_f"] = f;        
+					prg.programT[d][h][f]["_img"] = dc.create("img", { src: "images/off.png" }, prg.programT[d][h][f] );  
+					on(prg.programT[d][h][f], "click", function(evt){
+                  if ( prg.program ){
+							var i = evt.currentTarget;
+							var x = i._h*2+i._f;
+							prg.program[i._d][x] = prg.program[i._d][x] == prg.selectedType ? 'o' : prg.selectedType;
+							prg.refresh();
+						}
+					});          							
+				}
+				if ( h2 == 0 )
+					dc.create("td", null, hr );            					
+			}
+		}
+  	}
+ 
+	prg.todayT["table"] = dom.byId("today-table");
+     for ( var h = 0; h < prg.todayH*2; h++ ){
+         dc.create("col", {class: h%2 == 0? "halfCol" : "hourCol"}, prg.todayT["table"] );                 
+	}
+	var top_row = dc.create("tr", null, prg.todayT["table"] );
+	prg.todayT["day"] = dc.create("th", { colspan: 24, innerHTML: "..." }, top_row );
+	var h_row = dc.create( "tr", { class: "solid-down-sep" }, prg.todayT["table"] );
+	var c_row = dc.create( "tr", { class: "solid-down-sep" }, prg.todayT["table"] );
+	for ( var h = 0; h < prg.todayH*2; h++ ){
+		prg.todayT[h] = [];
+		prg.todayT[h]["_h"] = dc.create("td", { innerHTML: ""}, h_row );                 
+		prg.todayT[h]["_c"] = dc.create("td", { innerHTML: ""}, c_row );                 
+		prg.todayT[h]["_img"] = dc.create("img", { src: "images/off.png" }, prg.todayT[h]["_c"] );            
+	}
 
 });

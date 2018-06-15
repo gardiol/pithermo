@@ -220,60 +220,59 @@ function( dom, attr, dclass, style, html, on,// Dojo
 				sts.timer = window.setTimeout( function(){ sts.update(); }, 5000 );
 			});
 		},
-		build: function(){
-			for ( var p in sts ){				
-				if ( sts[p] && sts[p].startup ) sts[p].startup();
-			}
-
-			on(sts.tempReset, "click", function(){
-				var dialog = new ConfirmDialog({
-					title: "ATTENZIONE!",
-					content: "Annullare le modifiche?"});
-				dialog.set("buttonOk", "Si, annulla");
-				dialog.set("buttonCancel", "No, continua");
-				dialog.on("execute", function() {
-					if ( sts.status ) {
-						if ( sts.tempMin.get("value") != sts.status.temp.min ){
-							sts.inhibitTMin = true;
-						}
-						if ( sts.tempMax.get("value") != system_status.temp.max ){
-							sts.inhibitTMax = true;
-						}
-						sts.tempMax.set("value", system_status.temp.max );				
-						sts.tempMin.set("value", system_status.temp.min );		
-						sts.tEdited = false;
-						dclass.add(dom.byId("temp-reset"), "celated");
-						dclass.add(dom.byId("temp-apply"), "celated");
-					}
-				});
-				dialog.show();
-			});
-
-			on(sts.tempApply, "click", function(){
-				var dialog = new ConfirmDialog({
-					title: "ATTENZIONE!",
-					content: "Salvare le modifiche?"});
-				dialog.set("buttonOk", "Salva");
-				dialog.set("buttonCancel", "Continua a modificare");
-				dialog.on("execute", function() {
-					postRequest("cgi-bin/set_min_temp",sts.tempMin.value,
-						function(result){
-							sts.tEdited = false;
-							dclass.add(dom.byId("temp-reset"), "celated");
-							dclass.add(dom.byId("temp-apply"), "celated");
-						},
-						function(err){alert("Command error: " + err );});
-					postRequest("cgi-bin/set_max_temp",sts.tempMax.value,
-						function(result){
-							sts.tEdited = false;
-							dclass.add(dom.byId("temp-reset"), "celated");
-							dclass.add(dom.byId("temp-apply"), "celated");
-						},
-						function(err){alert("Command error: " + err );});
-				});
-				dialog.show();
-			});
-    	}
 	};
 	
+	for ( var p in sts ){				
+		if ( sts[p] && sts[p].startup ) sts[p].startup();
+	}
+
+	on(sts.tempReset, "click", function(){
+		var dialog = new ConfirmDialog({
+			title: "ATTENZIONE!",
+			content: "Annullare le modifiche?"});
+		dialog.set("buttonOk", "Si, annulla");
+		dialog.set("buttonCancel", "No, continua");
+		dialog.on("execute", function() {
+			if ( sts.status ) {
+				if ( sts.tempMin.get("value") != sts.status.temp.min ){
+					sts.inhibitTMin = true;
+				}
+				if ( sts.tempMax.get("value") != system_status.temp.max ){
+					sts.inhibitTMax = true;
+				}
+				sts.tempMax.set("value", system_status.temp.max );				
+				sts.tempMin.set("value", system_status.temp.min );		
+				sts.tEdited = false;
+				dclass.add(dom.byId("temp-reset"), "celated");
+				dclass.add(dom.byId("temp-apply"), "celated");
+			}
+		});
+		dialog.show();
+	});
+
+	on(sts.tempApply, "click", function(){
+		var dialog = new ConfirmDialog({
+			title: "ATTENZIONE!",
+			content: "Salvare le modifiche?"});
+		dialog.set("buttonOk", "Salva");
+		dialog.set("buttonCancel", "Continua a modificare");
+		dialog.on("execute", function() {
+			postRequest("cgi-bin/set_min_temp",sts.tempMin.value,
+				function(result){
+					sts.tEdited = false;
+					dclass.add(dom.byId("temp-reset"), "celated");
+					dclass.add(dom.byId("temp-apply"), "celated");
+				},
+				function(err){alert("Command error: " + err );});
+			postRequest("cgi-bin/set_max_temp",sts.tempMax.value,
+				function(result){
+					sts.tEdited = false;
+					dclass.add(dom.byId("temp-reset"), "celated");
+					dclass.add(dom.byId("temp-apply"), "celated");
+				},
+				function(err){alert("Command error: " + err );});
+		});
+		dialog.show();
+	});
+
 });

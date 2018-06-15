@@ -105,78 +105,6 @@ function( dom, dclass, style, html, on,// Dojo
 					html.set(dom.byId("history-stats-hx"), "");
 				}
     		},
- 			build: function(){
- 				hst.unit.startup();
-	        	hst.sel.startup();
-        		hst.grp.setTheme(Chris);
-        		hst.grp.addPlot("tempPlot",{
-                            type: Lines,lines: true, areas: false, markers: false,
-                            tension: "X",
-                            stroke: {color: "red",  width: 1}
-                        });
-        		hst.grp.addAxis("x", 	{
-                            plot:"tempPlot", 
-                            majorTicks: true, majorLabels: true,
-                            minorTicks: false,minorLabels: false,
-                            microTicks: false,
-                            labelFunc:function(text,value,prec){
-                                if ( hst.unit.get("value") != "h" )
-                                    return new Date(parseInt(value)*1000).toLocaleString();
-                                else
-                                    return new Date(parseInt(value)*1000).toLocaleTimeString();
-                            }
-                        });
-        		hst.grp.addAxis("y", 	{
-                            plot:"tempPlot", 
-                            vertical: true, 
-                            dropLabels: false,
-                            majorTickStep: 5, majorTicks: true, majorLabels: true,
-                            minorTickStep: 1, minorTicks: true, minorLabels: false,
-                            microTickStep: 0.1, microTicks: false,
-                            fixLower: "major",  fixUpper: "major"
-                        });
-        		hst.grp.addSeries("Temperatura", [],{ plot: "tempPlot"});
-        		hst.grp.addSeries("Esterna", [],{ plot: "tempPlot", stroke: {color:"blue"} });
-        		hst.grp.addPlot("humiPlot",{
-                            type: Lines,lines: true, areas: false, markers: false,
-                            tension: "X",
-                            hAxis: "x",vAxis: "h",
-                            stroke: {color: "yellow", width: 1	}
-                        });
-        		hst.grp.addAxis("h", 	{
-                            plot:"humiPlot", 
-                            vertical: true, leftBottom: false,
-                            majorTickStep: 5, 
-                            minorTickStep: 1,
-                            fixLower: "major", fixUpper: "major"
-                        });
-        		hst.grp.addSeries("Umidita",[],{plot: "humiPlot"});
-        		hst.grp.addSeries("EsternaUmidita",[],{plot: "humiPlot", stroke: { color: "violet"} });
-        		new MouseIndicator(hst.grp, "humiPlot",{ 
-                            series: "Umidita", start: true, mouseOver: true,
-                            labelFunc: function(v){
-                                if ( v.y && v.x )
-                                    return "H: "+v.y.toFixed(1)+"/"+ ((hst.xrefExtHData[v.x] != null) ? hst.xrefExtHData[v.x].toFixed(1) : "-");
-                                else
-                                    return "";
-                            }
-                            });
-        		new MouseIndicator(hst.grp, "tempPlot",{ 
-                            series: "Temperatura",mouseOver: true,
-                            labelFunc: function(v){
-                                if ( v.y && v.x )
-                                    return "T: "+v.y.toFixed(1)+"/" + ((hst.xrefExtTData[v.x] != null) ? hst.xrefExtTData[v.x].toFixed(1) : "-") +" (" + (new Date(v.x*1000).toLocaleString())+")";
-                                else
-                                    return "";
-                            }
-                            });
-		
-		
-				on(hst.exp,"click", function(v) {
-					dclass.toggle(dom.byId("history-graph"), "history-big");
-					hst.grp.resize();
-				});
-    		},
 			disable: function(){
 				hst.data = null;
             hst.grp.updateSeries("Temperatura", [] );
@@ -215,7 +143,76 @@ function( dom, dclass, style, html, on,// Dojo
 						hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
 					});
 			}
-
- 
     };
+    
+	hst.unit.startup();
+	hst.sel.startup();
+	hst.grp.setTheme(Chris);
+	hst.grp.addPlot("tempPlot",{
+                type: Lines,lines: true, areas: false, markers: false,
+                tension: "X",
+                stroke: {color: "red",  width: 1}
+            });
+	hst.grp.addAxis("x", 	{
+                plot:"tempPlot", 
+                majorTicks: true, majorLabels: true,
+                minorTicks: false,minorLabels: false,
+                microTicks: false,
+                labelFunc:function(text,value,prec){
+                    if ( hst.unit.get("value") != "h" )
+                        return new Date(parseInt(value)*1000).toLocaleString();
+                    else
+                        return new Date(parseInt(value)*1000).toLocaleTimeString();
+                }
+            });
+	hst.grp.addAxis("y", 	{
+                plot:"tempPlot", 
+                vertical: true, 
+                dropLabels: false,
+                majorTickStep: 5, majorTicks: true, majorLabels: true,
+                minorTickStep: 1, minorTicks: true, minorLabels: false,
+                microTickStep: 0.1, microTicks: false,
+                fixLower: "major",  fixUpper: "major"
+            });
+	hst.grp.addSeries("Temperatura", [],{ plot: "tempPlot"});
+	hst.grp.addSeries("Esterna", [],{ plot: "tempPlot", stroke: {color:"blue"} });
+	hst.grp.addPlot("humiPlot",{
+                type: Lines,lines: true, areas: false, markers: false,
+                tension: "X",
+                hAxis: "x",vAxis: "h",
+                stroke: {color: "yellow", width: 1	}
+            });
+	hst.grp.addAxis("h", 	{
+                plot:"humiPlot", 
+                vertical: true, leftBottom: false,
+                majorTickStep: 5, 
+                minorTickStep: 1,
+                fixLower: "major", fixUpper: "major"
+            });
+	hst.grp.addSeries("Umidita",[],{plot: "humiPlot"});
+	hst.grp.addSeries("EsternaUmidita",[],{plot: "humiPlot", stroke: { color: "violet"} });
+	new MouseIndicator(hst.grp, "humiPlot",{ 
+                series: "Umidita", start: true, mouseOver: true,
+                labelFunc: function(v){
+                    if ( v.y && v.x )
+                        return "H: "+v.y.toFixed(1)+"/"+ ((hst.xrefExtHData[v.x] != null) ? hst.xrefExtHData[v.x].toFixed(1) : "-");
+                    else
+                        return "";
+                }
+                });
+	new MouseIndicator(hst.grp, "tempPlot",{ 
+                series: "Temperatura",mouseOver: true,
+                labelFunc: function(v){
+                    if ( v.y && v.x )
+                        return "T: "+v.y.toFixed(1)+"/" + ((hst.xrefExtTData[v.x] != null) ? hst.xrefExtTData[v.x].toFixed(1) : "-") +" (" + (new Date(v.x*1000).toLocaleString())+")";
+                    else
+                        return "";
+                }
+                });
+
+	on(hst.exp,"click", function(v) {
+		dclass.toggle(dom.byId("history-graph"), "history-big");
+		hst.grp.resize();
+	});
+
 });
