@@ -192,7 +192,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 	               sts.on.set("disabled", false );
 						next_update = 15000;
 					}
-					html.set("temp-label",sts.status.temp.int + "° (" + sts.status.temp.ext + "°)" );
+					html.set("temp-label",sts.status.temp.int + "C (" + sts.status.temp.ext + "C)" );
 					html.set("humi-label", sts.status.temp.hum + "% (" + sts.status.temp.ext_hum + "%)" );
 					prg.update(sts.status.program);
 					evt.update();
