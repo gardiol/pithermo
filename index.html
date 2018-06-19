@@ -176,6 +176,17 @@
 <script src="events.js"></script>
 <script src="program.js"></script>
 <script src="history.js"></script>
-<script src="engine.js"></script>
+<script language="javascript">
+require([
+    "dojo/ready",
+    "dojo/domReady!"], 
+function(ready)
+{		 
+	ready(function(){
+		sts.update();
+	   hst.update();
+	});
+});
+</script>
 </body>
 </html>

@@ -17,7 +17,6 @@
     vertical-align: middle;
 }
 
-
 /* Program specific */
 #program-area {
    background: linear-gradient(beige,PeachPuff);
@@ -54,9 +53,26 @@
    border: 1px solid black;
 }
 
+.program-table th {
+   background: navajowhite;
+   border: 1px solid black;
+   min-width: 2em;
+}
+
+td.spacer {
+   background: navajowhite;
+   width: 1em;
+   border: 0px;   
+}
+
+img.today-table-img {
+	width: 1.5em !important;
+	height: 1.5em !important;
+}
+
 .program-table td img {
-	width: 1.5em;
-	height: 1.5em;
+	width: 2.5em;
+	height: 2.5em;
 }
 
 .program-selected {
@@ -83,13 +99,6 @@
     border-bottom: 1px solid black;
 }
 
-
-
-
-
-
-
-
 #program-change {
     padding: 0;
     text-align: center;
@@ -97,42 +106,10 @@
     background: yellow !important;
 }
 
-
-#program_-table {
-    display: inline-block;
-	border-collapse: collapse;
-	text-align: center;
-    border: 1px solid gray;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-#program_-table th, td {
-    height: 1.5em;
-    width: 1.5em;
-}
-
-#program_-table td img {
-	width: 1.3em;
-	height: 1.3em;
-}
-
 .copy {
     width: 1em !important;
     height: 1em !important;
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
 /* History area specific */
 #history-graph {
@@ -164,7 +141,6 @@
 #history-stats-t {
    display: inline-block;
 }
-
 
 /* Status are specific */
 #status-area {

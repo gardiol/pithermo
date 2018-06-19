@@ -263,16 +263,15 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 	for ( var d = 0; d < 7; d++ ){
 		prg.programT[d] = [];
 		prg.programT[d]["table"] = dc.create("table", {class:"program-table hidden"}, dom.byId("program-table"));
-      dc.create("col", {class:"hourCol"}, prg.programT[d]["table"] );                 
-      dc.create("col", {class:"halfCol"}, prg.programT[d]["table"] );                 
-      dc.create("col", {class:"hourCol" }, prg.programT[d]["table"] );                 
-      dc.create("col", {class:"hourCol"}, prg.programT[d]["table"] );                 
-      dc.create("col", {class:"hourCol"}, prg.programT[d]["table"] );                 
-      dc.create("col", {class:"halfCol"}, prg.programT[d]["table"] );                 
-      dc.create("col", {class:"hourCol" }, prg.programT[d]["table"] );                 
-      
+		for ( var x = 0; x < 3; x++ ){			
+	      dc.create("col", {class:"hourCol"}, prg.programT[d]["table"] );                 
+	      dc.create("col", {class:"halfCol"}, prg.programT[d]["table"] );                 
+	      dc.create("col", {class:"hourCol" }, prg.programT[d]["table"] );                 
+	      if ( x != 2 )
+		      dc.create("col", {class:"hourCol"}, prg.programT[d]["table"] );
+		}		      
 		var dr = dc.create("tr", {class: "header-row"}, prg.programT[d]["table"] );
-		prg.programT[d]["copy"] = dc.create("td", null, dr );
+		prg.programT[d]["copy"] = dc.create("th", null, dr );
 		prg.programT[d]["copy"]["_d"] = d;
 		prg.programT[d]["copy"]["_img"] = dc.create("img", { class:"copy", src: "images/copy.png" }, prg.programT[d]["copy"] );
 		on(prg.programT[d]["copy"], "click", function(evt){
@@ -293,7 +292,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 			    prg.refresh();
 			}
 		});	
-		prg.programT[d]["day"] = dc.create("th", { colspan: 5 }, dr );
+		prg.programT[d]["day"] = dc.create("th", { colspan: 9 }, dr );
 		prg.programT[d]["day"]["_d"] = d;
 		on(prg.programT[d]["day"], "click", function(evt){
           if ( prg.program ){
@@ -314,13 +313,42 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
               dialog.show();
           }
       });
-		prg.programT[d]["extr"] = dc.create("td", null, dr );
-		for ( var h1 = 0; h1 < 12; h1++ ){
+		prg.programT[d]["extr"] = dc.create("th", null, dr );
+		prg.programT[d]["extr"]["_d"] = d;
+		prg.programT[d]["extr"]["_img"] = dc.create("img", { class:"copy", src: "images/restore.png" }, prg.programT[d]["extr"] );
+		on(prg.programT[d]["extr"], "click", function(evt){
+          if ( prg.program ){
+              var d = evt.currentTarget._d;
+              var dialog = new ConfirmDialog({title: "Resetto giornata",
+                                              content: "Resetto l'intero giorno?"});
+              dialog.set("buttonOk", "Si");
+              dialog.set("buttonCancel", "Annulla");
+              dialog.on("execute",function() {
+                  for ( var h = 0; h < 24; h++ ){
+                      for ( var f = 0; f < 2; f++ ){
+                          prg.program[d][h*2+f] = 'o';
+                      }
+                  }
+						prg.setEdited(true);
+                  prg.refresh();
+              });
+              dialog.show();
+          }
+      });
+		var tr = dc.create("tr", null, prg.programT[d]["table"] );
+		dc.create("th", null, tr );
+		for ( var x = 0; x < 3; x++ ){
+			dc.create("th", { innerHTML: "00" }, tr );
+			dc.create("th", { innerHTML: "30" }, tr );
+			if ( x != 2 )
+				dc.create("th", { colspan: 2 }, tr );
+		}
+		for ( var h1 = 0; h1 < 8; h1++ ){
 			var hr = dc.create("tr", null, prg.programT[d]["table"] );
-			for ( var h2 = 0; h2 < 2; h2++ ){
-				var h = h1+h2*12;	
+			for ( var h2 = 0; h2 < 3; h2++ ){
+				var h = h1+h2*8;	
 				prg.programT[d][h] = [];
-				prg.programT[d][h]["h"] = dc.create("td", { innerHTML: h < 10 ? "0"+h:h}, hr );
+				prg.programT[d][h]["h"] = dc.create("th", { innerHTML: h < 10 ? "0"+h:h}, hr );
 				for ( var f = 0; f < 2; f++ ){
 					prg.programT[d][h][f] = dc.create("td", null, hr );            
 					prg.programT[d][h][f]["_img"] = dc.create("img", { src: "images/off.png" }, prg.programT[d][h][f] );  
@@ -337,8 +365,8 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 						}
 					});          							
 				}
-				if ( h2 == 0 )
-					dc.create("td", null, hr );            					
+				if ( h2 != 2 )
+					dc.create("td", { class: "spacer" }, hr );            					
 			}
 		}
   	}
@@ -355,7 +383,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 		prg.todayT[h] = [];
 		prg.todayT[h]["_h"] = dc.create("td", { innerHTML: ""}, h_row );                 
 		prg.todayT[h]["_c"] = dc.create("td", { innerHTML: ""}, c_row );                 
-		prg.todayT[h]["_img"] = dc.create("img", { src: "images/off.png" }, prg.todayT[h]["_c"] );            
+		prg.todayT[h]["_img"] = dc.create("img", { class: "today-table-img", src: "images/off.png" }, prg.todayT[h]["_c"] );            
 	}
 
 });
