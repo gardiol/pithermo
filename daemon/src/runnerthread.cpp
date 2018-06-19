@@ -39,6 +39,8 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _over_temp(false),
     _under_temp(false),
     _pellet_flameout(false),
+    _resume_gas_on(false),
+    _resume_pellet_mod(false),
     _prev_pellet_hot(false),
     _min_temp(16.0),
     _max_temp(17.0),
@@ -442,6 +444,13 @@ bool RunnerThread::_checkSpecialConditions()
             if ( _gas->isOn() || (_pellet->isOn() && !_pellet->isLow()) )
             {   // Over max, and we have something to turn off:
                 _over_temp = true;
+                // In manual model, we must instruct to resume the proper heating after we
+                // detect the end of the over temp condition:
+                if ( _manual_mode )
+                {
+                    _resume_gas_on = _gas->isOn();
+                    _resume_pellet_mod = _pellet->isOn() && !_pellet->isLow();
+                }
                 _logger->logDebug("over temp start");
                 _logger->logEvent( LogItem::OVER_TEMP_ON );
                 update_status = true;
@@ -524,6 +533,9 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
         bool gas_on = _manual_mode ? _gas->isOn() : _program.getGas();
         bool pellet_on = _manual_mode ? _pellet->isOn() : _program.getPellet();
         bool pellet_minimum = _manual_mode ? _pellet->isLow() : _program.getPelletMinimum();
+        // We never resume gas or pellet mod when in program mode:
+        if ( !_manual_mode )
+            _resume_gas_on = _resume_pellet_mod = false;
         // Anti-ice relies always on gas:
         if ( _anti_ice_active )
         {
@@ -543,6 +555,20 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                 gas_on = false;
                 if ( pellet_on && !pellet_minimum )
                     pellet_minimum = true;
+            }
+            else
+            {   // Resume gas or pellet modulation.
+                // This will happen only after an over temp has terminated AND we are not in program mode.
+                if ( _resume_gas_on )
+                {
+                    gas_on = true;
+                    _resume_gas_on = false;
+                }
+                if ( _resume_pellet_mod )
+                {
+                    pellet_minimum = false;
+                    _resume_pellet_mod = false;
+                }
             }
             if ( _under_temp )
             {   // Switch pellet to high or turn on gas

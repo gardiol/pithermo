@@ -59,6 +59,8 @@ private:
     bool _over_temp;
     bool _under_temp;
     bool _pellet_flameout;
+    bool _resume_gas_on;
+    bool _resume_pellet_mod;
 
     bool _prev_pellet_hot;
     float _min_temp;
