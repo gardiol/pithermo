@@ -28,7 +28,7 @@ function( dom, dclass, style, html, on,// Dojo
 			unit: new Select({onChange: function(){
 					postRequest("cgi-bin/set_history",hst.unit.get("value"),
             	function(result){
-            	    updateHistory();
+            	    hst.update();
             	},
             	function(err){
             	    alert("Command error: " + err );
