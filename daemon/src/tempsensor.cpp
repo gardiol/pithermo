@@ -46,7 +46,7 @@ bool TempSensor::readSensor()
     if ( !_timer.isRunning() || _timer.elapsedLoop() )
     {
 #ifndef DEMO
-        FrameworkTimer looper;
+        /*FrameworkTimer looper;
         int32_t seqbuf[40];
         uint8_t rcvbuf[5] = {0,0,0,0,0};
         int32_t max_value = 0;
@@ -70,37 +70,45 @@ bool TempSensor::readSensor()
 
         // Read LOW for 80us
         looper.setLoopTime(80);
+	looper.start();
         while( !looper.elapsedLoop() && (digitalRead(_gpio) == LOW) )
             delayMicroseconds(1);
         if ( !looper.elapsedLoop() )
         {
+		    printf("Recev 1\n");
             // Read HIGH for 80us
             looper.setLoopTime(80);
+	    looper.start();
             while( !looper.elapsedLoop() && (digitalRead(_gpio) == HIGH) )
                 delayMicroseconds(1);
             if ( !looper.elapsedLoop() )
             {
+		    printf("Recev 2\n");
                 bool timeout = false;
                 // Read output, on 40bits (5 bytes)
                 for (int front_index=0; !timeout && (front_index<40); front_index++)
                 {
                     // Wait for LOW
                     looper.setLoopTime(80);
+	            looper.start();
                     while( !looper.elapsedLoop() && (digitalRead(_gpio) == LOW) )
                         delayMicroseconds(1);
                     timeout = looper.elapsedLoop();
                     if ( !timeout )
                     {
+			    printf(" noto\n ");
                         // Start from 0
                         seqbuf[front_index] = 0;
 
-                        looper.setLoopTime(80);
+                        looper.setLoopTime(18000);
+	                looper.start();
                         while( !looper.elapsedLoop() && (digitalRead(_gpio) == HIGH) )
                         {
                             seqbuf[front_index]++;
                             delayMicroseconds(1);
                         }
                         timeout = looper.elapsedLoop();
+			printf(" to: %d\n", timeout );
                     }
 
                     if(seqbuf[front_index] > max_value)
@@ -108,8 +116,10 @@ bool TempSensor::readSensor()
                     if(seqbuf[front_index] < min_value)
                         min_value = seqbuf[front_index];
                 }
+		    printf("Recev 3\n");
                 if ( !timeout )
                 {
+		    printf("Recev 4\n");
                     int32_t mean = (min_value + max_value) / 2;
                     for (int front_index=0; front_index<40; front_index++)
                     {
@@ -168,17 +178,9 @@ bool TempSensor::readSensor()
             }
         }
 
-
-
-        /*        // then pull it up for 40 microseconds
-        digitalWrite(pin, HIGH);
-        delayMicroseconds(40);
-        // prepare to read the pin
-        pinMode(pin, INPUT);
-
-
-
-        int pin = 1;
+		    printf("Recev 10\n");
+*/
+        int pin = _gpio;
         uint8_t laststate = HIGH;
         uint8_t counter = 0;
         int dht22_dat[5] = {0,0,0,0,0};
@@ -251,7 +253,7 @@ bool TempSensor::readSensor()
             // Skip fake readings (will turn on anti-ice):
             if ( (_humidity == 0) && (_temp == 0) && ret )
                 ret = false;
-        }*/
+        }
 #else
         ret = true;
         _temp = 7; //(_timestamp/60) % 20 + 10;
