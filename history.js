@@ -45,6 +45,7 @@ function( dom, dclass, style, html, on,// Dojo
         		hst.xrefExtTData = {};
         		hst.xrefExtHData = {};
         		var t = [], h = [], x = [], y = [];
+                var t_m = [];
         		var s = hst.sel.get("value");
         		var show_h = hst.hck.get("checked");
         		if ( hst.data ){
@@ -61,7 +62,12 @@ function( dom, dclass, style, html, on,// Dojo
                	}
             	}
             	var n_pts = ti.length;
+                var avg_t = null;
             	for ( p = 0; p < n_pts; p++ ){
+                    if ( !avg_t )
+                        avg_t = (avg_t + te[p]) / 2;
+                    else
+                        avg_t = te[p];
 						if ( mins.t_i > te[p] ) mins.t_i = te[p];
 						if ( mins.t_e > ex[p] ) mins.t_e = ex[p];
 						if ( maxs.t_i < te[p] ) maxs.t_i = te[p];
@@ -69,6 +75,7 @@ function( dom, dclass, style, html, on,// Dojo
 						avgs.t_i = ((avgs.t_i+te[p])/2);
 						avgs.t_e = ((avgs.t_e+ex[p])/2);
                 	t.push( {x:ti[p], y:te[p] } );
+                    t_m.push( {x:ti[p], y: avg_t } );
                 	if ( show_h ){
 							if ( mins.h_i > hu[p] ) mins.h_i = hu[p];
 							if ( mins.h_e > hx[p] ) mins.h_e = hx[p];
@@ -85,6 +92,7 @@ function( dom, dclass, style, html, on,// Dojo
             	}
         		}
         		hst.grp.updateSeries("Temperatura", t );
+        		hst.grp.updateSeries("TemperaturaMed", t_m );
         		hst.grp.updateSeries("Esterna", x );
         		hst.grp.updateSeries("Umidita", h );
         		hst.grp.updateSeries("EsternaUmidita", y );
@@ -110,6 +118,7 @@ function( dom, dclass, style, html, on,// Dojo
 			disable: function(){
 				hst.data = null;
             hst.grp.updateSeries("Temperatura", [] );
+            hst.grp.updateSeries("TemperaturaMed", [] );
             hst.grp.updateSeries("Esterna", [] );
             hst.grp.updateSeries("Umidita", [] );
             hst.grp.updateSeries("EsternaUmidita", []);
@@ -177,6 +186,7 @@ function( dom, dclass, style, html, on,// Dojo
                 fixLower: "major",  fixUpper: "major"
             });
 	hst.grp.addSeries("Temperatura", [],{ plot: "tempPlot"});
+	hst.grp.addSeries("TemperaturaMed", [],{ plot: "tempPlot", stroke: {color:"purple"} });
 	hst.grp.addSeries("Esterna", [],{ plot: "tempPlot", stroke: {color:"blue"} });
 	hst.grp.addPlot("humiPlot",{
                 type: Lines,lines: true, areas: false, markers: false,

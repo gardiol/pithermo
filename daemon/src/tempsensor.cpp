@@ -1,6 +1,7 @@
 #include "tempsensor.h"
 
 #include "frameworkutils.h"
+#include "debugprint.h"
 
 #include <math.h>
 #include <time.h>
@@ -15,7 +16,7 @@ TempSensor::TempSensor(Logger *l, int gpio, float temp_correction):
     _temp_correction(temp_correction),
     _at_lease_one_read_ok(false)
 {
-    _timer.setLoopTime( 5000 * 1000 );
+    _timer.setLoopTime( 3000 * 1000 );
 }
 
 TempSensor::~TempSensor()
@@ -46,80 +47,90 @@ bool TempSensor::readSensor()
     if ( !_timer.isRunning() || _timer.elapsedLoop() )
     {
 #ifndef DEMO
-        /*FrameworkTimer looper;
-        int32_t seqbuf[40];
+        bool timeout = false;
+        FrameworkTimer looper;
+        looper.setLoopTime(160);
+        uint32_t seqbuf[40];
         uint8_t rcvbuf[5] = {0,0,0,0,0};
-        int32_t max_value = 0;
-        int32_t min_value = 3 * 1000 * 1000;
+        uint32_t max_value = 0;
+        uint32_t min_value = 0xFFFFFFFF;
 
-        // Request phase
-        pinMode(_gpio, OUTPUT);
+        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "REQ: ";
+        // Request phase: CLEAR(HG 250m) - LW(20m) - HG(40u)
+        setGPIOoutput(_gpio);
         // High
+        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "Hx250m ";
         digitalWrite(_gpio, HIGH);
-        delay(250);
+        FrameworkTimer::msleep_s(250);
         // Low
+        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "Lx20m ";
         digitalWrite(_gpio, LOW);
-        delay(20);
+        FrameworkTimer::msleep_s(20);
         // High
+        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "Hx40u ";
         digitalWrite(_gpio, HIGH);
-        delayMicroseconds(35);
+        FrameworkTimer::usleep_s(40);
 
-        // Reading phase
-        pinMode(_gpio, INPUT);
-        delayMicroseconds(10);
+
+        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "REP: ";
+        // Reading phase: 80us LW - 80us HG
+        setGPIOinput(_gpio);
 
         // Read LOW for 80us
-        looper.setLoopTime(80);
-	looper.start();
-        while( !looper.elapsedLoop() && (digitalRead(_gpio) == LOW) )
-            delayMicroseconds(1);
-        if ( !looper.elapsedLoop() )
+        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "W4L(80u) ";
+        looper.start();
+        while( !readPGIObool(_gpio) && !(timeout = looper.elapsedLoop()) )
+            FrameworkTimer::usleep_s(1);
+
+        if ( !timeout )
         {
-		    printf("Recev 1\n");
             // Read HIGH for 80us
-            looper.setLoopTime(80);
-	    looper.start();
-            while( !looper.elapsedLoop() && (digitalRead(_gpio) == HIGH) )
-                delayMicroseconds(1);
-            if ( !looper.elapsedLoop() )
+            debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "W4H(80u) ";
+            looper.start();
+            while( readPGIObool(_gpio) && !(timeout = looper.elapsedLoop()) )
+                FrameworkTimer::usleep_s(1);
+
+            if ( !timeout )
             {
-		    printf("Recev 2\n");
-                bool timeout = false;
+                debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "READ ";
+
                 // Read output, on 40bits (5 bytes)
                 for (int front_index=0; !timeout && (front_index<40); front_index++)
                 {
+                    seqbuf[front_index] = 0;
                     // Wait for LOW
-                    looper.setLoopTime(80);
-	            looper.start();
-                    while( !looper.elapsedLoop() && (digitalRead(_gpio) == LOW) )
-                        delayMicroseconds(1);
-                    timeout = looper.elapsedLoop();
+                    debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "W4B" << front_index << " ";
+                    looper.start();
+                    while( !readPGIObool(_gpio) && !(timeout = looper.elapsedLoop()) )
+                        FrameworkTimer::usleep_s(1);
+
                     if ( !timeout )
                     {
-			    printf(" noto\n ");
+                        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "D: ";
                         // Start from 0
                         seqbuf[front_index] = 0;
 
-                        looper.setLoopTime(18000);
-	                looper.start();
-                        while( !looper.elapsedLoop() && (digitalRead(_gpio) == HIGH) )
+                        looper.start();
+                        while( readPGIObool(_gpio) && !(timeout = looper.elapsedLoop()) )
                         {
                             seqbuf[front_index]++;
                             delayMicroseconds(1);
                         }
-                        timeout = looper.elapsedLoop();
-			printf(" to: %d\n", timeout );
+                        if ( !timeout )
+                            debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << seqbuf[front_index] << " ";
+                        else
+                            debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "T! ";
                     }
+                    else
+                        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "T! ";
 
                     if(seqbuf[front_index] > max_value)
                         max_value = seqbuf[front_index];
                     if(seqbuf[front_index] < min_value)
                         min_value = seqbuf[front_index];
                 }
-		    printf("Recev 3\n");
                 if ( !timeout )
                 {
-		    printf("Recev 4\n");
                     int32_t mean = (min_value + max_value) / 2;
                     for (int front_index=0; front_index<40; front_index++)
                     {
@@ -176,10 +187,13 @@ bool TempSensor::readSensor()
                     }
                 }
             }
+            else
+                debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "T! ";
         }
+        else
+            debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "T! ";
 
-		    printf("Recev 10\n");
-*/
+        /*
         int pin = _gpio;
         uint8_t laststate = HIGH;
         uint8_t counter = 0;
@@ -253,7 +267,7 @@ bool TempSensor::readSensor()
             // Skip fake readings (will turn on anti-ice):
             if ( (_humidity == 0) && (_temp == 0) && ret )
                 ret = false;
-        }
+        }*/
 #else
         ret = true;
         _temp = 7; //(_timestamp/60) % 20 + 10;
