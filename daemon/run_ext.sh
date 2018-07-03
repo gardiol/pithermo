@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo ./pithermo_ext --logs=../ --remote=192.168.1.99 --debug
+FRAMEWORK_DEBUG_USER4=1 sudo ./pithermo_ext --logs=../ --remote=192.168.1.99 --debug

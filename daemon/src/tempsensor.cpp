@@ -47,37 +47,37 @@ bool TempSensor::readSensor()
     if ( !_timer.isRunning() || _timer.elapsedLoop() )
     {
 #ifndef DEMO
-        bool timeout = false;
+/*        bool timeout = false;
         FrameworkTimer looper;
-        looper.setLoopTime(160);
+        looper.setLoopTime(2000);
         uint32_t seqbuf[40];
         uint8_t rcvbuf[5] = {0,0,0,0,0};
         uint32_t max_value = 0;
         uint32_t min_value = 0xFFFFFFFF;
 
-        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "REQ: ";
+        debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "REQ: ";
         // Request phase: CLEAR(HG 250m) - LW(20m) - HG(40u)
         setGPIOoutput(_gpio);
         // High
-        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "Hx250m ";
+        debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "Hx250m ";
         digitalWrite(_gpio, HIGH);
         FrameworkTimer::msleep_s(250);
         // Low
-        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "Lx20m ";
+        debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "Lx20m ";
         digitalWrite(_gpio, LOW);
         FrameworkTimer::msleep_s(20);
         // High
-        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "Hx40u ";
+        debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "Hx40u ";
         digitalWrite(_gpio, HIGH);
         FrameworkTimer::usleep_s(40);
 
 
-        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "REP: ";
+        debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "REP: ";
         // Reading phase: 80us LW - 80us HG
         setGPIOinput(_gpio);
 
         // Read LOW for 80us
-        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "W4L(80u) ";
+        debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "W4L(80u) ";
         looper.start();
         while( !readPGIObool(_gpio) && !(timeout = looper.elapsedLoop()) )
             FrameworkTimer::usleep_s(1);
@@ -85,28 +85,33 @@ bool TempSensor::readSensor()
         if ( !timeout )
         {
             // Read HIGH for 80us
-            debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "W4H(80u) ";
+            debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "W4H(80u) ";
             looper.start();
+	    debugPrintUntagged() << "b" << looper.elapsedTime();
+            readPGIObool(_gpio);
+	    debugPrintUntagged() << "x" << looper.elapsedTime();
+
             while( readPGIObool(_gpio) && !(timeout = looper.elapsedLoop()) )
                 FrameworkTimer::usleep_s(1);
+	    debugPrintUntagged() << "a" << looper.elapsedTime() << "-- " << readPGIObool(_gpio);
 
             if ( !timeout )
             {
-                debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "READ ";
+                debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "READ ";
 
                 // Read output, on 40bits (5 bytes)
                 for (int front_index=0; !timeout && (front_index<40); front_index++)
                 {
                     seqbuf[front_index] = 0;
                     // Wait for LOW
-                    debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "W4B" << front_index << " ";
+                    debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "W4B" << front_index << " ";
                     looper.start();
                     while( !readPGIObool(_gpio) && !(timeout = looper.elapsedLoop()) )
                         FrameworkTimer::usleep_s(1);
 
                     if ( !timeout )
                     {
-                        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "D: ";
+                        debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "D: ";
                         // Start from 0
                         seqbuf[front_index] = 0;
 
@@ -117,12 +122,12 @@ bool TempSensor::readSensor()
                             delayMicroseconds(1);
                         }
                         if ( !timeout )
-                            debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << seqbuf[front_index] << " ";
+                            debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << seqbuf[front_index] << " ";
                         else
-                            debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "T! ";
+                            debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "T! ";
                     }
                     else
-                        debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "T! ";
+                        debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "T! ";
 
                     if(seqbuf[front_index] > max_value)
                         max_value = seqbuf[front_index];
@@ -131,7 +136,7 @@ bool TempSensor::readSensor()
                 }
                 if ( !timeout )
                 {
-                    int32_t mean = (min_value + max_value) / 2;
+                    uint32_t mean = (min_value + max_value) / 2;
                     for (int front_index=0; front_index<40; front_index++)
                     {
                         if (seqbuf[front_index] > mean)
@@ -188,12 +193,13 @@ bool TempSensor::readSensor()
                 }
             }
             else
-                debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "T! ";
+                debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "T! ";
         }
         else
-            debugPrint( "Sensor", DebugPrint::USER4_CLASS ) << "T! ";
+            debugPrintUntagged(  DebugPrint::NOTICE_CLASS ) << "T! ";
 
-        /*
+	debugPrintUntagged() << "\n";
+        */
         int pin = _gpio;
         uint8_t laststate = HIGH;
         uint8_t counter = 0;
@@ -267,7 +273,7 @@ bool TempSensor::readSensor()
             // Skip fake readings (will turn on anti-ice):
             if ( (_humidity == 0) && (_temp == 0) && ret )
                 ret = false;
-        }*/
+        }
 #else
         ret = true;
         _temp = 7; //(_timestamp/60) % 20 + 10;
