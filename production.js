@@ -18,4 +18,5 @@ function( request, json )// Dojo
 	};
 	getRequest = function( req, ok_func, ko_func ){
 		request(req,{handleAs :"json"}).then(ok_func,ko_func);
-};
+	};
+});
