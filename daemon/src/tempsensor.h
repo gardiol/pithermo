@@ -18,15 +18,9 @@ public:
 
     bool readSensor();
 
-    float getTemp() const
-    {
-        return _temp;
-    }
+    float getTemp() const;
 
-    float getHimidity() const
-    {
-        return _humidity;
-    }
+    float getHimidity() const;
 
     void printStatus();
 
@@ -38,9 +32,7 @@ private:
     FrameworkTimer _timer;
     uint8_t _gpio;
     float _temp_correction;
-
-    bool _rawRead();
-
+    bool _at_lease_one_read_ok;
 };
 
 #endif // TEMPSENSOR_H
