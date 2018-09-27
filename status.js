@@ -16,9 +16,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 {
 	sts = {
 		timer: null,
-		inhibitTMin: false,
-		inhibitTMax: false,
-		tEdited: false,
 		status: null,		
 		confirm: function(msg,ok,cmd){
 			var dialog = new ConfirmDialog({
@@ -92,41 +89,30 @@ function( dom, attr, dclass, style, html, on,// Dojo
           label: "Spegni",
           disabled: true,
           onClick: function(){sts.confirm("Spengo il GAS?","Spegni!","gas-off");}
-      }, "gas-off-btn"),          
-		tempReset: dom.byId("temp-reset"),
-		tempApply: dom.byId("temp-apply"),
-		tempMin: new NumberSpinner({
-			value: 0,
-         disabled: true,
-         smallDelta: 0.1,
-			intermediateChanges: true,
-         style: "width: 6em;",
-         onChange: function(){
-				if ( !sts.inhibitTMin ){
-					sts.tEdited = true;
-					dclass.remove(sts.tempReset, "celated");
-					dclass.remove(sts.tempApply, "celated");
-				} else 
-					sts.inhibitTMin = false;
-			},
-         constraints: { min:-100, max:100, places:1 }
-		}, "min-temp"),
-      tempMax: new NumberSpinner({
-	      value: 0,
-         disabled: true,
-         smallDelta: 0.1,
-			intermediateChanges: true,
-         style: "width: 6em;",
-         onChange: function(){ 
-				if ( !sts.inhibitTMax ){
-					sts.tEdited = true;
-					dclass.remove(sts.tempReset, "celated");
-					dclass.remove(sts.tempApply, "celated");
-				} else
-					sts.inhibitTMax = false;					
-			},
-         constraints: { min:-100, max:100, places:1 }
-		}, "max-temp"),
+      }, "gas-off-btn"),
+		tempMin: new Button({
+			label: "XX.X°C",
+			disabled: true,
+			onClick: function(){
+				eTempVal.set("value", sts.status.temp.min );
+				eTemp.set("minOrMax", "min");
+				eTemp.set("title", "Cambia temperatura minima")
+				eTemp.show();		  
+			}
+		}, "min-temp"),          
+		tempMax: new Button({
+			label: "XX.X°C",
+			disabled: true,
+			onClick: function(){
+				eTempVal.set("value", sts.status.temp.max );
+				eTemp.set("minOrMax", "max");
+				eTemp.set("title", "Cambia temperatura massima")
+				eTemp.show();		  
+			}
+		}, "max-temp"),  
+		saveTemp: function(m,v){	
+			postRequest("cgi-bin/set_"+m+"_temp",{data:v},function(result){},function(err){alert("Command error: " + err );});
+		},
 		update: function(){
 			if ( sts.timer ){
          	window.clearTimeout( sts.timer );
@@ -140,19 +126,12 @@ function( dom, attr, dclass, style, html, on,// Dojo
                for ( var p in sts )
 						if ( sts[p] && sts[p].set ) sts[p].set("disabled", true); 
 	            if ( sts.status.active == "on" ){
-	               sts.off.set("disabled", false );
-		            if ( !sts.tEdited ){
-							if ( sts.tempMin.get("value") != sts.status.temp.min ){
-								sts.inhibitTMin = true;
-								sts.tempMin.set("value", sts.status.temp.min);
-							}
-							if ( sts.tempMax.get("value") != sts.status.temp.max ){
-								sts.inhibitTMax = true;
-								sts.tempMax.set("value", sts.status.temp.max);
-							}
-		            }
-						sts.tempMin.set("disabled", false );
-						sts.tempMax.set("disabled", false );
+					sts.off.set("disabled", false );
+					sts.tempMin.set("disabled", false);
+					sts.tempMax.set("disabled", false);
+					sts.tempMin.set("label", sts.status.temp.min + "°C" );
+					sts.tempMax.set("label", sts.status.temp.max + "°C" );
+				   
 						if ( sts.status.mode == "manual" ){
 							sts.auto.set("disabled", false );
 							if ( sts.status.pellet.command == "on" ){
@@ -224,55 +203,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 	
 	for ( var p in sts ){				
 		if ( sts[p] && sts[p].startup ) sts[p].startup();
-	}
-
-	on(sts.tempReset, "click", function(){
-		var dialog = new ConfirmDialog({
-			title: "ATTENZIONE!",
-			content: "Annullare le modifiche?"});
-		dialog.set("buttonOk", "Si, annulla");
-		dialog.set("buttonCancel", "No, continua");
-		dialog.on("execute", function() {
-			if ( sts.status ) {
-				if ( sts.tempMin.get("value") != sts.status.temp.min ){
-					sts.inhibitTMin = true;
-				}
-				if ( sts.tempMax.get("value") != sts.status.temp.max ){
-					sts.inhibitTMax = true;
-				}
-				sts.tempMax.set("value", sts.status.temp.max );				
-				sts.tempMin.set("value", sts.status.temp.min );		
-				sts.tEdited = false;
-				dclass.add(dom.byId("temp-reset"), "celated");
-				dclass.add(dom.byId("temp-apply"), "celated");
-			}
-		});
-		dialog.show();
-	});
-
-	on(sts.tempApply, "click", function(){
-		var dialog = new ConfirmDialog({
-			title: "ATTENZIONE!",
-			content: "Salvare le modifiche?"});
-		dialog.set("buttonOk", "Salva");
-		dialog.set("buttonCancel", "Continua a modificare");
-		dialog.on("execute", function() {
-			postRequest("cgi-bin/set_min_temp",sts.tempMin.value,
-				function(result){
-					sts.tEdited = false;
-					dclass.add(dom.byId("temp-reset"), "celated");
-					dclass.add(dom.byId("temp-apply"), "celated");
-				},
-				function(err){alert("Command error: " + err );});
-			postRequest("cgi-bin/set_max_temp",sts.tempMax.value,
-				function(result){
-					sts.tEdited = false;
-					dclass.add(dom.byId("temp-reset"), "celated");
-					dclass.add(dom.byId("temp-apply"), "celated");
-				},
-				function(err){alert("Command error: " + err );});
-		});
-		dialog.show();
-	});
+	}	
 
 });

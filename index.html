@@ -9,6 +9,18 @@
 	<script src="js/dojo/dojo.js" data-dojo-config="async: true"></script>
 </head>
 <body class="claro">
+
+<div data-dojo-type="dijit/Dialog" data-dojo-id="eTemp" title="Modifica Temperatura">
+	<p class="dijitDialogPaneContentArea">
+		<label for="temp">Temperatura (°C):</label>
+		<input data-dojo-type="dijit/form/NumberSpinner" name="temp" data-dojo-id="eTempVal" smallDelta=0.1 style="width:6em;" constraints="{ min:-100,max:100,places:1}"/>
+	</p>
+    <div class="dijitDialogPaneActionBar">
+        <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp(eTemp.attr('minOrMax'),eTempVal.get('value'));}">Salva</button>
+        <button data-dojo-type="dijit/form/Button" type="button" data-dojo-props="onClick:function(){eTemp.hide();}">Annulla</button>
+    </div>
+</div>
+
 <div id="status-area">
   <div id="status-info">
     <div id="power-box" class="col">
@@ -32,11 +44,11 @@
         <p class="status-title">Temperature</p>
         <div>
           <img alt="minTemp" class="temp-img" src="images/min-temp.png"/>
-          <div id="min-temp"></div>
+		  <button id="min-temp"></button>
         </div>
         <div>
           <img alt="maxTemp" class="temp-img" src="images/max-temp.png"/>
-          <div id="max-temp"></div>
+		  <button id="max-temp"></button>
         </div>
         <div id="temp-buttons">
           <img id="temp-reset" src="images/restore.png" class="button-img celated" style="margin-right: 1em;" />
@@ -170,7 +182,7 @@
     </div>
 </div><!-- history area-->
 
-<script src="production.js"></script>
+<script src="demo.js"></script>
 <script src="status.js"></script>
 <script src="events.js"></script>
 <script src="program.js"></script>

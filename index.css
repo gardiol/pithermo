@@ -11,6 +11,13 @@
 	display: inline-block;
 }
 
+.input-box {
+	border: 1px solid gray;
+	font-size: 140%;
+	padding: 0.2em;
+	background: light gray;
+}
+
 .button-img {
     width: 2em !important;
     height: 2em !important;
