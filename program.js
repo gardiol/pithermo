@@ -143,7 +143,11 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 					}
 					var t = x*2+n.f;
 					dclass.remove(prg.todayT[t]["_c"], "now_col" );
-					dclass.remove(prg.todayT[t]["_h"], "now_col" );									
+					dclass.remove(prg.todayT[t]["_h"], "now_col" );
+					if ( n.f == 1 ){
+						dclass.remove(prg.todayT[t-1]["_c"], "now_col" );
+						dclass.remove(prg.todayT[t-1]["_h"], "now_col" );
+					}
 					if ( h == n.h ){
 						dclass.add(prg.todayT[t]["_c"], "now_col" );
 						dclass.add(prg.todayT[t]["_h"], "now_col" );									
