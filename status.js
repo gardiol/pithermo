@@ -184,7 +184,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 				html.set("temp-label", "--" );
 				html.set("humi-label", "--" );
 				for ( var p in sts )
-					if ( sts[p].set ) sts[p].set("disabled", true);
+					if ( sts[p] && sts[p].set ) sts[p].set("disabled", true);
 				evt.disable();                
 				html.set("gas-time", "--");
 				html.set("pellet-time", "--");

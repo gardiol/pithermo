@@ -113,18 +113,19 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 			prg.daySel.removeOption( prg.daySel.getOptions() );
 			for ( var d = 0; d < 7; d++ ){
 				var v = prg.wDay[d];
+				var x = "";
 				if ( d == w ){
-					v += "(oggi)";						
+					v += " (oggi)";	
 				} else if ( d == (w+1)%7 ){
-					v += "(domani)";
+					v += " (domani)";
 				} else if ( d == (w+2)%7 ){
-					v += "(dopodomani)";
+					v += " (dopodomani)";
 				} else if ( d == (w-1)%7 ){
-					v += "(ieri)";
+					v += " (ieri)";
 				} else if ( d == (w-2)%7 ){
-					v += "(l'altroieri)";
+					v += " (l'altroieri)";
 				}
-				prg.daySel.addOption( { value:""+d, label:""+v, selected: (d==w) } );
+				prg.daySel.addOption( { value:""+d, label:""+v+x, selected: (d==w) } );
 				html.set(prg.programT[d]["day"], v );
 			}
 			prg.daySel.setValue( prg.fillDaysFirst ? w : old_d );
@@ -141,25 +142,28 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 						attr.set(prg.todayT[ x*2+f ]["_img"], "src", prg.srcCalc(n.d,h,f) );   
 					}
 					var t = x*2+n.f;
+					dclass.remove(prg.todayT[t]["_c"], "now_col" );
+					dclass.remove(prg.todayT[t]["_h"], "now_col" );
+					if ( n.f == 1 ){
+						dclass.remove(prg.todayT[t-1]["_c"], "now_col" );
+						dclass.remove(prg.todayT[t-1]["_h"], "now_col" );
+					}
 					if ( h == n.h ){
 						dclass.add(prg.todayT[t]["_c"], "now_col" );
 						dclass.add(prg.todayT[t]["_h"], "now_col" );									
-					} else {
-						dclass.remove(prg.todayT[t]["_c"], "now_col" );
-						dclass.remove(prg.todayT[t]["_h"], "now_col" );									
 					}
 				}
 					
 				if ( prg.program ){
 					for ( var d = 0; d < 7; d++ ){
 						for ( var h = 0; h < 24; h++ ){
-	               	for ( var f = 0; f < 2; f++ ){
+							for ( var f = 0; f < 2; f++ ){
 								attr.set(prg.programT[d][h][f]["_img"], "src", prg.srcCalc(d,h,f) );   
+								dclass.remove( prg.programT[d][h][f], "now_col" );
 								if ( d == n.d ){
-									if ( h == n.h ){
-									
+									if ( h == n.h ){		
 										if ( f == n.f ){
-											
+											dclass.add( prg.programT[d][h][f], "now_col" );
 										}	
 									}
 								}
@@ -172,47 +176,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 				html.set(prg.todayT["day"], "---" );			
 			}
 		},
-
-			
-			/*
-			
-
-				
-				
-                    
-                    dclass.remove(prgrf["cell"][d][h][f], "now" )                                
-                    dclass.remove(prgrf["cell"][d][h][f], "now_col" );
-                    if ( d == system_status.now.d ){
-						var today_cell = (h - today_base)*2 + f;
-						if ( (today_cell < 0) || (today_cell > 23 ) )
-							today_cell = null;
-						if ( today_cell )
-							attr.set(tdr[today_cell]["img"], "src", src );
-                        if ( h == system_status.now.h ){
-                            if ( f == system_status.now.f ){
-								dclass.add(prgrf["hdr_h"][h], "now_col" );
-								dclass.add(prgrf["hdr_ch"][h], "now_col" );
-								dclass.add(prgrf["hdr_d"][d], "now_col" );
-								dclass.add(prgrf["hdr_cd"][d], "now_col" );
-								dclass.add(prgrf["hdr_f"][h][f], "now_col" );
-                                dclass.add(prgrf["cell"][d][h][f], "now" );                         
-								dclass.add(tdr[today_cell]["c"], "now_col" );
-								dclass.add(tdr[today_cell]["h"], "now_col" );
-                            } else {
-                                dclass.add(prgrf["cell"][d][h][f], "now_col" );     
-                            }
-                        }
-                        else
-                            dclass.add(prgrf["cell"][d][h][f], "now_col" );                         
-                    } else {
-                        if ( h == system_status.now.h ){
-                            if ( f == system_status.now.f ){
-                                dclass.add(prgrf["cell"][d][h][f], "now_col" );                         
-*/
-
 	};
-
-
 
    new ToggleButton({ checked: false, onChange: function(v) {
        if ( v ){
