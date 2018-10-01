@@ -111,7 +111,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 			}
 		}, "max-temp"),  
 		saveTemp: function(m,v){	
-			postRequest("cgi-bin/set_"+m+"_temp",{data:v},function(result){},function(err){alert("Command error: " + err );});
+			postRequest("cgi-bin/set_"+m+"_temp",v,function(result){},function(err){alert("Command error: " + err );});
 		},
 		update: function(){
 			if ( sts.timer ){

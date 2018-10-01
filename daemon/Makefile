@@ -1,9 +1,9 @@
 ifndef DEMO
 $(info Build per TARGET - DEMO not specified)
-CFLAGS=-fPIC -g -Wall
+CFLAGS=-fPIC -g -Wall -std=c++11
 else
 $(info Build per PC - DEMO specified)
-CFLAGS=-fPIC -g -Wall -DDEMO
+CFLAGS=-fPIC -g -Wall -std=c++11 -DDEMO
 endif
 
 FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./framework/basethread.cpp ./framework/cmdlineparser.cpp ./framework/configdata.cpp ./framework/configfile.cpp ./framework/debugprint.cpp ./framework/udpsocket.cpp ./framework/frameworksighandler.cpp ./framework/frameworktimer.cpp ./framework/frameworkutils.cpp ./framework/genericcommdevice.cpp ./framework/memorychecker.cpp ./framework/profiler.cpp ./framework/profilerinternal.cpp ./framework/scheduledthread.cpp ./framework/socketcommdevice.cpp ./framework/tcpclient.cpp ./framework/tcpserver.cpp ./framework/transmissionstats.cpp
