@@ -39,7 +39,7 @@ HistoryItem::HistoryItem(FILE *file):
     _ext_humidity_str("0"),
     _humidity_str("0")
 {
-    if ( file != NULL )
+    if ( file != nullptr )
     {
         if ( !feof( file )  )
             fread( &_time, sizeof(_time), 1, file );
@@ -54,15 +54,15 @@ HistoryItem::HistoryItem(FILE *file):
             if ( fread( &_ext_humidity, sizeof(_ext_humidity), 1, file ) == 1 )
             {
                 _time = le64toh( _time );
-                uint32_t t32 = le32toh( ((uint32_t*)(&_temp))[0] );
-                _temp = ((float*)(&t32))[0];
-                t32 = le32toh( ((uint32_t*)(&_ext_temp))[0] );
-                _ext_temp = ((float*)(&t32))[0];
-                t32 = le32toh( ((uint32_t*)(&_ext_humidity))[0] );
-                _ext_humidity = ((float*)(&t32))[0];
-                t32 = le32toh( ((uint32_t*)(&_humidity))[0] );
-                _humidity = ((float*)(&t32))[0];
-                _time_str = FrameworkUtils::tostring( _time );
+                uint32_t t32 = le32toh( static_cast<uint32_t*>(static_cast<void*>(&_temp))[0] );
+                _temp = static_cast<float*>(static_cast<void*>(&t32))[0];
+                t32 = le32toh( static_cast<uint32_t*>(static_cast<void*>(&_ext_temp))[0] );
+                _ext_temp = static_cast<float*>(static_cast<void*>(&t32))[0];
+                t32 = le32toh( static_cast<uint32_t*>(static_cast<void*>(&_ext_humidity))[0] );
+                _ext_humidity = static_cast<float*>(static_cast<void*>(&t32))[0];
+                t32 = le32toh( static_cast<uint32_t*>(static_cast<void*>(&_humidity))[0] );
+                _humidity = static_cast<float*>(static_cast<void*>(&t32))[0];
+                _time_str = FrameworkUtils::utostring( _time );
                 _temp_str = FrameworkUtils::ftostring( _temp );
                 _ext_temp_str = FrameworkUtils::ftostring( _ext_temp );
                 _ext_humidity_str = FrameworkUtils::ftostring( _ext_humidity );
@@ -80,7 +80,7 @@ HistoryItem::HistoryItem(uint64_t last_time, float last_temp, float last_humidit
     _ext_humidity(last_ext_humidity),
     _humidity(last_humidity),
     _valid(true),
-    _time_str(FrameworkUtils::tostring( _time )),
+    _time_str(FrameworkUtils::utostring( _time )),
     _temp_str(FrameworkUtils::ftostring( _temp )),
     _ext_temp_str(FrameworkUtils::ftostring( _ext_temp )),
     _ext_humidity_str(FrameworkUtils::ftostring( _ext_humidity )),
@@ -120,17 +120,17 @@ void HistoryItem::operator=(const HistoryItem &other)
 
 void HistoryItem::write(FILE *file)
 {
-    if ( file != NULL )
+    if ( file != nullptr )
     {
         uint64_t t64 = htole64( _time );
-        fwrite( &t64, sizeof(t64), 1, file );
-        uint32_t t32 = htole32( ((uint32_t*)(&_temp))[0] );
+        fwrite( &t64, sizeof(t64), 1, file );        
+        uint32_t t32 = htole32( static_cast<uint32_t*>(static_cast<void*>(&_temp))[0] );
         fwrite( &t32, sizeof(t32), 1, file );
-        t32 = htole32( ((uint32_t*)(&_ext_temp))[0] );
+        t32 = htole32( static_cast<uint32_t*>(static_cast<void*>(&_ext_temp))[0] );
         fwrite( &t32, sizeof(t32), 1, file );
-        t32 = htole32( ((uint32_t*)(&_ext_humidity))[0] );
+        t32 = htole32( static_cast<uint32_t*>(static_cast<void*>(&_ext_humidity))[0] );
         fwrite( &t32, sizeof(t32), 1, file );
-        t32 = htole32( ((uint32_t*)(&_humidity))[0] );
+        t32 = htole32( static_cast<uint32_t*>(static_cast<void*>(&_humidity))[0] );
         fwrite( &t32, sizeof(t32), 1, file );
     }
 }

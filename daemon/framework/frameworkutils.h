@@ -264,7 +264,14 @@ public:
      * @param str the string
      * @return the float
      */
-    static double string_tof( const std::string& str );
+    static float string_tof( const std::string& str );
+
+    /** @brief Convert a string to an float
+     * @since 4.0
+     * @param str the string
+     * @return the float
+     */
+    static double string_tod( const std::string& str );
 
     /** @brief Convert a string to an itneger
      * @param str the string
@@ -404,11 +411,15 @@ public:
      */
     static std::string tostring( const int64_t t);
 
+    static std::string utostring( const uint64_t t);
+
     /** @brief Convert a double to string
      * @param t float to convert
      * @return converted string
      */
-    static std::string ftostring( const double t);
+    static std::string ftostring( const float t);
+
+    static std::string dtostring( const double t);
 
     /** @brief Change working directory
      *

@@ -10,17 +10,17 @@ Program::Program():
     _gas_program.resize(7);
     _pellet_program.resize(7);
     _pellet_minimum_program.resize(7);
-    for ( int d = 0; d < 7; d++ )
+    for ( std::size_t d = 0; d < 7; d++ )
     {
         _gas_program[d].resize(24);
         _pellet_program[d].resize(24);
         _pellet_minimum_program[d].resize(24);
-        for ( int h = 0; h < 24; h++ )
+        for ( std::size_t h = 0; h < 24; h++ )
         {
             _gas_program[d][h].resize(2);
             _pellet_program[d][h].resize(2);
             _pellet_minimum_program[d][h].resize(2);
-            for ( int f = 0; f < 2; f++ )
+            for ( std::size_t f = 0; f < 2; f++ )
             {
                 _gas_program[d][h][f] = false;
                 _pellet_program[d][h][f] = false;
@@ -41,9 +41,9 @@ void Program::setTime(int d, int h, int f)
          ( h >= 0 ) && ( h < 24 ) &&
          ( f >= 0 ) && ( f < 2 ) )
     {
-        _d = d;
-        _h = h;
-        _f = f;
+        _d = static_cast<std::size_t>(d);
+        _h = static_cast<std::size_t>(h);
+        _f = static_cast<std::size_t>(f);
     }
 }
 
@@ -53,12 +53,12 @@ bool Program::change(const std::string &p)
     std::vector<std::string> days = FrameworkUtils::string_split( p, "]" );
     if ( days.size() >= 7 )
     {
-        for ( int d = 0; d < 7; d++ )
+        for ( std::size_t d = 0; d < 7; d++ )
         {
             std::string day_str = FrameworkUtils::string_replace(FrameworkUtils::string_replace(FrameworkUtils::string_replace(days[d], "[", "" ), "\"", ""), ",", "");
-            for ( int h = 0; h < 24; h++ )
+            for ( std::size_t h = 0; h < 24; h++ )
             {
-                for ( int f = 0; f < 2; f++ )
+                for ( std::size_t f = 0; f < 2; f++ )
                 {
                     if ( day_str.length() > 0 )
                     {
@@ -117,19 +117,19 @@ bool Program::change(const std::string &p)
 
 void Program::loadConfig(const ConfigData *c)
 {
-    if ( c != NULL )
+    if ( c != nullptr )
     {
-        for ( int d = 0; d < 7; d++ )
+        for ( std::size_t d = 0; d < 7; d++ )
         {
-            std::string day = "day"+FrameworkUtils::tostring(d);
+            std::string day = "day"+FrameworkUtils::utostring(d);
             std::string day_string = c->getValue( day );
             std::vector<std::string> tokens = FrameworkUtils::string_split( day_string, ",");
             if ( tokens.size() >= 48 )
             {
-                int t = 0;
-                for ( int h = 0; h < 24; h++ )
+                std::size_t t = 0;
+                for ( std::size_t h = 0; h < 24; h++ )
                 {
-                    for ( int f = 0; f < 2; f++ )
+                    for ( std::size_t f = 0; f < 2; f++ )
                     {
                         std::string token = tokens[t++];
                         FrameworkUtils::string_tolower( token );
@@ -154,13 +154,13 @@ void Program::loadConfig(const ConfigData *c)
 
 void Program::saveConfig(ConfigData *c)
 {
-    for ( int d = 0; d < 7; d++ )
+    for ( std::size_t d = 0; d < 7; d++ )
     {
-        std::string day_str = "day"+FrameworkUtils::tostring(d);
+        std::string day_str = "day"+FrameworkUtils::utostring(d);
         std::string value = "";
-        for ( int h = 0; h < 24; h++ )
+        for ( std::size_t h = 0; h < 24; h++ )
         {
-            for ( int f = 0; f < 2; f++ )
+            for ( std::size_t f = 0; f < 2; f++ )
             {
                 bool gas_on = _gas_program[d][h][f];
                 bool pellet_on = _pellet_program[d][h][f];
@@ -189,12 +189,12 @@ void Program::writeJSON(FILE *file)
 {
     char s[5] = "\"_\",";
     fwrite("[", 1, 1, file );
-    for ( int d = 0; d < 7; d++ )
+    for ( std::size_t d = 0; d < 7; d++ )
     {
         fwrite("[", 1, 1, file );
-        for ( int h = 0; h < 24; h++ )
+        for ( std::size_t h = 0; h < 24; h++ )
         {
-            for ( int f = 0; f < 2; f++ )
+            for ( std::size_t f = 0; f < 2; f++ )
             {
                 bool pellet_on = _pellet_program[d][h][f];
                 bool gas_on = _gas_program[d][h][f];

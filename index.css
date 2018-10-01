@@ -185,6 +185,7 @@ img.today-table-img {
 	font-style: bold;
 	font-size: 140%;
 	border-bottom: 1px dotted black;
+    margin-bottom: 0.5em;
 }
 
 .temp-img {

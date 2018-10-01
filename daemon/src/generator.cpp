@@ -11,6 +11,8 @@ Generator::Generator(const std::string &n,
                      int power_gpio,
                      uint64_t today_on_time,
                      uint64_t today_low_time,
+                     uint64_t season_on_time,
+                     uint64_t season_low_time,
                      uint64_t on_since,
                      uint64_t on_low_since,
                      LogItem::Event on_event,
@@ -24,6 +26,8 @@ Generator::Generator(const std::string &n,
     _power_gpio( power_gpio ),
     _today_on_time( today_on_time ),
     _today_low_time( today_low_time ),
+    _season_on_time( season_on_time ),
+    _season_low_time( season_low_time ),
     _on_since( on_since ),
     _on_low_since( on_low_since ),
     _on_event(on_event),
@@ -64,12 +68,16 @@ bool Generator::switchOff()
 {    // off = HIGH/true
     if ( _on_since > 0 )
     {
-        _today_on_time += FrameworkTimer::getTimeEpoc() - _on_since;
+        uint64_t delta_on = FrameworkTimer::getTimeEpoc() - _on_since;
+        _today_on_time += delta_on;
+        _season_on_time += delta_on;
         _on_since = 0;
     }
     if ( _on_low_since > 0 )
     {
-        _today_low_time += FrameworkTimer::getTimeEpoc() - _on_low_since;
+        uint64_t delta_on = FrameworkTimer::getTimeEpoc() - _on_low_since;
+        _today_low_time += delta_on;
+        _season_low_time += delta_on;
         _on_low_since = 0;
     }
     writeGPIObool( _command_gpio, true );
@@ -95,7 +103,9 @@ bool Generator::setPower(Generator::PowerLevel pl)
     {
         if ( _on_low_since > 0 )
         {
-            _today_low_time += FrameworkTimer::getTimeEpoc() - _on_low_since;
+            uint64_t delta_on = FrameworkTimer::getTimeEpoc() - _on_low_since;
+            _today_low_time += delta_on;
+            _season_low_time += delta_on;
             _on_low_since = 0;
         }
         if ( _low_event != LogItem::NO_EVENT )
@@ -125,14 +135,22 @@ bool Generator::isHot()
     return fdb;
 }
 
-void Generator::resetTimes()
+void Generator::newDayResetTimes()
 {
     _today_on_time = 0;
     _today_low_time = 0;
     if ( _on_since > 0 )
+    {
+        uint64_t delta_on = FrameworkTimer::getTimeEpoc() - _on_since;
+        _season_on_time += delta_on;
         _on_since = FrameworkTimer::getTimeEpoc();
+    }
     if ( _on_low_since > 0 )
+    {
+        uint64_t delta_on = FrameworkTimer::getTimeEpoc() - _on_low_since;
+        _season_low_time += delta_on;
         _on_low_since = FrameworkTimer::getTimeEpoc();
+    }
 }
 
 uint64_t Generator::lastOnTime()
@@ -148,6 +166,16 @@ uint64_t Generator::todayOnTime()
 uint64_t Generator::todayLowOnTime()
 {
     return _today_low_time + ( _on_low_since > 0 ? (FrameworkTimer::getTimeEpoc()) - _on_low_since : 0 );
+}
+
+uint64_t Generator::seasonOnTime()
+{
+    return _season_on_time + todayOnTime();
+}
+
+uint64_t Generator::seasonLowOnTime()
+{
+    return _season_low_time + todayLowOnTime();
 }
 
 void Generator::printStatus()

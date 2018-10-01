@@ -36,6 +36,7 @@ private:
     bool _checkSpecialConditions();
     void _saveConfig();
 
+
     Logger* _logger;
     Generator* _gas;
     Generator* _pellet;

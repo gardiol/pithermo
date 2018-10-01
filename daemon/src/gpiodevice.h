@@ -11,7 +11,7 @@ public:
     virtual ~GPIODevice();
 
 protected:
-    void setGPIOoutput( int gpio_no );
+    void setGPIOoutput(int gpio_no );
     void setGPIOinput( int gpio_no );
     bool readPGIObool( int gpio_no );
     void writeGPIObool( int gpio_no, bool value );

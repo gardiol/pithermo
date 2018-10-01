@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 std::vector<std::set< std::pair<std::string, Command::CmdType> > > Command::_commands;
-uint32_t Command::_commands_size = 0;
+std::size_t Command::_commands_size = 0;
 
 void Command::init()
 {
@@ -34,7 +34,7 @@ Command::Command(const char *buffer, uint32_t size):
 {    
     bool found = false;
     // Non sprecare cicli, non controllare oltre la massima lunghezza del comando:
-    uint32_t check_size = (size+1) > _commands_size ? _commands_size : size+1;
+    std::size_t check_size = (size+1) > _commands_size ? _commands_size : size+1;
     for ( uint32_t i = 4;
           (i < check_size) && !found; i++ )
     {

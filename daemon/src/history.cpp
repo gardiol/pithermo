@@ -42,7 +42,7 @@ void History::_splitTime(uint64_t t, uint32_t &w, uint32_t &d, uint32_t &h, uint
     // week numbers.
     t += 60*60*24*3; // Now the day-0 for EPOC=3 will be +3days
     d = (t / (60*60*24)) % num_days; // Days are 0..6 (mon-sun)
-    w = (t / (60*60*24*7)); // weeks are not bounded..
+    w = static_cast<uint32_t>((t / (60*60*24*7))); // weeks are not bounded..
 }
 
 void History::_readNow()
@@ -88,10 +88,10 @@ void History::initialize(const std::string &mode, uint32_t len)
     }
     _readNow();
     FILE* read_file = fopen( _history_filename.c_str(), "rb" );
-    if ( read_file != NULL )
+    if ( read_file != nullptr )
     {
         fseek( read_file, 0, SEEK_END );
-        uint32_t flen = ftell(read_file);
+        long int flen = ftell(read_file);
         // The MAXIMUM number of points to read is:
         uint32_t max_points = num_weeks * num_days * num_hours * num_mins;
         // Oldest accepted time:
@@ -136,7 +136,7 @@ bool History::update(float last_temp, float last_humidity,
     _writeJson();
 
     FILE* history_file = fopen( _history_filename.c_str(), "ab" );
-    if ( history_file != NULL )
+    if ( history_file != nullptr )
     {
         new_item.write( history_file );
         fclose(history_file);
@@ -198,7 +198,7 @@ void History::_writeJson()
     // Example: [{temp:[{x:24,y:123456}],humidity:[{x:50,y:123456}]}]
     //
     FILE* history_json = fopen( (_exchange_path+"/_history").c_str(), "w" );
-    if ( history_json != NULL )
+    if ( history_json != nullptr )
     {
         uint32_t jHour = _now_hour;
         uint32_t jDay = _now_day;

@@ -595,9 +595,14 @@ std::string FrameworkUtils::string_toupper(const std::string& str )
     return ret;
 }
 
-double FrameworkLibrary::FrameworkUtils::string_tof(const std::string &str)
+double FrameworkLibrary::FrameworkUtils::string_tod(const std::string &str)
 {
     return atof( str.c_str() );
+}
+
+float FrameworkLibrary::FrameworkUtils::string_tof(const std::string &str)
+{
+    return static_cast<float>(atof( str.c_str() ));
 }
 
 int FrameworkUtils::string_toi(const std::string &str)
@@ -1406,7 +1411,21 @@ std::string FrameworkUtils::tostring( const int64_t t )
     return ss.str();
 }
 
-std::string FrameworkUtils::ftostring( const double t )
+std::string FrameworkUtils::utostring( const uint64_t t )
+{
+    std::ostringstream ss;
+    ss << t;
+    return ss.str();
+}
+
+std::string FrameworkUtils::dtostring( const double t )
+{
+    std::ostringstream ss;
+    ss << t;
+    return ss.str();
+}
+
+std::string FrameworkUtils::ftostring( const float t )
 {
     std::ostringstream ss;
     ss << t;

@@ -69,7 +69,7 @@ static void daemonize()
     chdir("/");
 
     /* Close all open file descriptors */
-    for (fd = sysconf(_SC_OPEN_MAX); fd > 0; fd--) {
+    for (fd = static_cast<int>(sysconf(_SC_OPEN_MAX)); fd > 0; fd--) {
         close(fd);
     }
 
@@ -99,13 +99,15 @@ public:
 
 private:
     void customHandler(FrameworkSigHandler::signal_type ,
-                       int32_t  )
-    {
-        _keepRunning = false;
-    }
-
+                       int32_t  );
     bool _keepRunning;
 };
+
+void SigHandler::customHandler(FrameworkSigHandler::signal_type ,
+                   int32_t  )
+{
+    _keepRunning = false;
+}
 
 int main(int argc, char** argv)
 {
@@ -119,7 +121,7 @@ int main(int argc, char** argv)
     cmd.defineParameter( CmdLineParameter("logs", "Path to history, logs and debug files", CmdLineParameter::single, true )
                          .setOptions(1));
 
-    cmd.setCommandLine( argc, argv );
+    cmd.setCommandLine( static_cast<uint32_t>(argc), argv );
 
     if ( cmd.parse() )
     {
@@ -160,7 +162,7 @@ int main(int argc, char** argv)
                             sprintf( &send_data[8], "%f:%f",
                                     temp_sensor.getTemp(),
                                     temp_sensor.getHimidity() );
-                            remote_client.writeData( send_data, strlen( send_data ) );
+                            remote_client.writeData( send_data, static_cast<int>(strlen( send_data )) );
                         }
                         temp_sensor.printStatus();
                         timer.waitLoop();
@@ -171,8 +173,10 @@ int main(int argc, char** argv)
 
                 logger.logMessage("Stopped");
             }
+#ifndef DEMO
             else
                 debugPrintError() << "WiringPi initialization error";
+#endif
         }
         else
             debugPrintError() << "Unable to open log file!\n";

@@ -35,9 +35,9 @@ public:
     void writeJSON( FILE* file );
 
 private:
-    int _d;
-    int _h;
-    int _f;
+    std::size_t _d;
+    std::size_t _h;
+    std::size_t _f;
     std::vector<std::vector<std::vector<bool> > > _gas_program;
     std::vector<std::vector<std::vector<bool> > > _pellet_program;
     std::vector<std::vector<std::vector<bool> > > _pellet_minimum_program;

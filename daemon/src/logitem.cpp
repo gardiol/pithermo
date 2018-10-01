@@ -10,8 +10,8 @@ using namespace FrameworkLibrary;
 LogItem::LogItem(LogItem::Event t):
     _time( FrameworkTimer::getTimeEpoc() ),
     _event(t),
-    _time_str( FrameworkUtils::tostring( _time ) ),
-    _event_str( FrameworkUtils::tostring( _event ) ),
+    _time_str( FrameworkUtils::utostring( _time ) ),
+    _event_str( FrameworkUtils::utostring( _event ) ),
     _valid(true)
 {
 }
@@ -23,7 +23,7 @@ LogItem::LogItem(FILE *file):
     _event_str(""),
     _valid(false)
 {
-    if ( file != NULL )
+    if ( file != nullptr )
     {
         if ( fread( &_time, sizeof(_time), 1, file ) == 1 )
         {
@@ -31,8 +31,8 @@ LogItem::LogItem(FILE *file):
             {
                 _time = le64toh( _time );
                 _event = le64toh( _event );
-                _time_str = FrameworkUtils::tostring( _time );
-                _event_str = FrameworkUtils::tostring( _event );
+                _time_str = FrameworkUtils::utostring( _time );
+                _event_str = FrameworkUtils::utostring( _event );
                 _valid = true;
             }
         }
@@ -60,7 +60,7 @@ LogItem::LogItem():
 
 void LogItem::write(FILE *file)
 {
-    if ( file != NULL )
+    if ( file != nullptr )
     {
         uint64_t t64 = htole64( _time );
         fwrite( &t64, sizeof(t64), 1, file );

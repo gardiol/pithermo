@@ -14,14 +14,22 @@ GPIODevice::~GPIODevice()
 
 }
 
+#ifndef DEMO
 void GPIODevice::setGPIOoutput(int gpio_no)
+#else
+void GPIODevice::setGPIOoutput(int)
+#endif
 {
 #ifndef DEMO
     _mode[ gpio_no ] = OUTPUT;
 #endif
 }
 
+#ifndef DEMO
 void GPIODevice::setGPIOinput(int gpio_no)
+#else
+void GPIODevice::setGPIOinput(int)
+#endif
 {
 #ifndef DEMO
     _mode[ gpio_no ] = INPUT;

@@ -149,16 +149,15 @@ function( dom, attr, dclass, style, html, on,// Dojo
 						} else if ( sts.status.mode == "auto" ) {
 							sts.manual.set("disabled", false );						
 						}
-						var p_h = Math.trunc(sts.status.pellet.time/3600);
-						var p_m = Math.trunc((sts.status.pellet.time/60)%60);
-						var mp_h = Math.trunc(sts.status.pellet.mintime/3600);
-						var mp_m = Math.trunc((sts.status.pellet.mintime/60)%60);
-						var Mp_h = Math.trunc((sts.status.pellet.time-sts.status.pellet.mintime)/3600);
-						var Mp_m = Math.trunc(((sts.status.pellet.time-sts.status.pellet.mintime)/60)%60);
-						html.set("pellet-time", p_h +"h" + p_m  + "m" );
-						html.set("pellet-mintime", mp_h +"h" + mp_m  + "m" );
-						html.set("pellet-modtime", Mp_h +"h" + Mp_m  + "m" );                    
+						html.set("pellet-mintime", Math.trunc(sts.status.pellet.mintime/3600) +"h" + Math.trunc((sts.status.pellet.mintime/60)%60)  + "m" );
+						html.set("pellet-modtime", Math.trunc((sts.status.pellet.time-sts.status.pellet.mintime)/3600) +"h" + Math.trunc(((sts.status.pellet.time-sts.status.pellet.mintime)/60)%60)  + "m" );                         
 						html.set("gas-time", Math.trunc(sts.status.gas.time/3600) +"h " + Math.trunc((sts.status.gas.time/60)%60)  + "m");
+                        html.set("gas-season", Math.trunc(sts.status.gas.stime/3600) +"h " + Math.trunc((sts.status.gas.stime/60)%60)  + "m");                        
+                        html.set("pellet-season-mintime", Math.trunc(sts.status.pellet.smintime/3600) +"h" + Math.trunc((sts.status.pellet.smintime/60)%60)  + "m" );            
+                        html.set("pellet-season-modtime", Math.trunc((sts.status.pellet.stime-sts.status.pellet.smintime)/3600) +"h" + Math.trunc(((sts.status.pellet.stime-sts.status.pellet.smintime)/60)%60)  + "m" ); 
+                                 
+                                 
+
 						attr.set("mode-led", "src", sts.status.mode == "manual" ? "images/manual.png":"images/auto.png");                
 						attr.set("power-led", "src", sts.status.active != "on" ? "images/spento.png":"images/acceso.png");                
 						attr.set("pellet-feedback-led", "src", sts.status.pellet.status == "on" ? "images/max-temp.png":"images/min-temp.png");                

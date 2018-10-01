@@ -13,7 +13,7 @@ using namespace FrameworkLibrary;
 class TempSensor: protected GPIODevice
 {
 public:
-    TempSensor(Logger* l, int gpio, float temp_correction );
+    TempSensor(Logger* l, uint8_t gpio, float temp_correction );
     virtual ~TempSensor();
 
     bool readSensor();

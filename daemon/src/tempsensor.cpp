@@ -7,7 +7,7 @@
 #include <time.h>
 #include <wiringPi.h>
 
-TempSensor::TempSensor(Logger *l, int gpio, float temp_correction):
+TempSensor::TempSensor(Logger *l, uint8_t gpio, float temp_correction):
     _logger(l),
     _temp(0.0),
     _humidity(0.0),
@@ -37,7 +37,7 @@ void TempSensor::printStatus()
 {
     _logger->logDebug("Sensor reads - t: " + FrameworkUtils::ftostring( _temp ) +
                       " h: " + FrameworkUtils::ftostring( _humidity ) +
-                      " - Last successful read: "  + FrameworkUtils::tostring( _timestamp ) );
+                      " - Last successful read: "  + FrameworkUtils::utostring( _timestamp ) );
 }
 
 
