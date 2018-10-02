@@ -19,7 +19,7 @@ class Command;
 class RunnerThread : public ScheduledThread
 {
 public:
-    RunnerThread( const std::string& cfg,
+    RunnerThread( ConfigFile* config,
                   const std::string& exchange_path,
                   const std::string& hst,
                   Logger* l);
@@ -45,7 +45,7 @@ private:
     History _history;
 
     std::vector<std::string> _status_json_template;
-    std::string _config_file;
+    ConfigFile* _config;
     std::string _exchange_path;
 
     std::list<Command*> _commands_list;

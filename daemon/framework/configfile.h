@@ -74,7 +74,9 @@ public:
      *
      */
     ConfigFile( std::string name, std::string file_data );
+    ConfigFile( std::string filename );
     virtual ~ConfigFile();
+
 
     /** @brief get the configuration file as a string, so it can be saved to disk
      *
@@ -86,6 +88,10 @@ public:
      */
     std::string toStr() const;
 
+    bool saveToFile();
+
+private:
+    void initialize(std::string file_data );
 };
 
 }

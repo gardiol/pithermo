@@ -5,7 +5,38 @@
 using namespace FrameworkLibrary;
 
 ConfigFile::ConfigFile(std::string name, std::string file_data):
-    ConfigData( name, NULL )
+    ConfigData( name, nullptr )
+{
+    initialize( file_data );
+}
+
+ConfigFile::ConfigFile(std::string filename):
+    ConfigData( filename, nullptr )
+{
+    std::string config_file_content = "";
+    FrameworkUtils::file_to_str( filename, config_file_content );
+    initialize( config_file_content );
+}
+
+ConfigFile::~ConfigFile()
+{
+}
+
+std::string ConfigFile::toStr() const
+{
+    std::string buffer = _writeValues();
+    buffer += "\n";
+    buffer += _writeSubSections();
+    return buffer;
+}
+
+bool ConfigFile::saveToFile()
+{
+    std::string config_file = getName();
+    return FrameworkUtils::str_to_file( config_file, toStr() );
+}
+
+void ConfigFile::initialize(std::string file_data)
 {
     std::vector<std::string> comments;
     comments.reserve(10);
@@ -75,16 +106,5 @@ ConfigFile::ConfigFile(std::string name, std::string file_data):
         pos = file_data.find_first_of('\n');
     }
     resetModified();
-}
 
-ConfigFile::~ConfigFile()
-{
-}
-
-std::string ConfigFile::toStr() const
-{
-    std::string buffer = _writeValues();
-    buffer += "\n";
-    buffer += _writeSubSections();
-    return buffer;
 }

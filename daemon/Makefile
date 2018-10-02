@@ -4,13 +4,14 @@ CFLAGS=-fPIC -g -Wall -std=c++11
 else
 $(info Build per PC - DEMO specified)
 CFLAGS=-fPIC -g -Wall -std=c++11 -DDEMO
+DEMO_OBJ=obj/demowiringpi.o
 endif
 
 FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./framework/basethread.cpp ./framework/cmdlineparser.cpp ./framework/configdata.cpp ./framework/configfile.cpp ./framework/debugprint.cpp ./framework/udpsocket.cpp ./framework/frameworksighandler.cpp ./framework/frameworktimer.cpp ./framework/frameworkutils.cpp ./framework/genericcommdevice.cpp ./framework/memorychecker.cpp ./framework/profiler.cpp ./framework/profilerinternal.cpp ./framework/scheduledthread.cpp ./framework/socketcommdevice.cpp ./framework/tcpclient.cpp ./framework/tcpserver.cpp ./framework/transmissionstats.cpp
 FRAMEWORK_OBJS := $(foreach src,$(FRAMEWORK_SRCS),obj/$(basename $(notdir $(src))).o)
 $(foreach o,$(FRAMEWORK_OBJS),$(eval FRAMEWORK_MAPS_$(basename $(notdir $(o))) := framework/$(basename $(notdir $(o))).cpp))
 
-all: obj pithermo_daemon pithermo_ext
+all: obj pithermo_daemon
 
 obj:
 	mkdir obj
@@ -18,8 +19,8 @@ obj:
 $(FRAMEWORK_OBJS): ${FRAMEWORK_SRCS}
 	g++ $(CFLAGS) -o $@ -c $(FRAMEWORK_MAPS_$(basename $(notdir $@))) -Iframework
 
-obj/main.o: src/main.cpp src/runnerthread.h src/command.h src/logitem.h src/logger.h
-	g++ $(CFLAGS) -o $@ -c $< -Iframework -I/usr/local/include
+obj/main.o: src/main.cpp src/runnerthread.h src/command.h src/logitem.h src/logger.h src/demowiringpi.h
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -I/usr/local/include -Isrc
 
 obj/runnerthread.o: src/runnerthread.cpp src/command.h src/program.h src/runnerthread.h src/logitem.h src/tempsensor.h src/gpiodevice.h src/logger.h src/generator.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework 
@@ -45,24 +46,21 @@ obj/logitem.o: src/logitem.cpp src/logitem.h
 obj/generator.o: src/generator.cpp src/generator.h src/logger.h src/logitem.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework
 
-obj/gpiodevice.o: src/gpiodevice.cpp src/gpiodevice.h src/logger.h src/logitem.h
-	g++ $(CFLAGS) -o $@ -c $< -Iframework -I/usr/local/include
+obj/gpiodevice.o: src/gpiodevice.cpp src/gpiodevice.h src/logger.h src/logitem.h src/demowiringpi.h
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -I/usr/local/include -Isrc
 
-obj/tempsensor.o: src/tempsensor.cpp src/tempsensor.h src/gpiodevice.h src/logger.h src/logitem.h
-	g++ $(CFLAGS) -o $@ -c $< -Iframework
+obj/tempsensor.o: src/tempsensor.cpp src/tempsensor.h src/gpiodevice.h src/logger.h src/logitem.h src/demowiringpi.h
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 
-obj/ext_main.o: src/ext_main.cpp src/logitem.h src/logger.h
-	g++ $(CFLAGS) -o $@ -c $< -Iframework -I/usr/local/include
+obj/demowiringpi.o: src/demowiringpi.cpp src/demowiringpi.h
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 
-pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o
+pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o ${DEMO_OBJ}
 	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib -lwiringPi
 
-pithermo_ext: $(FRAMEWORK_OBJS) obj/gpiodevice.o obj/tempsensor.o obj/ext_main.o obj/logger.o obj/logitem.o
-	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib -lwiringPi
 
 .PHONY: clean
 
 clean:
 	rm -rf obj
 	rm -f pithermo_daemon
-	rm -rf pithermo_ext

@@ -20,7 +20,7 @@
 // 0 = gas
 // 2 = quarto relé libero
 // 7 = pellet feedback
-RunnerThread::RunnerThread(const std::string &cfg,
+RunnerThread::RunnerThread(ConfigFile *config,
                            const std::string &exchange_path,
                            const std::string &hst, Logger *l):
     ScheduledThread("Runner", 10 * 1000 ),
@@ -29,7 +29,7 @@ RunnerThread::RunnerThread(const std::string &cfg,
     _pellet(nullptr),
     _temp_sensor(nullptr),
     _history( hst, exchange_path ),
-    _config_file( cfg ),
+    _config( config ),
     _exchange_path( exchange_path ),
     _commands_mutex("CommandsMutex"),
     _manual_mode(true),
@@ -84,21 +84,19 @@ RunnerThread::RunnerThread(const std::string &cfg,
     uint32_t history_len = 1;
     std::string history_mode = "day";
     std::string content;
-    FrameworkUtils::file_to_str( _config_file, content );
-    ConfigFile config("config", content );
-    if ( !config.isEmpty() )
+    if ( !_config->isEmpty() )
     {
-        _logger->enableDebug( config.getValueBool("debug") );
-        _manual_mode = FrameworkUtils::string_tolower(config.getValue( "mode" )) == "manual";
-        _min_temp = static_cast<float>(FrameworkUtils::string_tof( config.getValue( "min_temp" ) ) );
-        _max_temp = static_cast<float>(FrameworkUtils::string_tof( config.getValue( "max_temp" ) ) );
-        _activated = config.getValueBool( "activated" );
-        if ( config.hasValue( "pellet_startup_delay" ) )
-            _pellet_startup_delay = static_cast<uint64_t>(FrameworkUtils::string_toi( config.getValue( "pellet_startup_delay" ) ) );
-        _temp_correction = static_cast<float>(FrameworkUtils::string_tof( config.getValue( "temp_correction" ) ) );
-        history_len = static_cast<uint32_t>(FrameworkUtils::string_toi( config.getValue("history_len") ) );
-        history_mode = FrameworkUtils::string_tolower( config.getValue( "history_mode" ) );
-        _program.loadConfig( config.getSection( "program" ) );
+        _logger->enableDebug( _config->getValueBool("debug") );
+        _manual_mode = FrameworkUtils::string_tolower(_config->getValue( "mode" )) == "manual";
+        _min_temp = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "min_temp" ) ) );
+        _max_temp = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "max_temp" ) ) );
+        _activated = _config->getValueBool( "activated" );
+        if ( _config->hasValue( "pellet_startup_delay" ) )
+            _pellet_startup_delay = static_cast<uint64_t>(FrameworkUtils::string_toi( _config->getValue( "pellet_startup_delay" ) ) );
+        _temp_correction = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "temp_correction" ) ) );
+        history_len = static_cast<uint32_t>(FrameworkUtils::string_toi( _config->getValue("history_len") ) );
+        history_mode = FrameworkUtils::string_tolower( _config->getValue( "history_mode" ) );
+        _program.loadConfig( _config->getSection( "program" ) );
     }
     else
         _saveConfig();
@@ -672,25 +670,21 @@ bool RunnerThread::_updateCurrentTime( uint64_t new_time )
 
 void RunnerThread::_saveConfig()
 {
-    std::string content;
-    FrameworkUtils::file_to_str( _config_file, content );
-    ConfigFile config("config", content );
-    config.setValueBool("activated", _activated );
-    config.setValue( "mode", _manual_mode ? "manual" : "auto" );
-    config.setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
-    config.setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
-    config.setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
-    config.setValue("history_mode", _history.getMode() );
-    config.setValue("history_len", FrameworkUtils::tostring( _history.getLen() ) );
-    config.setValueBool( "debug", _logger->getDebug() );
-    config.setValue( "pellet_startup_delay", FrameworkUtils::utostring(_pellet_startup_delay) );
+    _config->setValueBool("activated", _activated );
+    _config->setValue( "mode", _manual_mode ? "manual" : "auto" );
+    _config->setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
+    _config->setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
+    _config->setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
+    _config->setValue("history_mode", _history.getMode() );
+    _config->setValue("history_len", FrameworkUtils::tostring( _history.getLen() ) );
+    _config->setValueBool( "debug", _logger->getDebug() );
+    _config->setValue( "pellet_startup_delay", FrameworkUtils::utostring(_pellet_startup_delay) );
 
-    ConfigData* prog_section = config.getSection( "program" );
+    ConfigData* prog_section = _config->getSection( "program" );
     if ( prog_section == nullptr )
-        prog_section = config.newSection( "program" );
+        prog_section = _config->newSection( "program" );
     _program.saveConfig( prog_section );
-    if ( !FrameworkUtils::str_to_file( _config_file, config.toStr() ) )
-        debugPrintError() << "Unable to save file " << _config_file << "\n";
+    _config->saveToFile();
 }
 
 void RunnerThread::_updateStatus()
