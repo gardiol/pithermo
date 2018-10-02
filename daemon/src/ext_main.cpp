@@ -137,7 +137,7 @@ int main(int argc, char** argv)
             if (wiringPiSetup () != -1)
 #endif
             {
-                TempSensor temp_sensor( &logger, 1, 0 );
+                TempSensor temp_sensor( &logger, 1, -1 );
 
                 logger.logMessage("Started");
                 if ( cmd.hasParameter( "debug" ) )
