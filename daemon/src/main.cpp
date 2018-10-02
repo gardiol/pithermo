@@ -239,6 +239,7 @@ int main(int argc, char** argv)
                             memcpy( send_data, "ext-temp", 9 );
                             FrameworkTimer timer;
                             timer.setLoopTime( 30 * 1000 * 1000 );
+                            timer.waitLoop();
                             while ( sig_handler.keepRunning() )
                             {
                                 if ( temp_sensor->readSensor() )
@@ -251,8 +252,7 @@ int main(int argc, char** argv)
                                 }
                                 // Check for a sensor reading which is too old...
                                 uint64_t last_temp_read = temp_sensor->getTimestamp();
-                                if ( (last_temp_read > 0) &&
-                                     ((FrameworkTimer::getCurrentTime() - last_temp_read)/1000000LL > 300LL ) )
+                                if ( (FrameworkTimer::getTimeEpoc() - last_temp_read) > 60 )
                                 {
                                     // Let's reset the sensor:
                                     delete temp_sensor;
