@@ -22,6 +22,8 @@ public:
 
     float getHimidity() const;
 
+    uint64_t getTimestamp() const;
+
     void printStatus();
 
 private:

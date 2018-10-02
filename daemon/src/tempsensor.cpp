@@ -40,6 +40,11 @@ float TempSensor::getHimidity() const
     return _humidity;
 }
 
+uint64_t TempSensor::getTimestamp() const
+{
+    return _timestamp;
+}
+
 void TempSensor::printStatus()
 {
     _logger->logDebug("Sensor reads - t: " + FrameworkUtils::ftostring( _temp ) +
@@ -135,6 +140,6 @@ bool TempSensor::readSensor()
         _timer.reset();
     }
     else
-        ret = _at_lease_one_read_ok; // not yet a first read, just return valid
+        ret = _at_lease_one_read_ok; // not yet a first read
     return ret;
 }

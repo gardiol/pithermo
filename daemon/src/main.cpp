@@ -186,7 +186,7 @@ int main(int argc, char** argv)
                 if ( logger.isValid() )
                 {
                     logger.enableDebug( enable_debug );
-                    logger.logMessage("Started");
+                    logger.logMessage(operating_mode + " start");
                     logger.logEvent( LogItem::START );
 
                     if ( start_as_daemon )
@@ -229,34 +229,46 @@ int main(int argc, char** argv)
                     else if ( operating_mode == "ext" )
                     {
                         float temp_correction = static_cast<float>(FrameworkUtils::string_tof( config.getValue( "temp_correction" ) ) );
-                        TempSensor temp_sensor( &logger, 1, temp_correction );
 
                         UdpSocket remote_client("RemoteClient",remote_host, "",5555,0);
                         if ( remote_client.activateInterface() )
                         {
+                            TempSensor* temp_sensor = new TempSensor( &logger, 1, temp_correction );
+
                             char send_data[2048];
                             memcpy( send_data, "ext-temp", 9 );
                             FrameworkTimer timer;
                             timer.setLoopTime( 30 * 1000 * 1000 );
                             while ( sig_handler.keepRunning() )
                             {
-                                if ( temp_sensor.readSensor() )
+                                if ( temp_sensor->readSensor() )
                                 {
                                     sprintf( &send_data[8], "%f:%f",
-                                            temp_sensor.getTemp(),
-                                            temp_sensor.getHimidity() );
+                                            temp_sensor->getTemp(),
+                                            temp_sensor->getHimidity() );
                                     remote_client.writeData( send_data, static_cast<int>(strlen( send_data )) );
+                                    temp_sensor->printStatus();
                                 }
-                                temp_sensor.printStatus();
+                                // Check for a sensor reading which is too old...
+                                uint64_t last_temp_read = temp_sensor->getTimestamp();
+                                if ( (last_temp_read > 0) &&
+                                     ((FrameworkTimer::getCurrentTime() - last_temp_read)/1000000LL > 300LL ) )
+                                {
+                                    // Let's reset the sensor:
+                                    delete temp_sensor;
+                                    logger.logDebug("Resetting sensor...");
+                                    temp_sensor = new TempSensor( &logger, 1, temp_correction );
+                                }
                                 timer.waitLoop();
                             }
+                            delete temp_sensor;
                         }
                         else
                             logger.logMessage( "Unable to open socket!" );
                     }
 
                     logger.logEvent( LogItem::STOP );
-                    logger.logMessage("Stopped");
+                    logger.logMessage(operating_mode + " stop");
                 }
                 else
                     debugPrintError() << "Unable to open log file!\n";
