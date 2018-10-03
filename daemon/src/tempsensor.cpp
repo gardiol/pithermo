@@ -30,21 +30,6 @@ TempSensor::~TempSensor()
 {
 }
 
-float TempSensor::getTemp() const
-{
-    return _temp;
-}
-
-float TempSensor::getHimidity() const
-{
-    return _humidity;
-}
-
-uint64_t TempSensor::getTimestamp() const
-{
-    return _timestamp;
-}
-
 void TempSensor::printStatus()
 {
     _logger->logDebug("Sensor reads - t: " + FrameworkUtils::ftostring( _temp ) +

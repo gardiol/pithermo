@@ -58,6 +58,7 @@ private:
     // Special conditions:
     bool _anti_ice_active;
     bool _over_temp;
+    uint64_t _over_temp_start_time;
     bool _under_temp;
     bool _pellet_flameout;
     bool _resume_gas_on;
@@ -77,6 +78,14 @@ private:
 
     float _current_ext_temp;
     float _current_ext_humidity;
+
+    uint64_t _temp_trend_last_valid;
+    // Previous temperature
+    float _temp_trend_prev;
+    // Speed change of temperature (D')
+    float _temp_trend_D1prev;
+    // Mean acceleration change of temperature (D'', mean)
+    float _temp_trend_D2mean;
 
     uint64_t _pellet_startup_delay;
 };

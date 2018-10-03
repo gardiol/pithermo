@@ -18,11 +18,20 @@ public:
 
     bool readSensor();
 
-    float getTemp() const;
+    float getTemp() const
+    {
+        return _temp;
+    }
 
-    float getHimidity() const;
+    float getHimidity() const
+    {
+        return _humidity;
+    }
 
-    uint64_t getTimestamp() const;
+    inline uint64_t getTimestamp() const
+    {
+        return _timestamp;
+    }
 
     void printStatus();
 

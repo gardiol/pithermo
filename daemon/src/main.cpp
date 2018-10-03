@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <sys/stat.h>
 #include <stdio.h>
+#include <sstream>
 
 #include "frameworkutils.h"
 #include "cmdlineparser.h"
@@ -135,6 +136,8 @@ int main(int argc, char** argv)
     // "ext" mode options:
     cmd.defineParameter( CmdLineParameter("remote", "Send data to this remote IP", CmdLineParameter::single, false )
                          .setOptions(1));
+    cmd.defineParameter( CmdLineParameter("ext-id", "External sensor ID", CmdLineParameter::single, false )
+                         .setOptions(1));
 
     cmd.setCommandLine( static_cast<uint32_t>(argc), argv );
 
@@ -149,6 +152,7 @@ int main(int argc, char** argv)
 
         std::string exchange_path = "";
         std::string remote_host = "";
+        std::string ext_id = "";
 
         if ( FrameworkUtils::fileExist( log_path, true ) )
         {
@@ -162,11 +166,17 @@ int main(int argc, char** argv)
             }
             else if ( operating_mode == "ext" )
             {
-                remote_host = cmd.consumeParameter( "remote" ).getOption();
-                if ( remote_host != "" )
-                    allowed_to_start = true;
+                ext_id = cmd.consumeParameter( "ext-id" ).getOption();
+                if ( ext_id != "" )
+                {
+                    remote_host = cmd.consumeParameter( "remote" ).getOption();
+                    if ( remote_host != "" )
+                        allowed_to_start = true;
+                    else
+                        debugPrintError() << "ERROR: remote IP not specified\n";
+                }
                 else
-                    debugPrintError() << "ERROR: remote IP not specified\n";
+                    debugPrintError() << "ERROR: missing ext-id tag!\n";
             }
             else
                 debugPrintError() << "ERROR: invalid operating mode (valid are: main/ext)\n";
@@ -235,8 +245,6 @@ int main(int argc, char** argv)
                         {
                             TempSensor* temp_sensor = new TempSensor( &logger, 1, temp_correction );
 
-                            char send_data[2048];
-                            memcpy( send_data, "ext-temp", 9 );
                             FrameworkTimer timer;
                             timer.setLoopTime( 30 * 1000 * 1000 );
                             timer.waitLoop();
@@ -244,10 +252,13 @@ int main(int argc, char** argv)
                             {
                                 if ( temp_sensor->readSensor() )
                                 {
-                                    sprintf( &send_data[8], "%f:%f",
-                                            temp_sensor->getTemp(),
-                                            temp_sensor->getHimidity() );
-                                    remote_client.writeData( send_data, static_cast<int>(strlen( send_data )) );
+                                    std::stringstream ss;
+                                    ss << "ext-temp"
+                                       << ext_id << ":"
+                                       << temp_sensor->getTemp() << ":"
+                                       << temp_sensor->getHimidity();
+                                    std::string send_data = ss.str();
+                                    remote_client.writeData( send_data.c_str(), static_cast<int>( send_data.length() ) );
                                     temp_sensor->printStatus();
                                 }
                                 // Check for a sensor reading which is too old...

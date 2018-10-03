@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <sstream>
 
 #include "configfile.h"
 #include "debugprint.h"
@@ -37,6 +38,7 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _manual_gas_on(false),
     _anti_ice_active(false),
     _over_temp(false),
+    _over_temp_start_time(0),
     _under_temp(false),
     _pellet_flameout(false),
     _resume_gas_on(false),
@@ -52,6 +54,10 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _half_hour(0),
     _current_ext_temp(0.0),
     _current_ext_humidity(0.0),
+    _temp_trend_last_valid(0),
+    _temp_trend_prev(0.0),
+    _temp_trend_D1prev(0.0),
+    _temp_trend_D2mean(0.0),
     _pellet_startup_delay(60*45)
 {
     _status_json_template.push_back("{\"mode\":\"");
@@ -218,10 +224,14 @@ bool RunnerThread::_checkCommands()
             _logger->logDebug("New EXT TEMP received: " + cmd->getParam());
         {
             std::vector<std::string> tokens = FrameworkUtils::string_split( cmd->getParam(), ":" );
-            if ( tokens.size() >= 1 )
-                _current_ext_temp = FrameworkUtils::string_tof( tokens[0] );
-            if ( tokens.size() >= 2 )
-                _current_ext_humidity = FrameworkUtils::string_tof( tokens[1] );
+            if ( tokens.size() == 3 )
+            {
+//                std::string sensor_id = tokens[0];
+                _current_ext_temp = FrameworkUtils::string_tof( tokens[1] );
+                _current_ext_humidity = FrameworkUtils::string_tof( tokens[2] );
+            }
+            else
+                _logger->logDebug( "Error: invalid ext-temp (" + cmd->getParam() + ")");
         }
             break;
 
@@ -447,6 +457,7 @@ bool RunnerThread::_checkSpecialConditions()
             if ( _gas->isOn() || (_pellet->isOn() && !_pellet->isLow()) )
             {   // Over max, and we have something to turn off:
                 _over_temp = true;
+                _over_temp_start_time = FrameworkTimer::getTimeEpoc();
                 // In manual model, we must instruct to resume the proper heating after we
                 // detect the end of the over temp condition:
                 if ( _manual_mode )
@@ -462,6 +473,7 @@ bool RunnerThread::_checkSpecialConditions()
         else if ( _over_temp && (_temp_sensor->getTemp() < _max_temp) )
         {   // Rientrati dall'over-temperatura:
             _over_temp = false;
+            _over_temp_start_time = 0;
             _logger->logDebug("over temp end");
             _logger->logEvent( LogItem::OVER_TEMP_OFF );
             update_status = true;
@@ -496,7 +508,34 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
 
     // Read internal temperature sensor:
     if ( _temp_sensor->readSensor() )
+    {
         _sensor_success_reads++;
+        float delta_time = _temp_sensor->getTimestamp() - _temp_trend_last_valid;
+        if ( delta_time > 0.0f )
+        {
+            float d1_cur = (_temp_sensor->getTemp() - _temp_trend_prev) / delta_time;
+            // T'' requires at least three valid temperatures
+            if ( _sensor_success_reads >= 3 )
+            {
+                float d2_cur = (d1_cur - _temp_trend_D1prev) / _temp_trend_last_valid;
+                _temp_trend_D2mean = (_temp_trend_D2mean + d2_cur) / 2.0f;
+                std::stringstream ss;
+                ss << "T'' Mean: " << _temp_trend_D2mean
+                   << " - T': " << d1_cur
+                   << " - T: " << _temp_sensor->getTemp()
+                   << " - Delta time: " << delta_time;
+                _logger->logDebug( "Trend: " + ss.str() );
+            }
+            // This get calculated each time:
+            _temp_trend_prev = _temp_sensor->getTemp();
+            _temp_trend_last_valid = _temp_sensor->getTimestamp();
+            // T' requires at least two valid temperatures to be meaningfull:
+            if ( _sensor_success_reads >= 2 )
+            {
+                _temp_trend_D1prev =  d1_cur;
+            }
+        }
+    }
 
     if ( _activated )
     {
@@ -556,8 +595,19 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
             if ( _over_temp )
             {   // Turn off gas and set pellet to minimum
                 gas_on = false;
-                if ( pellet_on && !pellet_minimum )
-                    pellet_minimum = true;
+                if ( pellet_on )
+                {
+                    if ( !pellet_minimum )
+                        pellet_minimum = true;
+                    else
+                    {
+                        // If we are in overtemp since too much and temperature is rising,
+                        // just shutoff completely pellet...
+                        if ( ((FrameworkTimer::getTimeEpoc() - _over_temp_start_time) > 3600) &&
+                             (_temp_trend_D2mean > 0.0f) )
+                            pellet_on = false;
+                    }
+                }
             }
             else
             {   // Resume gas or pellet modulation.

@@ -44,7 +44,7 @@ ScheduledThread::~ScheduledThread()
     requestTerminate();
     waitForEnd();
     delete _private;
-    _private = NULL;
+    _private = nullptr;
 }
 
 void ScheduledThread::setFrequency(uint64_t freq_us)
