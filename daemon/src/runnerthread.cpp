@@ -506,33 +506,38 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
 {
     bool update_status = _checkCommands();
 
-    // Read internal temperature sensor:
+    // Read internal temperature sensor and calculate temp trend
     if ( _temp_sensor->readSensor() )
     {
         _sensor_success_reads++;
-        float delta_time = _temp_sensor->getTimestamp() - _temp_trend_last_valid;
-        if ( delta_time > 0.0f )
+        // Trend calculation make sense only when temperature actually differs
+        if ( (_sensor_success_reads == 1) || // ensure the first read is always processed
+                ( fabs(_temp_sensor->getTemp() - _temp_trend_prev) > 0.05f) )
         {
-            float d1_cur = (_temp_sensor->getTemp() - _temp_trend_prev) / delta_time;
-            // T'' requires at least three valid temperatures
-            if ( _sensor_success_reads >= 3 )
+            float delta_time = _temp_sensor->getTimestamp() - _temp_trend_last_valid;
+            if ( delta_time > 0.0f )
             {
-                float d2_cur = (d1_cur - _temp_trend_D1prev) / _temp_trend_last_valid;
-                _temp_trend_D2mean = (_temp_trend_D2mean + d2_cur) / 2.0f;
-                std::stringstream ss;
-                ss << "T'' Mean: " << _temp_trend_D2mean
-                   << " - T': " << d1_cur
-                   << " - T: " << _temp_sensor->getTemp()
-                   << " - Delta time: " << delta_time;
-                _logger->logDebug( "Trend: " + ss.str() );
-            }
-            // This get calculated each time:
-            _temp_trend_prev = _temp_sensor->getTemp();
-            _temp_trend_last_valid = _temp_sensor->getTimestamp();
-            // T' requires at least two valid temperatures to be meaningfull:
-            if ( _sensor_success_reads >= 2 )
-            {
-                _temp_trend_D1prev =  d1_cur;
+                float d1_cur = (_temp_sensor->getTemp() - _temp_trend_prev) / delta_time;
+                // T'' requires at least three valid temperatures
+                if ( _sensor_success_reads >= 3 )
+                {
+                    float d2_cur = (d1_cur - _temp_trend_D1prev) / _temp_trend_last_valid;
+                    _temp_trend_D2mean = (_temp_trend_D2mean + d2_cur) / 2.0f;
+                    std::stringstream ss;
+                    ss << "T'' Mean: " << _temp_trend_D2mean
+                       << " - T': " << d1_cur
+                       << " - T: " << _temp_sensor->getTemp()
+                       << " - Delta time: " << delta_time;
+                    _logger->logDebug( "Trend: " + ss.str() );
+                }
+                // This get calculated each time:
+                _temp_trend_prev = _temp_sensor->getTemp();
+                _temp_trend_last_valid = _temp_sensor->getTimestamp();
+                // T' requires at least two valid temperatures to be meaningfull:
+                if ( _sensor_success_reads >= 2 )
+                {
+                    _temp_trend_D1prev =  d1_cur;
+                }
             }
         }
     }
