@@ -24,7 +24,7 @@
 RunnerThread::RunnerThread(ConfigFile *config,
                            const std::string &exchange_path,
                            const std::string &hst, Logger *l):
-    ScheduledThread("Runner", 10 * 1000 ),
+    ScheduledThread("Runner", 1000 * 1000 ),
     _logger(l),
     _gas(nullptr),
     _pellet(nullptr),
@@ -609,7 +609,7 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                         // If we are in overtemp since too much and temperature is rising,
                         // just shutoff completely pellet...
                         if ( ((FrameworkTimer::getTimeEpoc() - _over_temp_start_time) > 3600) &&
-                             (_temp_trend_D2mean > 0.0f) )
+                             (_temp_trend_D2mean > 0.0001f) )
                             pellet_on = false;
                     }
                 }
