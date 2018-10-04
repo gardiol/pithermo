@@ -59,6 +59,11 @@ public:
         return _humidity;
     }
 
+    float getExtHumidity() const
+    {
+        return _ext_humidity;
+    }
+
     std::string getTimeStr() const
     {
         return _time_str;
@@ -78,6 +83,11 @@ public:
     std::string getHumidityStr() const
     {
         return _humidity_str;
+    }
+
+    std::string getExtHumidityStr() const
+    {
+        return _ext_humidity_str;
     }
 
     void write( FILE* file );

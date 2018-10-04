@@ -20,7 +20,9 @@ History::History(const std::string &history_file, const std::string& exchange_pa
     _now_week(0),
     _history_filename( history_file ),
     _exchange_path( exchange_path ),
-    _mode( 'h' )
+    _mode( 'h' ),
+    _last_ext_temp(0.0f),
+    _last_ext_humidity(0.0f)
 {
 }
 
@@ -92,6 +94,11 @@ void History::initialize(const std::string &mode, uint32_t len)
     {
         fseek( read_file, 0, SEEK_END );
         long int flen = ftell(read_file);
+        // Read LAST ext data:
+        fseek( read_file, flen-HistoryItem::getSize(), SEEK_SET );
+        HistoryItem last_history(read_file);
+        _last_ext_temp = last_history.getExtTemp();
+        _last_ext_humidity = last_history.getExtHumidity();
         // The MAXIMUM number of points to read is:
         uint32_t max_points = num_weeks * num_days * num_hours * num_mins;
         // Oldest accepted time:
@@ -187,6 +194,16 @@ void History::setMode(const std::string &mode)
         _valid_ptr[l].resize( _points_per_line );
     }
     _writeJson();
+}
+
+float History::getLastExtTemp()
+{
+    return _last_ext_temp;
+}
+
+float History::getLastExtHumidity()
+{
+    return _last_ext_humidity;
 }
 
 void History::_writeJson()

@@ -174,6 +174,13 @@ function( dom, attr, dclass, style, html, on,// Dojo
 					html.set("humi-label", sts.status.temp.hum + "% (" + sts.status.temp.ext_hum + "%)" );
 					prg.update(sts.status.program);
 					evt.update();
+                    var d = new Date();
+                    var dd = d.getDate();
+                    var dm = d.getMonth()+1;
+                    var dh = d.getHours();
+                    var dM = d.getMinutes();
+                    var ds = d.getSeconds();
+                    html.set("update-time", (dd<10?"0"+dd:dd)+"/"+(dm<10?"0"+dm:dm)+"/"+d.getFullYear()+" - "+(dh<10?"0"+dh:dh)+":"+(dM<10?"0"+dM:dM) + "."+(ds<10?"0"+ds:ds)+"(ok)");
 					sts.timer = window.setTimeout( function(){ sts.update(); }, next_update );
 				} // result is valid
          }, 
@@ -187,7 +194,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 					if ( sts[p] && sts[p].set ) sts[p].set("disabled", true);
 				evt.disable();                
 				html.set("gas-time", "--");
-				html.set("pellet-time", "--");
 				html.set("pellet-mintime", "--");
 				html.set("pellet-modtime", "--");
 				attr.set("pellet-feedback-led", "src", "images/min-temp.png");
@@ -195,6 +201,13 @@ function( dom, attr, dclass, style, html, on,// Dojo
 				attr.set("pellet-status-led", "src", "images/pellet-off.png");
 				attr.set("gas-status-led", "src", "images/gas-off.png");
 				style.set(sts.flameout.domNode, 'display', 'none');		
+                var d = new Date();
+                var dd = d.getDate();
+                var dm = d.getMonth()+1;
+                var dh = d.getHours();
+                var dM = d.getMinutes();
+                var ds = d.getSeconds();
+                html.set("update-time", (dd<10?"0"+dd:dd)+"/"+(dm<10?"0"+dm:dm)+"/"+d.getFullYear()+" - "+(dh<10?"0"+dh:dh)+":"+(dM<10?"0"+dM:dM) + "."+(ds<10?"0"+ds:ds)+"(ok)");
 				sts.timer = window.setTimeout( function(){ sts.update(); }, 5000 );
 			});
 		},

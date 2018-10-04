@@ -27,6 +27,9 @@ public:
         return _num_lines;
     }
 
+    float getLastExtTemp();
+    float getLastExtHumidity();
+
 private:
     static const uint32_t num_weeks = 20;
     static const uint32_t num_days = 7;
@@ -59,6 +62,9 @@ private:
     std::vector<std::vector<bool> > _valid_ptr;
 
     char _mode;
+
+    float _last_ext_temp;
+    float _last_ext_humidity;
 
     std::vector<std::vector<std::vector<std::vector<HistoryItem> > > > _history_cache;
 };

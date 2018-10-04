@@ -109,6 +109,8 @@ RunnerThread::RunnerThread(ConfigFile *config,
 
     // Load history log:
     _history.initialize( history_mode, history_len );
+    _current_ext_temp = _history.getLastExtTemp();
+    _current_ext_humidity = _history.getLastExtHumidity();
 
     // Ensure on times will not be zeroized later
     _updateCurrentTime( FrameworkTimer::getTimeEpoc() );
@@ -604,14 +606,15 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                 {
                     if ( !pellet_minimum )
                         pellet_minimum = true;
-                    else
+/*                    else THIS IS COMMENTED OUT BECAUSE IT'S MORE COMPLEX THAN THIS
+ *                         AND IT IS REALLY SUCH A CORNER CASE THAT'S NOT WORTH IT
                     {
                         // If we are in overtemp since too much and temperature is rising,
                         // just shutoff completely pellet...
                         if ( ((FrameworkTimer::getTimeEpoc() - _over_temp_start_time) > 3600) &&
                              (_temp_trend_D2mean > 0.0001f) )
                             pellet_on = false;
-                    }
+                    }*/
                 }
             }
             else

@@ -188,6 +188,10 @@ img.today-table-img {
     margin-bottom: 0.5em;
 }
 
+#update-time {
+        font-size: 75%;
+}
+
 .temp-img {
    height: 2em;
    vertical-align: middle;
