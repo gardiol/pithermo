@@ -8,7 +8,11 @@ using namespace FrameworkLibrary;
 
 uint32_t HistoryItem::getSize()
 {
-    return sizeof(_time) + sizeof(_temp) + sizeof(_ext_temp) + sizeof(_humidity);
+    return sizeof(_time) +
+            sizeof(_temp) +
+            sizeof(_ext_temp) +
+            sizeof(_humidity) +
+            sizeof(_ext_humidity);
 }
 
 HistoryItem::HistoryItem():
