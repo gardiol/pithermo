@@ -52,10 +52,10 @@ HistoryItem::HistoryItem(FILE *file):
         if ( !feof( file )  )
             fread( &_ext_temp, sizeof(_ext_temp), 1, file );
         if ( !feof( file )  )
-            fread( &_humidity, sizeof(_humidity), 1, file );
+            fread( &_ext_humidity, sizeof(_ext_humidity), 1, file );
         if ( !feof( file )  )
         {
-            if ( fread( &_ext_humidity, sizeof(_ext_humidity), 1, file ) == 1 )
+            if ( fread( &_humidity, sizeof(_humidity), 1, file ) == 1 )
             {
                 _time = le64toh( _time );
                 uint32_t t32 = le32toh( static_cast<uint32_t*>(static_cast<void*>(&_temp))[0] );
