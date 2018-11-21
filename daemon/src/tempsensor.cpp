@@ -41,6 +41,12 @@ void TempSensor::printStatus()
 bool TempSensor::readSensor()
 {
     bool ret = false;
+#ifdef DEMO
+    _temp = 28.0;
+    _humidity = 50.0;
+    ret = _at_lease_one_read_ok = true;
+    _timestamp = FrameworkTimer::getTimeEpoc();
+#else
     if ( !_timer.isRunning() || _timer.elapsedLoop() )
     {
         int pin = _gpio;
@@ -126,5 +132,7 @@ bool TempSensor::readSensor()
     }
     else
         ret = _at_lease_one_read_ok; // not yet a first read
+
+#endif
     return ret;
 }

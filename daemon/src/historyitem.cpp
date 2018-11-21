@@ -21,12 +21,7 @@ HistoryItem::HistoryItem():
     _ext_temp(0.0),
     _ext_humidity(0.0),
     _humidity(0.0),
-    _valid(false),
-    _time_str("0"),
-    _temp_str("0"),
-    _ext_temp_str("0"),
-    _ext_humidity_str("0"),
-    _humidity_str("0")
+    _valid(false)
 {
 }
 
@@ -36,12 +31,7 @@ HistoryItem::HistoryItem(FILE *file):
     _ext_temp(0.0),
     _ext_humidity(0.0),
     _humidity(0.0),
-    _valid(false),
-    _time_str("0"),
-    _temp_str("0"),
-    _ext_temp_str("0"),
-    _ext_humidity_str("0"),
-    _humidity_str("0")
+    _valid(false)
 {
     if ( file != nullptr )
     {
@@ -66,11 +56,6 @@ HistoryItem::HistoryItem(FILE *file):
                 _ext_humidity = static_cast<float*>(static_cast<void*>(&t32))[0];
                 t32 = le32toh( static_cast<uint32_t*>(static_cast<void*>(&_humidity))[0] );
                 _humidity = static_cast<float*>(static_cast<void*>(&t32))[0];
-                _time_str = FrameworkUtils::utostring( _time );
-                _temp_str = FrameworkUtils::ftostring( _temp );
-                _ext_temp_str = FrameworkUtils::ftostring( _ext_temp );
-                _ext_humidity_str = FrameworkUtils::ftostring( _ext_humidity );
-                _humidity_str = FrameworkUtils::ftostring( _humidity );
                 _valid = true;
             }
         }
@@ -83,12 +68,7 @@ HistoryItem::HistoryItem(uint64_t last_time, float last_temp, float last_humidit
     _ext_temp(last_ext_temp),
     _ext_humidity(last_ext_humidity),
     _humidity(last_humidity),
-    _valid(true),
-    _time_str(FrameworkUtils::utostring( _time )),
-    _temp_str(FrameworkUtils::ftostring( _temp )),
-    _ext_temp_str(FrameworkUtils::ftostring( _ext_temp )),
-    _ext_humidity_str(FrameworkUtils::ftostring( _ext_humidity )),
-    _humidity_str(FrameworkUtils::ftostring( _humidity ))
+    _valid(true)
 {
 }
 
@@ -98,12 +78,7 @@ HistoryItem::HistoryItem(const HistoryItem &other):
     _ext_temp(other._ext_temp),
     _ext_humidity(other._ext_humidity),
     _humidity(other._humidity),
-    _valid(other._valid),
-    _time_str(other._time_str),
-    _temp_str(other._temp_str),
-    _ext_temp_str(other._ext_temp_str),
-    _ext_humidity_str(other._ext_humidity_str),
-    _humidity_str(other._humidity_str)
+    _valid(other._valid)
 {
 }
 
@@ -115,11 +90,6 @@ void HistoryItem::operator=(const HistoryItem &other)
     _ext_humidity = other._ext_humidity;
     _humidity = other._humidity;
     _valid = other._valid;
-    _time_str = other._time_str;
-    _temp_str = other._temp_str;
-    _ext_temp_str = other._ext_temp_str;
-    _ext_humidity_str = other._ext_humidity_str;
-    _humidity_str = other._humidity_str;
 }
 
 void HistoryItem::write(FILE *file)
@@ -137,4 +107,15 @@ void HistoryItem::write(FILE *file)
         t32 = htole32( static_cast<uint32_t*>(static_cast<void*>(&_humidity))[0] );
         fwrite( &t32, sizeof(t32), 1, file );
     }
+}
+
+void HistoryItem::writeNow(FILE *file)
+{
+    if ( file != nullptr )
+        fprintf(file, "%llu %f %f %f %f\n",
+                static_cast<unsigned long long int>(_time),
+                static_cast<double>(_temp),
+                static_cast<double>(_ext_temp),
+                static_cast<double>(_humidity),
+                static_cast<double>(_ext_humidity) );
 }

@@ -87,8 +87,6 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _status_json_template.push_back("},\"program\":");
 
     // Load config file
-    uint32_t history_len = 1;
-    std::string history_mode = "day";
     std::string content;
     if ( !_config->isEmpty() )
     {
@@ -100,17 +98,13 @@ RunnerThread::RunnerThread(ConfigFile *config,
         if ( _config->hasValue( "pellet_startup_delay" ) )
             _pellet_startup_delay = static_cast<uint64_t>(FrameworkUtils::string_toi( _config->getValue( "pellet_startup_delay" ) ) );
         _temp_correction = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "temp_correction" ) ) );
-        history_len = static_cast<uint32_t>(FrameworkUtils::string_toi( _config->getValue("history_len") ) );
-        history_mode = FrameworkUtils::string_tolower( _config->getValue( "history_mode" ) );
         _program.loadConfig( _config->getSection( "program" ) );
     }
     else
         _saveConfig();
 
     // Load history log:
-    _history.initialize( history_mode, history_len );
-    _current_ext_temp = _history.getLastExtTemp();
-    _current_ext_humidity = _history.getLastExtHumidity();
+    _history.initialize( _current_ext_temp, _current_ext_humidity );
 
     // Ensure on times will not be zeroized later
     _updateCurrentTime( FrameworkTimer::getTimeEpoc() );
@@ -245,12 +239,6 @@ bool RunnerThread::_checkCommands()
                 _logger->logEvent( LogItem::PELLET_FLAMEOUT_OFF );
                 update_status = true;
             }
-            break;
-
-        case Command::SET_HISTORY:
-            _logger->logDebug("Change history received");
-            _history.setMode( cmd->getParam() );
-            _logger->logDebug("Change history, mode: " + cmd->getParam());
             break;
 
         case Command::PELLET_MINIMUM_ON:
@@ -733,8 +721,6 @@ void RunnerThread::_saveConfig()
     _config->setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
     _config->setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
     _config->setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
-    _config->setValue("history_mode", _history.getMode() );
-    _config->setValue("history_len", FrameworkUtils::tostring( _history.getLen() ) );
     _config->setValueBool( "debug", _logger->getDebug() );
     _config->setValue( "pellet_startup_delay", FrameworkUtils::utostring(_pellet_startup_delay) );
 

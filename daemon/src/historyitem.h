@@ -19,19 +19,6 @@ public:
                  float last_ext_humidity );
     HistoryItem( const HistoryItem& other );
 
-    bool getStrings( std::string& ti,
-                     std::string& te, std::string&h,
-                     std::string& ext_te,
-                     std::string& ext_hu) const
-    {
-        ti = _time_str;
-        te = _temp_str;
-        h = _humidity_str;
-        ext_te = _ext_temp_str;
-        ext_hu = _ext_humidity_str;
-        return _valid;
-    }
-
     void operator=(const HistoryItem& other );
 
     bool isValid() const
@@ -64,33 +51,8 @@ public:
         return _ext_humidity;
     }
 
-    std::string getTimeStr() const
-    {
-        return _time_str;
-    }
-
-    std::string getTempStr() const
-    {
-        return _temp_str;
-    }
-
-
-    std::string getExtTempStr() const
-    {
-        return _ext_temp_str;
-    }
-
-    std::string getHumidityStr() const
-    {
-        return _humidity_str;
-    }
-
-    std::string getExtHumidityStr() const
-    {
-        return _ext_humidity_str;
-    }
-
     void write( FILE* file );
+    void writeNow( FILE* file );
 
 private:
     uint64_t _time;
@@ -99,13 +61,6 @@ private:
     float _ext_humidity;
     float _humidity;
     bool _valid;
-    std::string _time_str;
-    std::string _temp_str;
-    std::string _ext_temp_str;
-    std::string _ext_humidity_str;
-    std::string _humidity_str;
-
-    void updateStr();
 };
 
 #endif // HISTORYITEM_H

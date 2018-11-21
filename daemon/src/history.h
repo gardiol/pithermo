@@ -10,63 +10,33 @@
 class History
 {
 public:    
-    History(const std::string& history_file , const std::string &exchange_path);
+    History(const std::string& history_file,
+            const std::string &exchange_path);
     ~History();
 
-    void initialize( const std::string& mode, uint32_t len );
-    bool update( float last_temp, float last_humidity,
-                 float last_ext_temp, float last_ext_humidity );
-
-    void setMode(const std::string& mode);
-    std::string getMode() const
-    {
-        return std::string(&_mode, 1);
-    }
-    uint32_t getLen() const
-    {
-        return _num_lines;
-    }
-
-    float getLastExtTemp();
-    float getLastExtHumidity();
+    void initialize(float &ext_temp,
+                    float &ext_humidity);
+    bool update( float last_temp,
+                 float last_humidity,
+                 float last_ext_temp,
+                 float last_ext_humidity );
 
 private:
-    static const uint32_t num_weeks = 20;
-    static const uint32_t num_days = 7;
-    static const uint32_t num_hours = 24;
-    static const uint32_t num_mins = 60;
-
-    void _writeJson();
     void _splitTime( uint64_t t, uint32_t& w, uint32_t& d, uint32_t& h, uint32_t& m );
     void _readNow();
-
-    uint32_t _skip_minutes;
-    uint32_t _num_lines;
-    uint32_t _points_per_line;
 
     uint64_t _now;
     uint32_t _now_min;
     uint32_t _now_hour;
     uint32_t _now_day;
     uint32_t _now_week;
+    uint32_t _now_year;
 
     std::string _history_filename;
     std::string _exchange_path;
+    std::string _now_filename;
     FILE* _history_file;
 
-    std::vector<std::vector<std::string> > _time_strs;
-    std::vector<std::vector<std::string> > _temp_strs;
-    std::vector<std::vector<std::string> > _ext_temp_strs;
-    std::vector<std::vector<std::string> > _ext_humi_strs;
-    std::vector<std::vector<std::string> > _humi_strs;
-    std::vector<std::vector<bool> > _valid_ptr;
-
-    char _mode;
-
-    float _last_ext_temp;
-    float _last_ext_humidity;
-
-    std::vector<std::vector<std::vector<std::vector<HistoryItem> > > > _history_cache;
 };
 
 #endif // HISTORY_H
