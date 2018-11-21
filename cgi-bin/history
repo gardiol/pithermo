@@ -1,7 +1,24 @@
 #!/bin/bash
-if [ $(ps -Af | grep pithermo_daemon | wc -l) -ge 2 ]
+read WEEK
+read DAY
+FILES=
+if [ "$WEEK" != "" ]
 then
-	echo "Content-type: application/json"
-	echo ""
-	cat _history
+	if [ "$DAY" != "0" ]
+	then
+		FILES="_history/$WEEK/$DAY/history_data"
+	else
+		for i in _history/$WEEK/*
+		do
+			FILES="$FILES $i/history_data"
+		done
+	fi
 fi
+
+
+echo "Content-type: text/plain"
+echo ""
+for i in $FILES
+do
+	cat $i
+done

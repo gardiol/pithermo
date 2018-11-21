@@ -58,8 +58,6 @@ int check_epoc( const char* filename, uint64_t epoc )
         }
         fclose(file);
     }
-    else
-        ret = 0;
     return ret;
 }
 
@@ -119,7 +117,7 @@ int main(int argc, char** argv)
                             uint32_t week  = ((normalized_now / (60*60*24*7))); // weeks are not bounded..
                             char filename[1024];
                             strcpy( filename, argv[2] );
-                            create_path( argv[2], week, day );
+                            create_path( filename, week, day );
                             if ( check_epoc( filename, epoc ) )
                             {
                                 FILE* output_file = fopen( filename, "a" );
