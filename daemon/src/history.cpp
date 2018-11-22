@@ -63,7 +63,6 @@ bool History::update(float last_temp,
                      float last_ext_humidity)
 {
     bool ret = true;
-    _readNow();
     HistoryItem new_item( FrameworkTimer::getTimeEpoc(), last_temp, last_humidity, last_ext_temp, last_ext_humidity );
     FILE* history_file = fopen( _history_filename.c_str(), "ab" );
     if ( history_file != nullptr )
