@@ -170,16 +170,24 @@
 <div id="history-area">
   <div id="history-controls">
 	 <div>
-      <span>Mostra le ultime</span>
-		  <select id="history-sel">
-		  </select>
-		  <select id="history-unit">
-		    <option value="h" selected="selected">ore</option>
-		  	<option value="d">giornate</option>
-		  	<option value="w">settimane</option>
-		  </select>
-		  <input id="humi-check" /><label for="checkBox">Umidità</label>
-		  <img id="history-size" src="images/enlarge.png" class="temp-img" style="margin-left: 3em;"/>
+        <div>
+            <input data-dojo-id="historyUseRange" name="history-today" data-dojo-type="dijit/form/CheckBox" onChange="hst.toggleRange();"/>
+            <label for="history-today">Periodo manuale</label>
+            <span id="history-range" class="celated">
+                <label for="history-start">Dal:</label>
+                <input data-dojo-id="historyStart" name="history-start" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
+                <label for="history-end">al:</label>
+                <input data-dojo-id="historyEnd" name="history-end" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
+                <button data-dojo-id="historyRangeUpdate" data-dojo-type="dijit/form/Button" onClick="hst.update()" type="button">Update!</button>
+            </span>
+        </div>
+        <div>
+            <input id="show-temp" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="hst.drawGraph()"/><label for="show-temp">Temperatura</label>
+            <input id="show-humi" data-dojo-type="dijit/form/CheckBox" value="2" onChange="hst.drawGraph()"/><label for="show-humi">Umidità</label>
+            <input id="show-ext-temp" data-dojo-type="dijit/form/CheckBox" value="3" checked onChange="hst.drawGraph()"/><label for="show-ext-temp">Temperatura externa</label>
+            <input id="show-ext-humi" data-dojo-type="dijit/form/CheckBox" value="4" onChange="hst.drawGraph()"/><label for="show-ext-humi">Umidità esterna</label>
+            <img id="history-size" src="images/enlarge.png" class="temp-img" style="margin-left: 3em;"/>
+        </div>
     </div>
     <div>
 		<div id="history-stats">
@@ -206,12 +214,12 @@
 <script language="javascript">
 require([
     "dojo/ready",
-    "dojo/domReady!"], 
+    "dojo/parser"], 
 function(ready)
-{		 
+{
 	ready(function(){
-		sts.update();
-	   hst.update();
+        sts.update();
+        hst.update();
 	});
 });
 </script>

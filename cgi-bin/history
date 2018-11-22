@@ -1,24 +1,39 @@
 #!/bin/bash
-read WEEK
-read DAY
+read PARAM
+SWEEK=$(echo $PARAM | cut -d: -f1)
+SDAY=$(echo $PARAM | cut -d: -f2)
+EWEEK=$(echo $PARAM | cut -d: -f3)
+EDAY=$(echo $PARAM | cut -d: -f4)
 FILES=
-if [ "$WEEK" != "" ]
-then
-	if [ "$DAY" != "0" ]
+W=$SWEEK
+while [ $W -le $EWEEK ]
+do
+	if [ $W -eq $SWEEK ]
 	then
-		FILES="_history/$WEEK/$DAY/history_data"
+		D=$SDAY
 	else
-		for i in _history/$WEEK/*
-		do
-			FILES="$FILES $i/history_data"
-		done
+		D=0
 	fi
-fi
-
+	if [ $W -eq $EWEEK ]
+	then
+		X=$EDAY
+	else
+		X=6
+	fi
+	while [ $D -le $X ]
+	do
+		FILES="$FILES _history/$W/$D/history_data"
+		(( D = D + 1 ))
+	done
+	(( W = W + 1 ))
+done
 
 echo "Content-type: text/plain"
 echo ""
 for i in $FILES
 do
-	cat $i
+	if [ -e $i ]
+	then
+		cat $i
+	fi
 done

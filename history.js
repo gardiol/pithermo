@@ -2,12 +2,14 @@ var hst = null;
 
 require([
     "dojo/dom", 
+    "dojo/dom-attr",
     "dojo/dom-class",
     "dojo/dom-style",
     "dojo/html",
     "dojo/on",
     "dijit/form/CheckBox",
     "dijit/form/Select",
+    "dijit/form/DateTextBox",
     "dojox/charting/Chart",
     "dojox/charting/axis2d/Default", 
     "dojox/charting/plot2d/Lines",
@@ -16,29 +18,28 @@ require([
     "dojox/charting/plot2d/Markers",
     "dojox/charting/action2d/MouseIndicator",
     "dojo/domReady!"], 
-function( dom, dclass, style, html, on,// Dojo
-          CheckBox, Select, // Dijit
+function( dom, attr, dclass, style, html, on,// Dojo
+          CheckBox, Select, DateTextBox,// Dijit
           Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator )// Charing
 {
     hst = { 
 			timer: null,
-    		data:  null,
+    		data:  {},
+        
+            grp: new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25}),
+
      		xrefExtTData: {},
     		xrefExtHData: {},
-			unit: new Select({onChange: function(){
-					postRequest("cgi-bin/set_history",hst.unit.get("value"),
-            	function(result){
-            	    hst.update();
-            	},
-            	function(err){
-            	    alert("Command error: " + err );
-            	});
-				}},"history-unit"), 
-        	sel:  new Select({onChange: function(){hst.setData()}},"history-sel"),
-         hck:  new CheckBox({checked:false,onChange: function(){hst.setData()}}, "humi-check"),
-			grp:  new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25}),
-         exp:  dom.byId("history-size"),
-			setData: function(){
+                
+        
+        
+            toggleRange: function(){
+                dclass.toggle(dom.byId("history-range"), "celated");
+                hst.update();
+            },
+        
+        
+/*			setData: function(){
 				var mins = { t_i:200, t_e: 200, h_i: 200, h_e: 200 };
 				var maxs = { t_i:-200, t_e:-200, h_i:-200, h_e:-200 };
 				var avgs = { t_i:0, t_e: 0, h_i: 0, h_e: 0 };
@@ -46,7 +47,9 @@ function( dom, dclass, style, html, on,// Dojo
         		hst.xrefExtHData = {};
         		var t = [], h = [], x = [], y = [];
                 var t_m = [];
-        		var s = hst.sel.get("value");
+                
+        		var s = hst.sel.get("value"); ??
+                
         		var show_h = hst.hck.get("checked");
         		if ( hst.data ){
             	var te = [], ex = [], hu = [], ti = [], hx = [];
@@ -123,42 +126,99 @@ function( dom, dclass, style, html, on,// Dojo
             hst.grp.updateSeries("Umidita", [] );
             hst.grp.updateSeries("EsternaUmidita", []);
             hst.grp.render();
-			},
+			},*/
+        
+
+            drawGraph: function(){
+                var show_t = dom.byId("show-temp").checked;
+                var show_h = dom.byId("show-humi").checked;
+                var show_et = dom.byId("show-ext-temp").checked;
+                var show_eh = dom.byId("show-ext-humi").checked;
+                var serie_t = [];
+                var serie_h = [];
+                var serie_et = [];
+                var serie_eh = [];
+                for (var time in hst.data){
+                    if ( show_t )
+                        serie_t.push( {x:time, y: hst.data[time][0] } );
+                    if ( show_h )
+                        serie_h.push( {x:time, y: hst.data[time][1] } );
+                    if ( show_et )
+                        serie_et.push( {x:time, y: hst.data[time][2] } );
+                    if ( show_eh )
+                        serie_eh.push( {x:time, y: hst.data[time][3] } );
+                }
+                hst.grp.updateSeries("Temp", serie_t );                
+        		hst.grp.updateSeries("TempExt", serie_et );
+        		hst.grp.updateSeries("Humi", serie_h );
+        		hst.grp.updateSeries("HumiExt", serie_eh );
+        		hst.grp.render();        
+            },
+
+            clearData: function(){
+                hst.data = {};
+                hst.drawGraph();                                
+            },
+        
+            setData: function(new_rows){
+                var len = new_rows.length;
+                var pos = 0;
+                var rows = 0;
+                while ( pos != len ){
+                    var line_end = new_rows.indexOf( "\n", pos );
+                    pos = line_end+1;
+                    rows++;
+                }
+                var skip_rows = rows / 100;
+                pos = 0;
+                while ( pos != len ){
+                    var line_end = new_rows.indexOf( "\n", pos );
+                    var row = new_rows.substr( pos, line_end-pos+1 );
+                    var split_row = row.split(" ");
+                    if ( (pos % skip_rows) == 0)
+                        hst.data[ parseInt(split_row[0]) ] = { 0: parseFloat(split_row[1]), 1: parseFloat(split_row[2]), 
+                                                               2: parseFloat(split_row[3]), 3: parseFloat(split_row[3]) };
+                    pos = line_end+1;
+                }
+                hst.drawGraph();
+            },
+        
  			update: function(){
 				if ( hst.timer ){
-            	window.clearTimeout( hst.timer );
-               hst.timer = null;
+                    window.clearTimeout( hst.timer );
+                    hst.timer = null;
 				}
-				getRequest("cgi-bin/history",
-					function(result){
-						if ( result ) {
-							hst.data = result.data;
-                     hst.unit.set("value", result.mode);
-							var old_val = hst.sel.get("value");
-							hst.sel.removeOption( hst.sel.getOptions() );
-							for ( var v = 1; v < result.len; v++ )
-								hst.sel.addOption( { value:""+v, label:""+v, selected:false } );
-                    	if ( old_val > result.len )
-								old_val = result.len;
-               		hst.sel.set("value", old_val);     
-                    	hst.sel.set("maximum", result.len );
-                    	hst.sel.set("discreteValues", result.len );
-                    	hst.setData();
-						} else {
-							hst.disable();
-						}
-               	hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
-					},
-					function(err){
-						hst.disable();
-						hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
-					});
+
+                if ( !historyUseRange.checked ){
+                    historyEnd.set("value",new Date());
+                    historyStart.set("value", new Date());
+                }
+				var endDate = Math.floor( historyEnd.get("value") / 1000 );
+				var startDate = Math.floor( historyStart.get("value") / 1000 ); 
+                
+				var startWeek = Math.floor(((startDate+60*60*24*3) / (60*60*24*7)));
+				var startDay = Math.floor(((startDate+60*60*24*3) / (60*60*24)) % 7);
+                var endWeek = Math.floor(((endDate+60*60*24*3) / (60*60*24*7)));
+                var endDay = Math.floor(((endDate+60*60*24*3) / (60*60*24)) % 7);				
+                hst.clearData();
+                
+                postRequest("cgi-bin/history",""+startWeek+":"+startDay+":"+endWeek+":"+endDay,
+                    function(result){
+                        if ( result ){
+                            hst.setData(result);
+                        }
+//                                hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
+                            },
+                    function(err){
+                        hst.disable();
+//                                hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
+                });                    
 			}
     };
     
-	hst.unit.startup();
-	hst.sel.startup();
+    
 	hst.grp.setTheme(Chris);
+    
 	hst.grp.addPlot("tempPlot",{
                 type: Lines,lines: true, areas: false, markers: false,
                 tension: "X",
@@ -170,9 +230,6 @@ function( dom, dclass, style, html, on,// Dojo
                 minorTicks: false,minorLabels: false,
                 microTicks: false,
                 labelFunc:function(text,value,prec){
-                    if ( hst.unit.get("value") != "h" )
-                        return new Date(parseInt(value)*1000).toLocaleString();
-                    else
                         return new Date(parseInt(value)*1000).toLocaleTimeString();
                 }
             });
@@ -185,9 +242,9 @@ function( dom, dclass, style, html, on,// Dojo
                 microTickStep: 0.1, microTicks: false,
                 fixLower: "major",  fixUpper: "major"
             });
-	hst.grp.addSeries("Temperatura", [],{ plot: "tempPlot"});
-	hst.grp.addSeries("TemperaturaMed", [],{ plot: "tempPlot", stroke: {color:"purple"} });
-	hst.grp.addSeries("Esterna", [],{ plot: "tempPlot", stroke: {color:"blue"} });
+	hst.grp.addSeries("Temp", [],{ plot: "tempPlot"});
+	hst.grp.addSeries("TempExt", [],{ plot: "tempPlot", stroke: {color:"blue"} });
+    
 	hst.grp.addPlot("humiPlot",{
                 type: Lines,lines: true, areas: false, markers: false,
                 tension: "X",
@@ -201,9 +258,10 @@ function( dom, dclass, style, html, on,// Dojo
                 minorTickStep: 1,
                 fixLower: "major", fixUpper: "major"
             });
-	hst.grp.addSeries("Umidita",[],{plot: "humiPlot"});
-	hst.grp.addSeries("EsternaUmidita",[],{plot: "humiPlot", stroke: { color: "violet"} });
-	new MouseIndicator(hst.grp, "humiPlot",{ 
+	hst.grp.addSeries("Humi",[],{plot: "humiPlot"});
+	hst.grp.addSeries("HumiExt",[],{plot: "humiPlot", stroke: { color: "violet"} });
+
+/*    new MouseIndicator(hst.grp, "humiPlot",{ 
                 series: "Umidita", start: true, mouseOver: true,
                 labelFunc: function(v){
                     if ( v.y && v.x )
@@ -220,9 +278,9 @@ function( dom, dclass, style, html, on,// Dojo
                     else
                         return "";
                 }
-                });
+                });*/
 
-	on(hst.exp,"click", function(v) {
+	on(dom.byId("history-size"),"click", function(v) {
 		dclass.toggle(dom.byId("history-graph"), "history-big");
 		hst.grp.resize();
 	});
