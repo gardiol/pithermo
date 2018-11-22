@@ -28,111 +28,16 @@ function( dom, attr, dclass, style, html, on,// Dojo
         
             grp: new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25}),
 
-     		xrefExtTData: {},
-    		xrefExtHData: {},
-                
-        
-        
             toggleRange: function(){
                 dclass.toggle(dom.byId("history-range"), "celated");
                 hst.update();
             },
         
-        
-/*			setData: function(){
-				var mins = { t_i:200, t_e: 200, h_i: 200, h_e: 200 };
-				var maxs = { t_i:-200, t_e:-200, h_i:-200, h_e:-200 };
-				var avgs = { t_i:0, t_e: 0, h_i: 0, h_e: 0 };
-        		hst.xrefExtTData = {};
-        		hst.xrefExtHData = {};
-        		var t = [], h = [], x = [], y = [];
-                var t_m = [];
-                
-        		var s = hst.sel.get("value"); ??
-                
-        		var show_h = hst.hck.get("checked");
-        		if ( hst.data ){
-            	var te = [], ex = [], hu = [], ti = [], hx = [];
-            	for ( var v = 0; (v < s) || (ti.length < 15); v++ ){
-               	if ( hst.data[v] ){
-                  	te = hst.data[v].te.concat(te);
-                  	ex = hst.data[v].e_te.concat(ex);
-                  	hu = hst.data[v].hu.concat(hu);
-                  	hx = hst.data[v].e_hu.concat(hx);
-                  	ti = hst.data[v].ti.concat(ti);
-                	} else {
-                  	break;
-               	}
-            	}
-            	var n_pts = ti.length;
-                var avg_t = null;
-            	for ( p = 0; p < n_pts; p++ ){
-                    if ( !avg_t )
-                        avg_t = (avg_t + te[p]) / 2;
-                    else
-                        avg_t = te[p];
-						if ( mins.t_i > te[p] ) mins.t_i = te[p];
-						if ( mins.t_e > ex[p] ) mins.t_e = ex[p];
-						if ( maxs.t_i < te[p] ) maxs.t_i = te[p];
-						if ( maxs.t_e < ex[p] ) maxs.t_e = ex[p];
-						avgs.t_i = ((avgs.t_i+te[p])/2);
-						avgs.t_e = ((avgs.t_e+ex[p])/2);
-                	t.push( {x:ti[p], y:te[p] } );
-                    t_m.push( {x:ti[p], y: avg_t } );
-                	if ( show_h ){
-							if ( mins.h_i > hu[p] ) mins.h_i = hu[p];
-							if ( mins.h_e > hx[p] ) mins.h_e = hx[p];
-							if ( maxs.h_i < hu[p] ) maxs.h_i = hu[p];
-							if ( maxs.h_e < hx[p] ) maxs.h_e = hx[p];
-							avgs.h_i = ((avgs.h_i+hu[p])/2);
-							avgs.h_e = ((avgs.h_e+hx[p])/2);
-               	   h.push( {x:ti[p], y:hu[p] } );
-                    	y.push( {x:ti[p], y:hx[p] } );
-               	}
-                	x.push( {x:ti[p], y:ex[p] } );
-                	hst.xrefExtTData[ti[p]] = ex[p];
-                	hst.xrefExtHData[ti[p]] = hx[p];
-            	}
-        		}
-        		hst.grp.updateSeries("Temperatura", t );
-        		hst.grp.updateSeries("TemperaturaMed", t_m );
-        		hst.grp.updateSeries("Esterna", x );
-        		hst.grp.updateSeries("Umidita", h );
-        		hst.grp.updateSeries("EsternaUmidita", y );
-        		var ts = 60; // 1 min
-        		if ( t.length > 0 ){
-         	   var d = t[ t.length-1 ].x - t[0].x;
-            	ts = Math.floor( ( d / Math.min(10, t.length) ) / (15*60) +1 ) * 15*60;
-        		}
-        		hst.grp.getAxis("x").opt.majorTickStep = ts;
-        		hst.grp.render();        
-				html.set(dom.byId("history-stats-te"), "T(int): " + mins.t_i + " ...(" + avgs.t_i.toFixed(1) + ")... " + maxs.t_i + "" );
-				html.set(dom.byId("history-stats-ex"), "T(est): " + mins.t_e + " ...(" + avgs.t_e.toFixed(1) + ")... " + maxs.t_e + "" );
-				if ( show_h ){
-					html.set(dom.byId("history-stats-hu"), "H(int): " + mins.h_i + " ...(" + avgs.h_i.toFixed(1) + ")... " + maxs.h_i + "" );
-					html.set(dom.byId("history-stats-hx"), "H(est): " + mins.h_e + " ...(" + avgs.h_e.toFixed(1) + ")... " + maxs.h_e + "" );
-					dclass.remove( dom.byId("history-stats-h"), "hidden" );
-				} else {
-					html.set(dom.byId("history-stats-hu"), "");
-					html.set(dom.byId("history-stats-hx"), "");
-					dclass.add( dom.byId("history-stats-h"), "hidden" );
-				}
-    		},
-			disable: function(){
-				hst.data = null;
-            hst.grp.updateSeries("Temperatura", [] );
-            hst.grp.updateSeries("TemperaturaMed", [] );
-            hst.grp.updateSeries("Esterna", [] );
-            hst.grp.updateSeries("Umidita", [] );
-            hst.grp.updateSeries("EsternaUmidita", []);
-            hst.grp.render();
-			},*/
-        
-
             drawGraph: function(){
 				var mins = { 0:NaN,1:NaN,2:NaN,3:NaN };
 				var maxs = { 0:NaN,1:NaN,2:NaN,3:NaN };
 				var meds = { 0:NaN,1:NaN,2:NaN,3:NaN };
+				var axna = { 0:"Temp", 1:"Humi", 2:"TempExt", 3:"HumiExt" };
 				var show = { 0:dom.byId("show-temp").checked,
 							 1:dom.byId("show-humi").checked,
 							 2:dom.byId("show-ext-temp").checked,
@@ -142,25 +47,27 @@ function( dom, attr, dclass, style, html, on,// Dojo
 					for ( var n in show ){
 						var val = hst.data[time][n];
 						if ( show[n] )
-							list[n].push( {x:time, y:val ); 
-						if ( (mins[n] == NaN) || (mins[n] > val) )
+							list[n].push( {x:time, y:val } ); 
+						if ( isNaN(mins[n]) || (mins[n] > val) )
 							mins[n] = val;
-						if ( (maxs[n] == NaN) || (maxs[n] < val) )
+						if ( isNaN(maxs[n]) || (maxs[n] < val) )
 							maxs[n] = val;
-						if ( (meds[n] == NaN) ){
+						if ( isNaN(meds[n]) ){
 							meds[n] = val;
 						} else {
 							meds[n] = (meds[n]+val)/2;
 						}
 					}
                 }
-                hst.grp.updateSeries("Temp", list[0] );                
-        		hst.grp.updateSeries("TempExt", list[2] );
-        		hst.grp.updateSeries("Humi", list[1] );
-        		hst.grp.updateSeries("HumiExt", list[3] );
+				html.set(dom.byId("history-stats-te"), "T(int): " + mins[0] + " ...(" + meds[0].toFixed(1) + ")... " + maxs[0] + "" );
+				html.set(dom.byId("history-stats-ex"), "T(est): " + mins[2] + " ...(" + meds[2].toFixed(1) + ")... " + maxs[2] + "" );
+				html.set(dom.byId("history-stats-hu"), "H(int): " + mins[1] + " ...(" + meds[1].toFixed(1) + ")... " + maxs[1] + "" );
+				html.set(dom.byId("history-stats-hx"), "H(est): " + mins[3] + " ...(" + meds[3].toFixed(1) + ")... " + maxs[3] + "" );
+				for ( var n in list )
+					hst.grp.updateSeries( axna[n], list[n] );                
         		hst.grp.render();        
-            },
-
+			},
+			
             clearData: function(){
                 hst.data = {};
                 hst.drawGraph();                                
@@ -260,25 +167,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
             });
 	hst.grp.addSeries("Humi",[],{plot: "humiPlot"});
 	hst.grp.addSeries("HumiExt",[],{plot: "humiPlot", stroke: { color: "violet"} });
-
-/*    new MouseIndicator(hst.grp, "humiPlot",{ 
-                series: "Umidita", start: true, mouseOver: true,
-                labelFunc: function(v){
-                    if ( v.y && v.x )
-                        return "H: "+v.y.toFixed(1)+"/"+ ((hst.xrefExtHData[v.x] != null) ? hst.xrefExtHData[v.x].toFixed(1) : "-");
-                    else
-                        return "";
-                }
-                });
-	new MouseIndicator(hst.grp, "tempPlot",{ 
-                series: "Temperatura",mouseOver: true,
-                labelFunc: function(v){
-                    if ( v.y && v.x )
-                        return "T: "+v.y.toFixed(1)+"/" + ((hst.xrefExtTData[v.x] != null) ? hst.xrefExtTData[v.x].toFixed(1) : "-") +" (" + (new Date(v.x*1000).toLocaleString())+")";
-                    else
-                        return "";
-                }
-                });*/
 
 	on(dom.byId("history-size"),"click", function(v) {
 		dclass.toggle(dom.byId("history-graph"), "history-big");

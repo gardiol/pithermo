@@ -24,6 +24,7 @@
 
 using namespace FrameworkLibrary;
 
+#if defined(FRAMEWORK_PLATFORM_LINUX)
 static void daemonize()
 {
     pid_t pid = 0;
@@ -80,7 +81,7 @@ static void daemonize()
     stdout = fopen("/dev/null", "w+");
     stderr = fopen("/dev/null", "w+");
 }
-
+#endif
 
 
 
@@ -199,9 +200,11 @@ int main(int argc, char** argv)
                     logger.logMessage(operating_mode + " start");
                     logger.logEvent( LogItem::START );
 
+#if defined(FRAMEWORK_PLATFORM_LINUX)
                     if ( start_as_daemon )
                         daemonize();
                     else if ( DEMO_MODE )
+#endif
                         debugPrintNotice("") << "DemoMode\n";
 
                     SigHandler sig_handler;

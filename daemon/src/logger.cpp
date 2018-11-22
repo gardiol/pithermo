@@ -49,7 +49,7 @@ Logger::Logger(const std::string &log_path, const std::string& exchange_path):
                 if ( in_season || is_today )
                 {
                     if ( is_today )
-                        _today_logs.push_front( evt );
+                        _today_logs.push_back( evt );
                     switch ( evt.getEvent() )
                     {
                     case  LogItem::GAS_ON:

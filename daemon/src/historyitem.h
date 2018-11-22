@@ -51,6 +51,7 @@ public:
         return _ext_humidity;
     }
 
+    void read( FILE* file );
     void write( FILE* file );
     void writeText( FILE* file );
 

@@ -382,8 +382,8 @@ public:
      * This is here because some compilers (Visual Studio, i am looking at you!) does not implement the C++11 rint()
      * @param a the number to be rounded
      * @return the nearest integer
-     */
-    static double rint( double a );
+
+    static double rint( double a );*/
 
     /** @brief Load an entire text file into a string
      * @param name name of file

@@ -44,11 +44,15 @@
         <div class="status-title">Temperature</div>
         <div>
           <img alt="minTemp" class="temp-img" src="images/min-temp.png"/>
+		  <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.status.temp.min-0.1);}">-</button>		  
 		  <button id="min-temp"></button>
+		  <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.status.temp.min+0.1);}">+</button>		  
         </div>
         <div>
           <img alt="maxTemp" class="temp-img" src="images/max-temp.png"/>
+		  <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.status.temp.max-0.1);}">-</button>		  
 		  <button id="max-temp"></button>
+		  <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.status.temp.max+0.1);}">+</button>		  
         </div>
         <div id="temp-buttons">
           <img id="temp-reset" src="images/restore.png" class="button-img celated" style="margin-right: 1em;" />
@@ -195,7 +199,7 @@
 				<div id="history-stats-te"></div>
 				<div id="history-stats-ex"></div>
 			</div>
-			<div id="history-stats-h" class="hidden">
+			<div id="history-stats-h">
 				<div id="history-stats-hu"></div>
 				<div id="history-stats-hx"></div>
 			</div>
@@ -206,7 +210,7 @@
     </div>
 </div><!-- history area-->
 
-<script src="demo.js"></script>
+<script src="production.js"></script>
 <script src="status.js?2"></script>
 <script src="events.js"></script>
 <script src="program.js?1"></script>

@@ -825,7 +825,7 @@ bool FrameworkUtils::isBlank(char c)
     return ( c == ' ' ) || ( c == '\t' );
 }
 
-double FrameworkUtils::rint(double a)
+/*double FrameworkUtils::rint(double a)
 {
 #if defined(FRAMEWORK_PLATFORM_LINUX)
     return ::rint(a);
@@ -843,7 +843,7 @@ double FrameworkUtils::rint(double a)
     }
     return r;
 #endif
-}
+}*/
 
 void FrameworkUtils::print_errno_string(const std::string &msg , const std::string &extra)
 {
