@@ -130,28 +130,34 @@ function( dom, attr, dclass, style, html, on,// Dojo
         
 
             drawGraph: function(){
-                var show_t = dom.byId("show-temp").checked;
-                var show_h = dom.byId("show-humi").checked;
-                var show_et = dom.byId("show-ext-temp").checked;
-                var show_eh = dom.byId("show-ext-humi").checked;
-                var serie_t = [];
-                var serie_h = [];
-                var serie_et = [];
-                var serie_eh = [];
+				var mins = { 0:NaN,1:NaN,2:NaN,3:NaN };
+				var maxs = { 0:NaN,1:NaN,2:NaN,3:NaN };
+				var meds = { 0:NaN,1:NaN,2:NaN,3:NaN };
+				var show = { 0:dom.byId("show-temp").checked,
+							 1:dom.byId("show-humi").checked,
+							 2:dom.byId("show-ext-temp").checked,
+							 3:dom.byId("show-ext-humi").checked };
+				var list = { 0:[], 1:[], 2:[], 3:[] };
                 for (var time in hst.data){
-                    if ( show_t )
-                        serie_t.push( {x:time, y: hst.data[time][0] } );
-                    if ( show_h )
-                        serie_h.push( {x:time, y: hst.data[time][1] } );
-                    if ( show_et )
-                        serie_et.push( {x:time, y: hst.data[time][2] } );
-                    if ( show_eh )
-                        serie_eh.push( {x:time, y: hst.data[time][3] } );
+					for ( var n in show ){
+						var val = hst.data[time][n];
+						if ( show[n] )
+							list[n].push( {x:time, y:val ); 
+						if ( (mins[n] == NaN) || (mins[n] > val) )
+							mins[n] = val;
+						if ( (maxs[n] == NaN) || (maxs[n] < val) )
+							maxs[n] = val;
+						if ( (meds[n] == NaN) ){
+							meds[n] = val;
+						} else {
+							meds[n] = (meds[n]+val)/2;
+						}
+					}
                 }
-                hst.grp.updateSeries("Temp", serie_t );                
-        		hst.grp.updateSeries("TempExt", serie_et );
-        		hst.grp.updateSeries("Humi", serie_h );
-        		hst.grp.updateSeries("HumiExt", serie_eh );
+                hst.grp.updateSeries("Temp", list[0] );                
+        		hst.grp.updateSeries("TempExt", list[2] );
+        		hst.grp.updateSeries("Humi", list[1] );
+        		hst.grp.updateSeries("HumiExt", list[3] );
         		hst.grp.render();        
             },
 
