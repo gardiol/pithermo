@@ -1,0 +1,57 @@
+
+#include <stdint.h>
+#include "framework/frameworkutils.h"
+#include "framework/frameworktimer.h"
+#include "src/history.h"
+
+using namespace FrameworkLibrary;
+
+uint64_t from_time = 0;
+uint64_t to_time = 0;
+uint32_t n_samples = 0;
+
+bool parse_POST()
+{
+    if ( fscanf( stdin, "%llu:%llu:%d", &from_time, &to_time, &n_samples ) == 3 )
+    {
+        uint64_t now = FrameworkTimer::getTimeEpoc();
+        if ( (from_time > 0) && (from_time <= now) &&
+             (to_time > 0) && (to_time <= now) &&
+             (n_samples > 0) && (n_samples < 100000 ) )
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+int main( int argc, char** argv)
+{
+    std::string history_file = FrameworkUtils::read_env( "HISTORY_FILE" );
+    int ret = 255;
+    printf("Content-type: text/plain\n\n");
+
+    if ( FrameworkUtils::fileExist( history_file ) )
+    {
+        if ( parse_POST() )
+        {
+            History history( history_file );
+            std::list<HistoryItem> items;
+
+            if ( history.fetchInterval( from_time, to_time, items ) )
+            {
+                uint32_t n_items = items.size();
+                uint32_t skip_items = n_items / n_samples;
+                uint32_t n_item = 0;
+                for ( std::list::iterator i = items.begin(); i != items.end(); ++i )
+                {
+                    if ( (n_item % skip_items) == 0 )
+                        (*i).writeText( stdout );
+                    n_item++;
+                }
+                ret = 0;
+            }
+        }
+    }
+    return ret;
+}

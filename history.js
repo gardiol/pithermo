@@ -163,22 +163,17 @@ function( dom, attr, dclass, style, html, on,// Dojo
             setData: function(new_rows){
                 var len = new_rows.length;
                 var pos = 0;
-                var rows = 0;
-                while ( pos != len ){
+                while ( pos < len ){
                     var line_end = new_rows.indexOf( "\n", pos );
-                    pos = line_end+1;
-                    rows++;
-                }
-                var skip_rows = rows / 100;
-                pos = 0;
-                while ( pos != len ){
-                    var line_end = new_rows.indexOf( "\n", pos );
-                    var row = new_rows.substr( pos, line_end-pos+1 );
-                    var split_row = row.split(" ");
-                    if ( (pos % skip_rows) == 0)
-                        hst.data[ parseInt(split_row[0]) ] = { 0: parseFloat(split_row[1]), 1: parseFloat(split_row[2]), 
-                                                               2: parseFloat(split_row[3]), 3: parseFloat(split_row[3]) };
-                    pos = line_end+1;
+					if ( line_end != -1 ){
+						var row = new_rows.substr( pos, line_end-pos+1 );
+						var split_row = row.split(" ");
+						hst.data[ parseInt(split_row[0]) ] = { 0: parseFloat(split_row[1]), 1: parseFloat(split_row[2]), 
+															   2: parseFloat(split_row[3]), 3: parseFloat(split_row[3]) };
+						pos = line_end+1;
+					} else {
+						pos = len;
+					 }
                 }
                 hst.drawGraph();
             },
@@ -188,33 +183,32 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     window.clearTimeout( hst.timer );
                     hst.timer = null;
 				}
-
                 if ( !historyUseRange.checked ){
-                    historyEnd.set("value",new Date());
-                    historyStart.set("value", new Date());
+					var now = new Date();
+					var start = new Date();
+					start.setHours(0);
+					start.setMinutes(0);
+					start.setSeconds(0);
+                    historyEnd.set("value", now );
+                    historyStart.set("value", start );
                 }
 				var endDate = Math.floor( historyEnd.get("value") / 1000 );
 				var startDate = Math.floor( historyStart.get("value") / 1000 ); 
-                
-				var startWeek = Math.floor(((startDate+60*60*24*3) / (60*60*24*7)));
-				var startDay = Math.floor(((startDate+60*60*24*3) / (60*60*24)) % 7);
-                var endWeek = Math.floor(((endDate+60*60*24*3) / (60*60*24*7)));
-                var endDay = Math.floor(((endDate+60*60*24*3) / (60*60*24)) % 7);				
-                hst.clearData();
-                
-                postRequest("cgi-bin/history",""+startWeek+":"+startDay+":"+endWeek+":"+endDay,
+
+                hst.clearData();                
+                postRequest("cgi-bin/history",startDate+":"+endDate+":200",
                     function(result){
-                        if ( result ){
+                        if ( result )
                             hst.setData(result);
-                        }
-//                                hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
-                            },
+						if ( !historyUseRange.checked )
+							hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
+                    },
                     function(err){
                         hst.disable();
-//                                hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
-                });                    
+						hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
+					});                    
 			}
-    };
+		};
     
     
 	hst.grp.setTheme(Chris);

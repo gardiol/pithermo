@@ -1,5 +1,4 @@
-history_extract.c
-history_purge.c
+CGI/history_cgi.cpp
 src/demowiringpi.cpp
 src/demowiringpi.h
 src/demowiringpi.h
@@ -68,7 +67,3 @@ src/program.h
 src/runnerthread.cpp
 src/runnerthread.h
 
-#gen_hist.c
-#read_hist.c
-#end_conv.c
-#ext_add.c

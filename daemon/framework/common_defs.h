@@ -7,6 +7,7 @@
 
 // Remember that _WIN32 MUST be defined both for 32 and 64bit windows versions.
 #if defined(_WIN32)
+
 //**********************************************
 // ********** Windows specific defines *********
 //**********************************************

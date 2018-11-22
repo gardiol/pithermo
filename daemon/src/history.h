@@ -6,12 +6,12 @@
 #include <vector>
 
 #include "historyitem.h"
+#include <list>
 
 class History
 {
 public:    
-    History(const std::string& history_file,
-            const std::string &exchange_path);
+    History(const std::string& history_file);
     ~History();
 
     void initialize(float &ext_temp,
@@ -21,21 +21,10 @@ public:
                  float last_ext_temp,
                  float last_ext_humidity );
 
+    bool fetchInterval( uint64_t from, uint64_t to, std::list<HistoryItem>& items );
+
 private:
-    void _splitTime( uint64_t t, uint32_t& w, uint32_t& d, uint32_t& h, uint32_t& m );
-    void _readNow();
-
-    uint64_t _now;
-    uint32_t _now_min;
-    uint32_t _now_hour;
-    uint32_t _now_day;
-    uint32_t _now_week;
-    uint32_t _now_year;
-
     std::string _history_filename;
-    std::string _exchange_path;
-    std::string _now_filename;
-    FILE* _history_file;
 
 };
 

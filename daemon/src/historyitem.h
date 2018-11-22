@@ -52,7 +52,7 @@ public:
     }
 
     void write( FILE* file );
-    void writeNow( FILE* file );
+    void writeText( FILE* file );
 
 private:
     uint64_t _time;

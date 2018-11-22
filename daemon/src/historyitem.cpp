@@ -109,7 +109,7 @@ void HistoryItem::write(FILE *file)
     }
 }
 
-void HistoryItem::writeNow(FILE *file)
+void HistoryItem::writeText(FILE *file)
 {
     if ( file != nullptr )
         fprintf(file, "%llu %f %f %f %f\n",
