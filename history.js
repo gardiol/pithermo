@@ -52,7 +52,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 					for ( var n in show ){
 						var val = hst.data[time][n];
 						if ( show[n] )
-							list[n].push( {x:time, y:val } ); 
+							list[n].push( {x:time, y:val.toFixed(1) } ); 
 						if ( isNaN(mins[n]) || (mins[n] > val) )
 							mins[n] = val;
 						if ( isNaN(maxs[n]) || (maxs[n] < val) )
