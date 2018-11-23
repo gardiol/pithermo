@@ -112,6 +112,8 @@ bool History::fetchInterval(uint64_t from, uint64_t to, std::list<HistoryItem> &
         while ( !end_found && item.isValid() && !feof(read_file) )
         {
             items.push_back( item );
+            if ( item.getTime() >= to )
+                end_found = true;
             item.read( read_file );
         }
         if ( items.size() > 1 )

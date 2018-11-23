@@ -23,6 +23,8 @@ function( dom, attr, dclass, style, html, on,// Dojo
           Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator )// Charing
 {
     hst = { 
+            hStart: null,
+            hEnd: null,
 			timer: null,
     		data:  {},
         
@@ -59,10 +61,10 @@ function( dom, attr, dclass, style, html, on,// Dojo
 						}
 					}
                 }
-				html.set(dom.byId("history-stats-te"), "T(int): " + mins[0] + " ...(" + meds[0].toFixed(1) + ")... " + maxs[0] + "" );
-				html.set(dom.byId("history-stats-ex"), "T(est): " + mins[2] + " ...(" + meds[2].toFixed(1) + ")... " + maxs[2] + "" );
-				html.set(dom.byId("history-stats-hu"), "H(int): " + mins[1] + " ...(" + meds[1].toFixed(1) + ")... " + maxs[1] + "" );
-				html.set(dom.byId("history-stats-hx"), "H(est): " + mins[3] + " ...(" + meds[3].toFixed(1) + ")... " + maxs[3] + "" );
+				html.set(dom.byId("history-stats-te"), "T(int): " + mins[0].toFixed(1) + " ...(" + meds[0].toFixed(1) + ")... " + maxs[0].toFixed(1) + "" );
+				html.set(dom.byId("history-stats-ex"), "T(est): " + mins[2].toFixed(1) + " ...(" + meds[2].toFixed(1) + ")... " + maxs[2].toFixed(1) + "" );
+				html.set(dom.byId("history-stats-hu"), "H(int): " + mins[1].toFixed(1) + " ...(" + meds[1].toFixed(1) + ")... " + maxs[1].toFixed(1) + "" );
+				html.set(dom.byId("history-stats-hx"), "H(est): " + mins[3].toFixed(1) + " ...(" + meds[3].toFixed(1) + ")... " + maxs[3].toFixed(1) + "" );
 				for ( var n in list )
 					hst.grp.updateSeries( axna[n], list[n] );                
         		hst.grp.render();        
@@ -97,16 +99,18 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     hst.timer = null;
 				}
                 if ( !historyUseRange.checked ){
-					var now = new Date();
-					var start = new Date();
-					start.setHours(0);
-					start.setMinutes(0);
-					start.setSeconds(0);
-                    historyEnd.set("value", now );
-                    historyStart.set("value", start );
+                    hst.hStart = new Date();
+                    hst.hEnd = new Date();
+                    historyEnd.set("value", hst.hStart );
+                    historyStart.set("value", hst.hEnd );
+                } else {
+                    hst.hEnd = historyEnd.get("value")
+                    hst.hStart = historyStart.get("value")
                 }
-				var endDate = Math.floor( historyEnd.get("value") / 1000 );
-				var startDate = Math.floor( historyStart.get("value") / 1000 ); 
+                var sDate = hst.hStart;sDate.setHours(0);sDate.setMinutes(0);sDate.setSeconds(0);
+                var eDate = hst.hEnd;eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(59);
+				var startDate = Math.floor( sDate / 1000 );
+				var endDate = Math.floor( eDate / 1000 ); 
 
                 hst.clearData();                
                 postRequest("cgi-bin/history",startDate+":"+endDate+":200",
@@ -117,7 +121,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 							hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
                     },
                     function(err){
-                        hst.disable();
 						hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
 					});                    
 			}

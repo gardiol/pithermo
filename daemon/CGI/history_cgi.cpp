@@ -18,6 +18,7 @@ bool parse_POST()
         uint64_t now = FrameworkTimer::getTimeEpoc();
         if ( (from_time > 0) && (from_time <= now) &&
              (to_time > 0) && (to_time <= now) &&
+             (from_time < to_time) &&
              (n_samples > 0) && (n_samples < 100000 ) )
         {
             return true;
@@ -28,7 +29,7 @@ bool parse_POST()
 
 int main( int , char** )
 {
-    std::string history_file = FrameworkUtils::read_env( "HISTORY_FILE" );
+    std::string history_file = "../history";
     int ret = 255;
     printf("Content-type: text/plain\n\n");
 
@@ -36,12 +37,16 @@ int main( int , char** )
     {
         if ( parse_POST() )
         {
+/*            FILE* d = fopen("hd", "a");
+            fprintf(d, "%d %d %d\n", from_time, to_time, n_samples );
+            fclose(d);*/
+
             History history( history_file );
             std::list<HistoryItem> items;
 
             if ( history.fetchInterval( from_time, to_time, items ) )
             {
-                uint32_t n_items = items.size();
+                uint32_t n_items = static_cast<uint32_t>(items.size());
                 uint32_t skip_items = n_items / n_samples;
                 uint32_t n_item = 0;
                 for ( std::list<HistoryItem>::iterator i = items.begin(); i != items.end(); ++i )
