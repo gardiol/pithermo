@@ -84,7 +84,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 						var row = new_rows.substr( pos, line_end-pos+1 );
 						var split_row = row.split(" ");
 						hst.data[ parseInt(split_row[0]) ] = { 0: parseFloat(split_row[1]), 1: parseFloat(split_row[2]), 
-															   2: parseFloat(split_row[3]), 3: parseFloat(split_row[3]) };
+				                                                       2: parseFloat(split_row[3]), 3: parseFloat(split_row[4]) };
 						pos = line_end+1;
 					} else {
 						pos = len;
