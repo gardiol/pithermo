@@ -16,8 +16,8 @@ bool parse_POST()
     if ( fscanf( stdin, "%llu:%llu:%u", (unsigned long long int*)&from_time, (unsigned long long int*)&to_time, (unsigned int*)&n_samples ) == 3 )
     {
         uint64_t now = FrameworkTimer::getTimeEpoc();
-        if ( (from_time > 0) && (from_time <= now) &&
-             (to_time > 0) && (to_time <= now) &&
+        if ( (from_time > 0) && //(from_time <= now) &&
+             (to_time > 0) && //(to_time <= now) &&
              (from_time < to_time) &&
              (n_samples > 0) && (n_samples < 100000 ) )
         {
