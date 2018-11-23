@@ -113,7 +113,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 				var endDate = Math.floor( eDate / 1000 ); 
 
                 hst.clearData();                
-                postRequest("cgi-bin/history",startDate+":"+endDate+":200",
+                postRequest("cgi-bin/history",startDate+":"+endDate+":60",
                     function(result){
                         if ( result )
                             hst.setData(result);
