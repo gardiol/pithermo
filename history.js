@@ -16,11 +16,11 @@ require([
     "dojox/charting/themes/Chris",
     "dojox/charting/plot2d/Areas",
     "dojox/charting/plot2d/Markers",
-    "dojox/charting/action2d/MouseIndicator",
+    "dojox/charting/action2d/Tooltip",
     "dojo/domReady!"], 
 function( dom, attr, dclass, style, html, on,// Dojo
           CheckBox, Select, DateTextBox,// Dijit
-          Chart, Default, Lines, Chris, Areas, Markers, MouseIndicator )// Charing
+          Chart, Default, Lines, Chris, Areas, Markers, Tooltip )// Charing
 {
     hst = { 
             hStart: null,
@@ -130,7 +130,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 	hst.grp.setTheme(Chris);
     
 	hst.grp.addPlot("tempPlot",{
-                type: Lines,lines: true, areas: false, markers: false,
+                type: Lines,lines: true, areas: false, markers: true,
                 tension: "X",
                 stroke: {color: "red",  width: 1}
             });
@@ -140,7 +140,14 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 minorTicks: false,minorLabels: false,
                 microTicks: false,
                 labelFunc:function(text,value,prec){
-                        return new Date(parseInt(value)*1000).toLocaleTimeString();
+					var X = new Date(parseInt(value)*1000);
+					var Y = X.getFullYear();
+					var M = X.getMonth()+1;
+					var D = X.getDay();
+					var H = X.getHours();
+					var m = X.getMinutes();
+					return D + "/" + M + "/" + Y + " " + H + ":" + m;
+//                        return new Date(parseInt(value)*1000).toString();
                 }
             });
 	hst.grp.addAxis("y", 	{
@@ -156,7 +163,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 	hst.grp.addSeries("TempExt", [],{ plot: "tempPlot", stroke: {color:"blue"} });
     
 	hst.grp.addPlot("humiPlot",{
-                type: Lines,lines: true, areas: false, markers: false,
+                type: Lines,lines: true, areas: false, markers: true,
                 tension: "X",
                 hAxis: "x",vAxis: "h",
                 stroke: {color: "yellow", width: 1	}
@@ -171,9 +178,12 @@ function( dom, attr, dclass, style, html, on,// Dojo
 	hst.grp.addSeries("Humi",[],{plot: "humiPlot"});
 	hst.grp.addSeries("HumiExt",[],{plot: "humiPlot", stroke: { color: "violet"} });
 
+	new Tooltip( hst.grp, "tempPlot");
+	new Tooltip( hst.grp, "humiPlot");
+	
 	on(dom.byId("history-size"),"click", function(v) {
 		dclass.toggle(dom.byId("history-graph"), "history-big");
 		hst.grp.resize();
 	});
-
+	
 });
