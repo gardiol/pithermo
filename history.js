@@ -10,6 +10,7 @@ require([
     "dijit/form/CheckBox",
     "dijit/form/Select",
     "dijit/form/DateTextBox",
+    "dijit/Tooltip",
     "dojox/charting/Chart",
     "dojox/charting/axis2d/Default", 
     "dojox/charting/plot2d/Lines",
@@ -17,10 +18,12 @@ require([
     "dojox/charting/plot2d/Areas",
     "dojox/charting/plot2d/Markers",
     "dojox/charting/action2d/Tooltip",
+    "dojox/charting/action2d/Magnify",
+    "dojox/charting/widget/Legend",
     "dojo/domReady!"], 
 function( dom, attr, dclass, style, html, on,// Dojo
-          CheckBox, Select, DateTextBox,// Dijit
-          Chart, Default, Lines, Chris, Areas, Markers, Tooltip )// Charing
+          CheckBox, Select, DateTextBox, DijitTooltip,// Dijit
+          Chart, Default, Lines, Chris, Areas, Markers, Tooltip, Magnify, Legend )// Charing
 {
     hst = { 
             hStart: null,
@@ -180,7 +183,23 @@ function( dom, attr, dclass, style, html, on,// Dojo
 
 	new Tooltip( hst.grp, "tempPlot");
 	new Tooltip( hst.grp, "humiPlot");
-	
+
+    new Magnify( hst.grp, "tempPlot");
+	new Magnify( hst.grp, "humiPlot");
+
+    
+    hst.grp.connectToPlot("tempPlot",
+        function(evt){
+            if ( evt.type == "onclick" ){
+                    var lt = hst.grp.getCoords();
+                    var aroundRect = {type: "rect"};
+                    aroundRect.x = Math.round(evt.cx + lt.x);
+                    aroundRect.y = Math.round(evt.cy + lt.y);
+                    aroundRect.w = aroundRect.h = 1;                    
+                    DijitTooltip.show(evt.y, aroundRect);
+            }
+        });
+    
 	on(dom.byId("history-size"),"click", function(v) {
 		dclass.toggle(dom.byId("history-graph"), "history-big");
 		hst.grp.resize();
