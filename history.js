@@ -143,14 +143,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 minorTicks: false,minorLabels: false,
                 microTicks: false,
                 labelFunc:function(text,value,prec){
-					var X = new Date(parseInt(value)*1000);
-					var Y = X.getFullYear();
-					var M = X.getMonth()+1;
-					var D = X.getDay();
-					var H = X.getHours();
-					var m = X.getMinutes();
-					return D + "/" + M + "/" + Y + " " + H + ":" + m;
-//                        return new Date(parseInt(value)*1000).toString();
+                    return utils.printDate(value*1000);
                 }
             });
 	hst.grp.addAxis("y", 	{
@@ -181,9 +174,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 	hst.grp.addSeries("Humi",[],{plot: "humiPlot"});
 	hst.grp.addSeries("HumiExt",[],{plot: "humiPlot", stroke: { color: "violet"} });
 
-	new Tooltip( hst.grp, "tempPlot");
-	new Tooltip( hst.grp, "humiPlot");
-
     new Magnify( hst.grp, "tempPlot");
 	new Magnify( hst.grp, "humiPlot");
 
@@ -196,7 +186,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     aroundRect.x = Math.round(evt.cx + lt.x);
                     aroundRect.y = Math.round(evt.cy + lt.y);
                     aroundRect.w = aroundRect.h = 1;                    
-                    DijitTooltip.show(evt.y, aroundRect);
+                    DijitTooltip.show("<div style='text-align:center;'>"+evt.y+"<br><span style='font-size:60%;'>" + utils.date2str(evt.x*1000) + "" + utils.time2str(evt.x*1000)+"</span></div>", aroundRect);
             }
         });
     
