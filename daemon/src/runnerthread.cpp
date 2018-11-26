@@ -90,7 +90,6 @@ RunnerThread::RunnerThread(ConfigFile *config,
     std::string content;
     if ( !_config->isEmpty() )
     {
-        _logger->enableDebug( _config->getValueBool("debug") );
         _manual_mode = FrameworkUtils::string_tolower(_config->getValue( "mode" )) == "manual";
         _min_temp = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "min_temp" ) ) );
         _max_temp = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "max_temp" ) ) );
@@ -109,6 +108,8 @@ RunnerThread::RunnerThread(ConfigFile *config,
     // Ensure on times will not be zeroized later
     _updateCurrentTime( FrameworkTimer::getTimeEpoc() );
 
+    // Load usage stats
+    _logger->initializeStats();
     uint64_t gas_on_time = _logger->getTodayGasOnTime();
     uint64_t pellet_on_time = _logger->getTodayPelletOnTime();
     uint64_t pellet_min_time = _logger->getTodayPelletLowTime();
@@ -671,8 +672,6 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
             _gas->switchOff();
     }
 
-    _logger->updateEventsJson();
-
     if ( update_status )
     {
         _pellet->printStatus();
@@ -721,7 +720,6 @@ void RunnerThread::_saveConfig()
     _config->setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
     _config->setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
     _config->setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
-    _config->setValueBool( "debug", _logger->getDebug() );
     _config->setValue( "pellet_startup_delay", FrameworkUtils::utostring(_pellet_startup_delay) );
 
     ConfigData* prog_section = _config->getSection( "program" );

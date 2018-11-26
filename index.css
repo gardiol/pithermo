@@ -222,6 +222,12 @@ img#pellet-feedback-led {
 	height: 2em;
 }
 
+#events {
+    padding-top: 1em;
+    text-align: center;
+    padding-bottom: 0.5em;
+}
+
 #messages {
 	margin-left: 3em;
 	margin-right: 3em;

@@ -3,7 +3,8 @@
 #include <list>
 #include "../framework/frameworkutils.h"
 #include "../framework/frameworktimer.h"
-#include "../src/history.h"
+#include "../src/logger.h"
+#include "../src/logitem.h"
 
 using namespace FrameworkLibrary;
 
@@ -24,32 +25,28 @@ bool parse_POST()
 
 int main( int , char** )
 {
-    std::string history_file = "../history";
+    std::string events_file = "../events";
     int ret = 255;
     printf("Content-type: text/plain\n\n");
 
-    if ( FrameworkUtils::fileExist( history_file ) )
+    if ( FrameworkUtils::fileExist( events_file ) )
     {
         if ( parse_POST() )
         {
-/*            FILE* d = fopen("hd", "a");
-            fprintf(d, "%d %d %d\n", from_time, to_time, n_samples );
-            fclose(d);*/
+            Logger logger( events_file );
+            std::list<LogItem> items;
 
-            History history( history_file );
-            std::list<HistoryItem> items;
-
-            if ( history.fetchInterval( from_time, to_time, items ) )
+            if ( logger.fetchInterval( from_time, to_time, items ) )
             {
-                uint32_t n_items = static_cast<uint32_t>(items.size());
-                uint32_t skip_items = FrameworkUtils_max<uint32_t>( n_items / n_samples, 1);
                 uint32_t n_item = 0;
-                for ( std::list<HistoryItem>::iterator i = items.begin(); i != items.end(); ++i )
+                for ( std::list<LogItem>::iterator i = items.begin();
+                      (i != items.end()) && (n_item < n_samples); ++i )
                 {
-                    if ( (n_item % skip_items) == 0 )
-                        (*i).writeText( stdout );
+                    (*i).writeText( stdout );
                     n_item++;
                 }
+                if ( n_item < items.size() )
+                    printf("+");
                 ret = 0;
             }
         }

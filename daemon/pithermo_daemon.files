@@ -1,3 +1,4 @@
+CGI/events_cgi.cpp
 CGI/history_cgi.cpp
 src/demowiringpi.cpp
 src/demowiringpi.h

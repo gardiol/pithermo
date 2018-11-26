@@ -34,7 +34,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
             grp: new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25}),
 
             toggleRange: function(){
-                dclass.toggle(dom.byId("history-range"), "celated");
+                dclass.toggle(dom.byId("history-range"), "hidden");
                 hst.update();
             },
         
@@ -115,7 +115,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 				var startDate = Math.floor( sDate / 1000 );
 				var endDate = Math.floor( eDate / 1000 ); 
 
-                hst.clearData();                
+                hst.clearData();
                 postRequest("cgi-bin/history",startDate+":"+endDate+":60",
                     function(result){
                         if ( result )

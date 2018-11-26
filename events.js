@@ -1,13 +1,17 @@
 var evt = null;
  
 require([
-   "dojo/dom", 
-   "dojo/dom-construct",
-   "dojo/domReady!"], 
-function( dom, dc)    // Dojo
+    "dojo/dom", 
+    "dojo/dom-class",
+    "dojo/on",
+    "dojo/dom-construct",
+    "dojo/domReady!"], 
+function( dom, dclass, on, dc)    // Dojo
 {
 	evt = {
-		events: [],
+        hStart: null,
+        hEnd: null,
+        timer: null,
 		msgs: {
 			0: "No event",
 			1: "Sistema avviato",
@@ -36,33 +40,68 @@ function( dom, dc)    // Dojo
 			8388608: "Sistema attivato",
 			16777216: "Sistema disattivato",
 		},	
+        toggleRange: function(){
+            dclass.toggle(dom.byId("events-range"), "hidden");
+            evt.update();
+        },
+        setData: function(new_rows){
+            var len = new_rows.length;
+            var pos = 0;
+            dc.empty("messages-queue");
+            while ( pos < len ){
+                var line_end = new_rows.indexOf( "\n", pos );
+                if ( line_end != -1 ){
+                    var row = new_rows.substr( pos, line_end-pos+1 );
+                    var split_row = row.split(" ");                    
+                    var t = utils.printDate( split_row[0]*1000 );
+                    var m = evt.msgs[ parseInt(split_row[1]) ];
+                    var e = m ? m : "-evento-sconosciuto-(" + split_row[1] + ")"; 
+                    dc.place("<li>" + t + " -- " + e + "</li>", "messages-queue","first");                    
+                    pos = line_end+1;
+                } else {
+                    if ( new_rows.substr( pos ) == "+" )
+                        dc.place("<li>(troppi eventi, solo i primi 120 sono visualizzati)</li>", "messages-queue", "first");
+                    pos = len;
+                }
+            }
+        },
+
 		update: function(){
-			getRequest("cgi-bin/events",
+            if ( evt.timer ){
+                window.clearTimeout( evt.timer );
+                evt.timer = null;
+            }
+
+            if ( !eventsUseRange.checked ){
+                evt.hStart = new Date();
+                evt.hEnd = new Date();
+                eventsEnd.set("value", evt.hStart );
+                eventsStart.set("value", evt.hEnd );
+            } else {
+                evt.hEnd = eventsEnd.get("value")
+                evt.hStart = eventsStart.get("value")
+            }
+                var sDate = evt.hStart;sDate.setHours(0);sDate.setMinutes(0);sDate.setSeconds(0);
+                var eDate = evt.hEnd;eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(59);
+				var startDate = Math.floor( sDate / 1000 );
+				var endDate = Math.floor( eDate / 1000 ); 
+
+            postRequest("cgi-bin/events",startDate+":"+endDate+":120",
 				function(events){
-					var s = evt.events.length;
-					var e = events.length;
-					if ( (evt.events == []) || 
-						(events.length < evt.events.length) ){
-						dc.empty("messages-queue");
-						s = 0;
-					}	
-					evt.events = events;                 
-					for ( var x = s; x < evt.events.length; x++ ){
-						var se = evt.events[x];
-				      var t = new Date(se.t*1000).toLocaleString();
-				      var e = evt.msgs[se.e] ? evt.msgs[se.e] : evt.msgs[0] + "(" + se.e + ")";                
-						dc.place("<li>" + t + " -- " + e + "</li>", "messages-queue","first");
-					}
+                    evt.setData(events);
+                    if ( !eventsUseRange.checked )
+                        evt.timer = window.setTimeout( function(){ evt.update(); }, 5 * 1000 );
 				},
 				function(err){
 					dc.empty("messages-queue");
 					dc.place("<li>Impossibile leggere la lista degli eventi!</li>", "messages-queue","first");
+                    evt.timer = window.setTimeout( function(){ evt.update(); }, 60 * 1000 );
 				});
-		}, 
- 		disable: function(){
- 					evt.events = [];                
-					dc.empty("messages-queue");
-					dc.place("<li>Errore di connessione</li>", "messages-queue","first");
 		}
 	};
+    
+    on(dom.byId("events-size"),"click", function(v) {
+		dclass.toggle(dom.byId("messages"), "history-big");
+	});
+
 });

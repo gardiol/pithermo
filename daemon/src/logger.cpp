@@ -7,7 +7,7 @@
 
 using namespace FrameworkLibrary;
 
-Logger::Logger(const std::string &log_path, const std::string& exchange_path):
+Logger::Logger(const std::string &events_path):
     _season_pellet_on_time(0),
     _season_pellet_low_time(0),
     _season_gas_on_time(0),
@@ -17,18 +17,29 @@ Logger::Logger(const std::string &log_path, const std::string& exchange_path):
     _today_gas_on_since(0),
     _today_pellet_on_since(0),
     _today_pellet_low_on_since(0),
-    _log_filename(log_path + "/events"),
-    _debug_filename(log_path + "/debug"),
-    _events_json_filename(exchange_path + "/_events"),
+    _log_filename(events_path),
+    _debug_filename(events_path+"_debug.txt"),
     _debug(false),
-    _valid(false),
-    _log_update(false),
-    _day(0)
+    _valid(false)
 {
-    _valid = true;
-    _day = _calculateDay( FrameworkTimer::getTimeEpoc() );
-    FILE* f = fopen( _log_filename.c_str(), "rb" );
+    // Test log file is accessible/can be created
+    FILE* f = fopen( _log_filename.c_str(), "ab" );
+    if ( f != nullptr )
+    {
+        _valid = true;
+        fclose(f);
+    }
+}
 
+Logger::~Logger()
+{
+}
+
+void Logger::initializeStats()
+{
+    uint64_t today_day = _calculateDay( FrameworkTimer::getTimeEpoc() );
+
+    FILE* f = fopen( _log_filename.c_str(), "rb" );
     uint64_t season_start = 0;
     uint64_t season_stop = 0;
     _calculateSeason( season_start, season_stop );
@@ -45,11 +56,9 @@ Logger::Logger(const std::string &log_path, const std::string& exchange_path):
             {
                 uint64_t event_time = evt.getTime();
                 bool in_season = (event_time >= season_start ) && (event_time <= season_stop );
-                bool is_today = _calculateDay( event_time ) == _day;
+                bool is_today = _calculateDay( event_time ) == today_day;
                 if ( in_season || is_today )
                 {
-                    if ( is_today )
-                        _today_logs.push_back( evt );
                     switch ( evt.getEvent() )
                     {
                     case  LogItem::GAS_ON:
@@ -139,20 +148,8 @@ Logger::Logger(const std::string &log_path, const std::string& exchange_path):
     }
 }
 
-Logger::~Logger()
-{
-}
-
 void Logger::logEvent(LogItem evt)
 {
-    uint64_t new_day = _calculateDay( FrameworkTimer::getTimeEpoc() );
-    if ( new_day != _day )
-    {
-        _today_logs.clear();
-        _day = new_day;
-    }
-    _today_logs.push_back( evt );
-    _log_update = true;
     FILE* f = fopen(_log_filename.c_str(), "ab" );
     if ( f != nullptr )
     {
@@ -161,57 +158,66 @@ void Logger::logEvent(LogItem evt)
     }
 }
 
-void Logger::logMessage(const std::string &str)
-{
-    FILE* f = fopen(_debug_filename.c_str(), "a" );
-    if ( f != nullptr )
-    {
-        _printStamp(f);
-        fprintf(f, " %s\n", str.c_str() );
-        fclose(f);
-    }
-}
-
 void Logger::logDebug(const std::string &str)
 {
     if ( _debug )
-        logMessage( " -debug- " + str );
-}
-
-bool Logger::logsChanged()
-{
-    if ( _log_update )
     {
-        _log_update = false;
-        return true;
-    }
-    return false;
-}
-
-void Logger::updateEventsJson()
-{
-    if ( logsChanged() )
-    {
-        FILE* event_file = fopen( _events_json_filename.c_str(), "w" );
-        if ( event_file )
+        FILE* f = fopen(_debug_filename.c_str(), "a" );
+        if ( f != nullptr )
         {
-            fwrite( "[", 1, 1, event_file );
-            for ( std::list<LogItem>::const_iterator i = _today_logs.begin(); i != _today_logs.end(); ++i )
-            {
-                if ( i != _today_logs.begin() )
-                    fwrite(",", 1, 1, event_file );
-                fwrite( "{\"t\":", 5, 1, event_file );
-                std::string time_str = i->getTimeStr();
-                std::string evt_str = i->getEventStr();
-                fwrite( time_str.c_str(), time_str.length(), 1, event_file );
-                fwrite(",\"e\":", 5, 1, event_file );
-                fwrite( evt_str.c_str(), evt_str.length(), 1, event_file );
-                fwrite("}", 1, 1, event_file );
-            }
-            fwrite( "]", 1, 1, event_file );
-            fclose( event_file );
+            _printStamp(f);
+            fprintf(f, "%s\n", str.c_str() );
+            fclose(f);
         }
     }
+}
+
+bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items)
+{
+    bool ret = false;
+    items.clear();
+    FILE* read_file = fopen( _log_filename.c_str(), "rb" );
+    if ( read_file != nullptr )
+    {
+        bool start_found = false;
+        bool end_found = false;
+        fseek( read_file, 0, SEEK_END );
+        long int file_len = ftell(read_file);
+        uint32_t item_size = LogItem::getSize();
+        uint32_t total_items = file_len / item_size;
+        LogItem item;
+
+        // Search for start with a log2 approach
+        uint32_t step_size = total_items / 2;
+        uint32_t start_item = step_size;
+        while ( !start_found && (start_item != 0) && (start_item != (total_items-1) ) && (step_size > 0) )
+        {
+            step_size /= 2;
+            long int cursor = start_item * item_size;
+            fseek( read_file, cursor, SEEK_SET );
+            item.read( read_file );
+            uint64_t item_time = item.getTime();
+            if ( item_time == from )
+                start_found = true;
+            else if ( item_time > from )
+                start_item -= step_size;
+            else
+                start_item += step_size;
+        }
+
+        // Let's read until last:
+        while ( !end_found && item.isValid() && !feof(read_file) )
+        {
+            items.push_back( item );
+            if ( item.getTime() >= to )
+                end_found = true;
+            item.read( read_file );
+        }
+        if ( items.size() > 1 )
+            ret = true;
+        fclose(read_file);
+    }
+    return ret;
 }
 
 uint64_t Logger::_calculateDay(uint64_t t)

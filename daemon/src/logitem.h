@@ -37,11 +37,15 @@ public:
         DEACTIVATED         = 0x0000000001000000 // 16384k
     };
 
+    static uint32_t getSize();
+
     LogItem( Event t );
     LogItem( FILE* file );
     LogItem( const LogItem& other );
     LogItem();
+    void read( FILE* file );
     void write(FILE* file );
+    void writeText( FILE* file );
 
     void operator=(const LogItem& other );
 
@@ -54,31 +58,15 @@ public:
     {
         return _event;
     }
-    static int32_t getSize()
-    {
-        return sizeof(_time) + sizeof(_event);
-    }
 
     bool isValid() const
     {
         return _valid;
     }
 
-    std::string getTimeStr() const
-    {
-        return _time_str;
-    }
-
-    std::string getEventStr() const
-    {
-        return _event_str;
-    }
-
 private:
     uint64_t _time;
     uint64_t _event;
-    std::string _time_str;
-    std::string _event_str;
     bool _valid;
 };
 

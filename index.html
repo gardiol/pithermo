@@ -4,7 +4,7 @@
 	<title>ThermoController</title>
 	<meta charset="UTF-8"/>
 	<link rel="stylesheet" href="js/dijit/themes/claro/claro.css"/>
-	<link rel="stylesheet" href="index.css?ver=20181001"/>
+	<link rel="stylesheet" href="index.css?ver=20181126"/>
 	<script>dojoConfig = {parseOnLoad: true}</script>
 	<script src="js/dojo/dojo.js" data-dojo-config="async: true"></script>
 </head>
@@ -120,9 +120,25 @@
             </div><!-- gas status-->
         </div> <!-- status row-->
     </div><!-- status controls-->
-	<div id="messages">
-		<ul id="messages-queue"></ul>
-	</div>
+    <div id="events">
+        <div>
+            <div>
+                <input data-dojo-id="eventsUseRange" name="events-today" data-dojo-type="dijit/form/CheckBox" onChange="evt.toggleRange();"/>
+                <label for="events-today">Scegli periodo</label>
+                <img id="events-size" src="images/enlarge.png" class="temp-img" style="margin-left: 3em;"/>
+            </div>
+            <div id="events-range" class="hidden">
+                <label for="events-start">Dal:</label>
+                <input data-dojo-id="eventsStart" name="events-start" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
+                <label for="events-end">al:</label>
+                <input data-dojo-id="eventsEnd" name="events-end" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
+                <button data-dojo-id="eventsRangeUpdate" data-dojo-type="dijit/form/Button" onClick="evt.update()" type="button">Aggiorna!</button>
+            </div>
+        </div>
+    </div>
+    <div id="messages">
+        <ul id="messages-queue"></ul>
+    </div>
 </div><!-- status area-->
     
 <div id="program-area">
@@ -176,21 +192,21 @@
 	 <div>
         <div>
             <input data-dojo-id="historyUseRange" name="history-today" data-dojo-type="dijit/form/CheckBox" onChange="hst.toggleRange();"/>
-            <label for="history-today">Visualizza un periodo fisso</label>
-            <img id="history-size" src="images/enlarge.png" class="temp-img" style="margin-left: 3em;"/>
+            <label for="history-today">Scegli periodo</label>
         </div>
-		<div id="history-range" class="celated">
+		<div id="history-range" class="hidden">
 			<label for="history-start">Dal:</label>
 			<input data-dojo-id="historyStart" name="history-start" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
 			<label for="history-end">al:</label>
 			<input data-dojo-id="historyEnd" name="history-end" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
-			<button data-dojo-id="historyRangeUpdate" data-dojo-type="dijit/form/Button" onClick="hst.update()" type="button">Update!</button>
+			<button data-dojo-id="historyRangeUpdate" data-dojo-type="dijit/form/Button" onClick="hst.update()" type="button">Aggiorna!</button>
 		</div>
         <div>
             <input id="show-temp" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="hst.drawGraph()"/><label for="show-temp">Temperatura</label>
             <input id="show-humi" data-dojo-type="dijit/form/CheckBox" value="2" onChange="hst.drawGraph()"/><label for="show-humi">Umidità</label>
             <input id="show-ext-temp" data-dojo-type="dijit/form/CheckBox" value="3" checked onChange="hst.drawGraph()"/><label for="show-ext-temp">Temperatura externa</label>
             <input id="show-ext-humi" data-dojo-type="dijit/form/CheckBox" value="4" onChange="hst.drawGraph()"/><label for="show-ext-humi">Umidità esterna</label>
+            <img id="history-size" src="images/enlarge.png" class="temp-img" style="margin-left: 3em;"/>
         </div>
     </div>
     <div>
@@ -210,12 +226,12 @@
     </div>
 </div><!-- history area-->
 
-<script src="utils.js"></script>
-<script src="production.js"></script>
-<script src="status.js?3"></script>
-<script src="events.js"></script>
-<script src="program.js?2"></script>
-<script src="history.js?6"></script>
+<script src="utils.js?20181126"></script>
+<script src="production.js?20181126"></script>
+<script src="status.js?20181126"></script>
+<script src="events.js?20181126"></script>
+<script src="program.js?20181126"></script>
+<script src="history.js?20181126"></script>
 <script language="javascript">
 require([
     "dojo/ready",
@@ -225,6 +241,7 @@ function(ready)
 	ready(function(){
         sts.update();
         hst.update();
+        evt.update();
 	});
 });
 </script>

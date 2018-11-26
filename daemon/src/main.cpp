@@ -193,11 +193,10 @@ int main(int argc, char** argv)
                 ConfigFile config( config_file );
                 enable_debug = config.getValueBool("debug");
 
-                Logger logger( log_path, exchange_path );
+                Logger logger( log_path + "/events" );
                 if ( logger.isValid() )
                 {
                     logger.enableDebug( enable_debug );
-                    logger.logMessage(operating_mode + " start");
                     logger.logEvent( LogItem::START );
 
 #if defined(FRAMEWORK_PLATFORM_LINUX)
@@ -234,10 +233,10 @@ int main(int argc, char** argv)
                                 ret = 0;
                             }
                             else
-                                logger.logMessage( "Unable to start runner thread!" );
+                                debugPrintError() << "Unable to start runner thread!";
                         }
                         else
-                            logger.logMessage( "Unable to open socket!" );
+                            debugPrintError() << "Unable to open socket!";
                     }
                     else if ( operating_mode == "ext" )
                     {
@@ -278,11 +277,10 @@ int main(int argc, char** argv)
                             delete temp_sensor;
                         }
                         else
-                            logger.logMessage( "Unable to open socket!" );
+                            debugPrintError() << "Unable to open socket!";
                     }
 
                     logger.logEvent( LogItem::STOP );
-                    logger.logMessage(operating_mode + " stop");
                 }
                 else
                     debugPrintError() << "Unable to open log file!\n";

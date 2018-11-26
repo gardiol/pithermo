@@ -173,7 +173,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 					html.set("temp-label",sts.status.temp.int + "C (" + sts.status.temp.ext + "C)" );
 					html.set("humi-label", sts.status.temp.hum + "% (" + sts.status.temp.ext_hum + "%)" );
 					prg.update(sts.status.program);
-					evt.update();
                     var d = new Date();
                     var dd = d.getDate();
                     var dm = d.getMonth()+1;
@@ -192,7 +191,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 				html.set("humi-label", "--" );
 				for ( var p in sts )
 					if ( sts[p] && sts[p].set ) sts[p].set("disabled", true);
-				evt.disable();                
 				html.set("gas-time", "--");
 				html.set("pellet-mintime", "--");
 				html.set("pellet-modtime", "--");

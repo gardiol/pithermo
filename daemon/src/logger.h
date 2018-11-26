@@ -10,8 +10,10 @@
 class Logger
 {
 public:
-    Logger(const std::string& log_path , const std::string &exchange_path);
+    Logger(const std::string& events_path );
     ~Logger();
+
+    void initializeStats();
 
     void enableDebug( bool d )
     {
@@ -24,15 +26,12 @@ public:
     }
 
     void logEvent( LogItem evt );
-    void logMessage( const std::string& str );
     void logDebug( const std::string& str );
 
     bool isValid() const
     {
         return _valid;
     }
-
-    bool logsChanged();
 
     uint64_t getSeasonPelletOnTime() const
     {
@@ -79,14 +78,12 @@ public:
         return _today_pellet_low_on_since;
     }
 
-    void updateEventsJson();
+    bool fetchInterval( uint64_t from, uint64_t to, std::list<LogItem>& items );
 
 private:
     uint64_t _calculateDay( uint64_t t );
     void _calculateSeason( uint64_t& start, uint64_t &end );
     void _printStamp(FILE* f);
-
-    std::list<LogItem> _today_logs;
 
     uint64_t _season_pellet_on_time;
     uint64_t _season_pellet_low_time;
@@ -101,13 +98,9 @@ private:
 
     std::string _log_filename;
     std::string _debug_filename;
-    std::string _events_json_filename;
 
     bool _debug;
     bool _valid;
-    bool _log_update;
-
-    uint64_t _day;
 };
 
 #endif // LOGGER_H

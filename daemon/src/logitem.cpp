@@ -7,11 +7,15 @@
 
 using namespace FrameworkLibrary;
 
+uint32_t LogItem::getSize()
+{
+    return sizeof(_time) +
+            sizeof(_event);
+}
+
 LogItem::LogItem(LogItem::Event t):
     _time( FrameworkTimer::getTimeEpoc() ),
     _event(t),
-    _time_str( FrameworkUtils::utostring( _time ) ),
-    _event_str( FrameworkUtils::utostring( _event ) ),
     _valid(true)
 {
 }
@@ -19,10 +23,29 @@ LogItem::LogItem(LogItem::Event t):
 LogItem::LogItem(FILE *file):
     _time(0),
     _event(0),
-    _time_str(""),
-    _event_str(""),
     _valid(false)
 {
+    read(file);
+}
+
+LogItem::LogItem(const LogItem &other):
+    _time(other._time),
+    _event(other._event),
+    _valid(other._valid)
+{
+}
+
+LogItem::LogItem():
+    _time(0),
+    _event(0),
+    _valid(false)
+{
+
+}
+
+void LogItem::read(FILE *file)
+{
+    _valid = false;
     if ( file != nullptr )
     {
         if ( fread( &_time, sizeof(_time), 1, file ) == 1 )
@@ -31,31 +54,10 @@ LogItem::LogItem(FILE *file):
             {
                 _time = le64toh( _time );
                 _event = le64toh( _event );
-                _time_str = FrameworkUtils::utostring( _time );
-                _event_str = FrameworkUtils::utostring( _event );
                 _valid = true;
             }
         }
     }
-}
-
-LogItem::LogItem(const LogItem &other):
-    _time(other._time),
-    _event(other._event),
-    _time_str(other._time_str),
-    _event_str(other._event_str),
-    _valid(other._valid)
-{
-}
-
-LogItem::LogItem():
-    _time(0),
-    _event(0),
-    _time_str(""),
-    _event_str(""),
-    _valid(false)
-{
-
 }
 
 void LogItem::write(FILE *file)
@@ -69,11 +71,17 @@ void LogItem::write(FILE *file)
     }
 }
 
+void LogItem::writeText(FILE *file)
+{
+    if ( file != nullptr )
+        fprintf(file, "%llu %llu\n",
+                static_cast<unsigned long long int>(_time),
+                static_cast<unsigned long long int>(_event) );
+}
+
 void LogItem::operator=(const LogItem &other)
 {
     _time = other._time;
     _event = other._event;
     _valid = other._valid;
-    _time_str = other._time_str;
-    _event_str = other._event_str;
 }
