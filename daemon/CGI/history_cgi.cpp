@@ -32,10 +32,6 @@ int main( int , char** )
     {
         if ( parse_POST() )
         {
-/*            FILE* d = fopen("hd", "a");
-            fprintf(d, "%d %d %d\n", from_time, to_time, n_samples );
-            fclose(d);*/
-
             History history( history_file );
             std::list<HistoryItem> items;
 

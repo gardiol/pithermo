@@ -123,3 +123,34 @@ bool History::fetchInterval(uint64_t from, uint64_t to, std::list<HistoryItem> &
     return ret;
 }
 
+bool History::calculateStats(uint64_t from, uint64_t to, float &min_t, float &max_t, float &avg_t, float &min_et, float &max_et, float &avg_et)
+{
+    bool ret = false;
+    std::list<HistoryItem> items;
+    min_t = min_et = max_t = max_et = avg_t = avg_et = 0;
+    if ( fetchInterval( from, to, items ) )
+    {
+        bool first = true;
+        for ( std::list<HistoryItem>::iterator i = items.begin(); i != items.end(); ++i )
+        {
+            float t = (*i).getTemp(), et = (*i).getExtTemp();
+            if ( first || (t < min_t) ) min_t = t;
+            if ( first || (t > max_t) ) max_t = t;
+            if ( first || (et < min_et) ) min_et = et;
+            if ( first || (et > max_et) ) max_et = et;
+            if ( first )
+            {
+                avg_t = t;
+                avg_et = et;
+                first = false;
+                ret = true;
+            }
+            else
+            {
+                avg_t = (avg_t + t)/2.0f;
+                avg_et = (avg_et + et)/2.0f;
+            }
+        }
+    }
+    return ret;
+}

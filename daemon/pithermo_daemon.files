@@ -1,5 +1,6 @@
 CGI/events_cgi.cpp
 CGI/history_cgi.cpp
+CGI/stats_cgi.cpp
 src/demowiringpi.cpp
 src/demowiringpi.h
 src/demowiringpi.h

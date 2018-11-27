@@ -9,12 +9,6 @@ Generator::Generator(const std::string &n,
                      int command_gpio,
                      int status_gpio,
                      int power_gpio,
-                     uint64_t today_on_time,
-                     uint64_t today_low_time,
-                     uint64_t season_on_time,
-                     uint64_t season_low_time,
-                     uint64_t on_since,
-                     uint64_t on_low_since,
                      LogItem::Event on_event,
                      LogItem::Event off_event,
                      LogItem::Event low_event,
@@ -24,12 +18,6 @@ Generator::Generator(const std::string &n,
     _command_gpio( command_gpio ),
     _status_gpio( status_gpio ),
     _power_gpio( power_gpio ),
-    _today_on_time( today_on_time ),
-    _today_low_time( today_low_time ),
-    _season_on_time( season_on_time ),
-    _season_low_time( season_low_time ),
-    _on_since( on_since ),
-    _on_low_since( on_low_since ),
     _on_event(on_event),
     _off_event(off_event),
     _low_event(low_event),
@@ -67,19 +55,7 @@ bool Generator::switchOn()
 bool Generator::switchOff()
 {    // off = HIGH/true
     if ( _on_since > 0 )
-    {
-        uint64_t delta_on = FrameworkTimer::getTimeEpoc() - _on_since;
-        _today_on_time += delta_on;
-        _season_on_time += delta_on;
         _on_since = 0;
-    }
-    if ( _on_low_since > 0 )
-    {
-        uint64_t delta_on = FrameworkTimer::getTimeEpoc() - _on_low_since;
-        _today_low_time += delta_on;
-        _season_low_time += delta_on;
-        _on_low_since = 0;
-    }
     writeGPIObool( _command_gpio, true );
     _logger->logEvent( _off_event );
     _logger->logDebug( _name + " OFF");
@@ -92,22 +68,12 @@ bool Generator::setPower(Generator::PowerLevel pl)
     writeGPIObool( _power_gpio, pl != POWER_LOW );
     if ( pl == POWER_LOW )
     {
-        if ( _on_since > 0 )
-            if ( _on_low_since == 0 )
-                _on_low_since = FrameworkTimer::getTimeEpoc();
         if ( _low_event != LogItem::NO_EVENT )
             _logger->logEvent( _low_event );
         _logger->logDebug( _name + " LOW");
     }
     else
     {
-        if ( _on_low_since > 0 )
-        {
-            uint64_t delta_on = FrameworkTimer::getTimeEpoc() - _on_low_since;
-            _today_low_time += delta_on;
-            _season_low_time += delta_on;
-            _on_low_since = 0;
-        }
         if ( _low_event != LogItem::NO_EVENT )
             _logger->logEvent( _high_event );
         _logger->logDebug( _name + " HIGH");
@@ -135,7 +101,7 @@ bool Generator::isHot()
     return fdb;
 }
 
-void Generator::newDayResetTimes()
+/*void Generator::newDayResetTimes()
 {
     _today_on_time = 0;
     _today_low_time = 0;
@@ -151,31 +117,11 @@ void Generator::newDayResetTimes()
         _season_low_time += delta_on;
         _on_low_since = FrameworkTimer::getTimeEpoc();
     }
-}
+}*/
 
 uint64_t Generator::lastOnTime()
 {
     return _on_since;
-}
-
-uint64_t Generator::todayOnTime()
-{
-    return _today_on_time + ( _on_since > 0 ? (FrameworkTimer::getTimeEpoc() - _on_since) : 0 );
-}
-
-uint64_t Generator::todayLowOnTime()
-{
-    return _today_low_time + ( _on_low_since > 0 ? (FrameworkTimer::getTimeEpoc()) - _on_low_since : 0 );
-}
-
-uint64_t Generator::seasonOnTime()
-{
-    return _season_on_time + todayOnTime();
-}
-
-uint64_t Generator::seasonLowOnTime()
-{
-    return _season_low_time + todayLowOnTime();
 }
 
 void Generator::printStatus()

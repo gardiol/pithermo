@@ -104,8 +104,8 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 if ( !historyUseRange.checked ){
                     hst.hStart = new Date();
                     hst.hEnd = new Date();
-                    historyEnd.set("value", hst.hStart );
-                    historyStart.set("value", hst.hEnd );
+                    historyEnd.set("value", hst.hEnd );
+                    historyStart.set("value", hst.hStart );
                 } else {
                     hst.hEnd = historyEnd.get("value")
                     hst.hStart = historyStart.get("value")
@@ -171,8 +171,8 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 minorTickStep: 1,
                 fixLower: "major", fixUpper: "major"
             });
-	hst.grp.addSeries("Humi",[],{plot: "humiPlot"});
-	hst.grp.addSeries("HumiExt",[],{plot: "humiPlot", stroke: { color: "violet"} });
+	hst.grp.addSeries("Humi",[{x:0,y:0},{x:1,y:1}],{plot: "humiPlot"});
+	hst.grp.addSeries("HumiExt",[{x:0,y:0},{x:1,y:1}],{plot: "humiPlot", stroke: { color: "violet"} });
 
     new Magnify( hst.grp, "tempPlot");
 	new Magnify( hst.grp, "humiPlot");
@@ -190,6 +190,8 @@ function( dom, attr, dclass, style, html, on,// Dojo
             }
         });
     
+    hst.grp.render();        
+
 	on(dom.byId("history-size"),"click", function(v) {
 		dclass.toggle(dom.byId("history-graph"), "history-big");
 		hst.grp.resize();

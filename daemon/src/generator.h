@@ -14,12 +14,6 @@ public:
               int command_gpio,
               int status_gpio,
               int power_gpio,
-              uint64_t today_on_time,
-              uint64_t today_low_time,
-              uint64_t season_on_time,
-              uint64_t season_low_time,
-              uint64_t on_since,
-              uint64_t on_low_since,
               LogItem::Event on_event,
               LogItem::Event off_event,
               LogItem::Event low_event,
@@ -36,15 +30,7 @@ public:
     bool isHot();
     bool isLow();
 
-    void newDayResetTimes();
-
     uint64_t lastOnTime();
-
-    uint64_t todayOnTime();
-    uint64_t todayLowOnTime();
-
-    uint64_t seasonOnTime();
-    uint64_t seasonLowOnTime();
 
     void printStatus();
 
@@ -58,14 +44,7 @@ private:
     int _status_gpio;
     int _power_gpio;
 
-    uint64_t _today_on_time;
-    uint64_t _today_low_time;
-
-    uint64_t _season_on_time;
-    uint64_t _season_low_time;
-
     uint64_t _on_since;
-    uint64_t _on_low_since;
 
     LogItem::Event _on_event;
     LogItem::Event _off_event;

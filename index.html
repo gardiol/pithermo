@@ -72,12 +72,6 @@
     	<div id="pellet-status" class="status-boxes">
         <div class="status-title">Stufa a pellet</div>
 				<div>
-                    Tempo totale oggi:
-                </div>
-				<div>
-					<span id="pellet-mintime">0h 0m</span> <i>(min)</i> + <span id="pellet-modtime">0h 0m</span> <i>(mod)</i>
-				</div>
-				<div>
 					<div class="col">
 						<div><button id="pellet-on-btn"></button></div>
 						<div><button id="pellet-minimum-on-btn"></button></div>
@@ -92,31 +86,13 @@
 						<div><button id="pellet-minimum-off-btn"></button></div>
 					</div>
 				</div>
-                <div>
-                    Tempo totale stagione:
-                </div>
-				<div>
-					<span id="pellet-season-mintime">0h 0m</span> <i>(min)</i> + <span id="pellet-season-modtime">0h 0m</span> <i>(mod)</i>
-				</div>
 				<div><button id="pellet-flameout-reset-btn"></button></div>
             </div><!-- pellet status-->
             <div id="gas-status" class="status-boxes">
                 <div class="status-title">Caldaia a gas</div>
-				<div>
-                    Tempo totale oggi:
-                </div>
-				<div>
-					<span id="gas-time">0h 0m</span>
-				</div>
                 <button id="gas-on-btn"></button>	
                 <img alt="gl" class="status-icon" id="gas-status-led" src="images/gas-off.png"/>
                 <button id="gas-off-btn"></button>	
-                <div>
-                    Tempo totale stagione:
-                </div>
-				<div>
-                    <span id="gas-season">...</span>
-				</div>
             </div><!-- gas status-->
         </div> <!-- status row-->
     </div><!-- status controls-->
@@ -226,12 +202,63 @@
     </div>
 </div><!-- history area-->
 
+
+<div id="stats-area">
+  <div id="stats-controls">
+	 <div>
+        <div>
+            <input data-dojo-id="statsUseRange" name="stats-today" data-dojo-type="dijit/form/CheckBox" onChange="sta.toggleRange();"/>
+            <label for="stats-today">Scegli periodo</label>
+        </div>
+		<div id="stats-range" class="hidden">
+			<label for="stats-start">Dal:</label>
+			<input data-dojo-id="statsStart" name="stats-start" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
+			<label for="stats-end">al:</label>
+			<input data-dojo-id="statsEnd" name="stats-end" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
+			<button data-dojo-id="statsRangeUpdate" data-dojo-type="dijit/form/Button" onClick="sta.update()" type="button">Aggiorna!</button>
+		</div>
+		<div>
+            <input id="stats-show-p" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/><label for="stats-show-p">Pellet(mod)</label>
+            <input id="stats-show-pl" data-dojo-type="dijit/form/CheckBox" value="2" checked onChange="sta.drawGraph()"/><label for="stats-show-pl">Pellet(min)</label>
+            <input id="stats-show-g" data-dojo-type="dijit/form/CheckBox" value="3" checked onChange="sta.drawGraph()"/><label for="stats-show-g">Gas</label>
+            <input id="stats-show-t" data-dojo-type="dijit/form/CheckBox" value="4" onChange="sta.drawGraph()"/><label for="stats-show-t">Temperatura</label>
+        </div>
+        <div id="stats-total">
+			<div>
+				<span id="stats-total-pellet"></span>
+				<span id="stats-total-pellet-mod"></span>
+				<span id="stats-total-pellet-min"></span>
+			</div>
+			<div id="stats-total-gas">
+			</div>
+		</div>
+
+    </div>
+    <div>
+		<div id="stats">
+			<div id="gas-stats">
+				<div id="-stats-te"></div>
+				<div id="-stats-ex"></div>
+			</div>
+			<div id="pellet-stats">
+				<div id="-stats-hu"></div>
+				<div id="-stats-hx"></div>
+			</div>
+		</div>
+		</div>
+    </div><!-- stats controls-->
+    <div id="stats-graph">
+    </div>
+</div><!-- stats area-->
+
+
 <script src="utils.js?20181126"></script>
 <script src="production.js?20181126"></script>
-<script src="status.js?20181126"></script>
+<script src="status.js?20181127"></script>
 <script src="events.js?20181126"></script>
 <script src="program.js?20181126"></script>
 <script src="history.js?20181126"></script>
+<script src="stats.js?20181127"></script>
 <script language="javascript">
 require([
     "dojo/ready",
@@ -242,6 +269,7 @@ function(ready)
         sts.update();
         hst.update();
         evt.update();
+        sta.update();
 	});
 });
 </script>

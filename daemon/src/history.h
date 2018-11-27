@@ -22,6 +22,7 @@ public:
                  float last_ext_humidity );
 
     bool fetchInterval( uint64_t from, uint64_t to, std::list<HistoryItem>& items );
+    bool calculateStats( uint64_t from, uint64_t to, float& min_t, float& max_t, float& avg_t, float& min_et, float& max_et, float& avg_et );
 
 private:
     std::string _history_filename;

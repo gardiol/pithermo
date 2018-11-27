@@ -115,8 +115,8 @@ function( dom, attr, dclass, style, html, on,// Dojo
 		},
 		update: function(){
 			if ( sts.timer ){
-         	window.clearTimeout( sts.timer );
-            sts.timer = null;
+                window.clearTimeout( sts.timer );
+                sts.timer = null;
         	}
 			getRequest("cgi-bin/status",
         	function(result){
@@ -149,15 +149,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 						} else if ( sts.status.mode == "auto" ) {
 							sts.manual.set("disabled", false );						
 						}
-						html.set("pellet-mintime", Math.trunc(sts.status.pellet.mintime/3600) +"h" + Math.trunc((sts.status.pellet.mintime/60)%60)  + "m" );
-						html.set("pellet-modtime", Math.trunc((sts.status.pellet.time-sts.status.pellet.mintime)/3600) +"h" + Math.trunc(((sts.status.pellet.time-sts.status.pellet.mintime)/60)%60)  + "m" );                         
-						html.set("gas-time", Math.trunc(sts.status.gas.time/3600) +"h " + Math.trunc((sts.status.gas.time/60)%60)  + "m");
-                        html.set("gas-season", Math.trunc(sts.status.gas.stime/3600) +"h " + Math.trunc((sts.status.gas.stime/60)%60)  + "m");                        
-                        html.set("pellet-season-mintime", Math.trunc(sts.status.pellet.smintime/3600) +"h" + Math.trunc((sts.status.pellet.smintime/60)%60)  + "m" );            
-                        html.set("pellet-season-modtime", Math.trunc((sts.status.pellet.stime-sts.status.pellet.smintime)/3600) +"h" + Math.trunc(((sts.status.pellet.stime-sts.status.pellet.smintime)/60)%60)  + "m" ); 
-                                 
-                                 
-
 						attr.set("mode-led", "src", sts.status.mode == "manual" ? "images/manual.png":"images/auto.png");                
 						attr.set("power-led", "src", sts.status.active != "on" ? "images/spento.png":"images/acceso.png");                
 						attr.set("pellet-feedback-led", "src", sts.status.pellet.status == "on" ? "images/max-temp.png":"images/min-temp.png");                
@@ -173,13 +164,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 					html.set("temp-label",sts.status.temp.int + "C (" + sts.status.temp.ext + "C)" );
 					html.set("humi-label", sts.status.temp.hum + "% (" + sts.status.temp.ext_hum + "%)" );
 					prg.update(sts.status.program);
-                    var d = new Date();
-                    var dd = d.getDate();
-                    var dm = d.getMonth()+1;
-                    var dh = d.getHours();
-                    var dM = d.getMinutes();
-                    var ds = d.getSeconds();
-                    html.set("update-time", (dd<10?"0"+dd:dd)+"/"+(dm<10?"0"+dm:dm)+"/"+d.getFullYear()+" - "+(dh<10?"0"+dh:dh)+":"+(dM<10?"0"+dM:dM) + "."+(ds<10?"0"+ds:ds)+"(ok)");
+                    html.set("update-time", utils.printDate(new Date()) + " (ok)" );
 					sts.timer = window.setTimeout( function(){ sts.update(); }, next_update );
 				} // result is valid
          }, 
@@ -191,21 +176,12 @@ function( dom, attr, dclass, style, html, on,// Dojo
 				html.set("humi-label", "--" );
 				for ( var p in sts )
 					if ( sts[p] && sts[p].set ) sts[p].set("disabled", true);
-				html.set("gas-time", "--");
-				html.set("pellet-mintime", "--");
-				html.set("pellet-modtime", "--");
 				attr.set("pellet-feedback-led", "src", "images/min-temp.png");
 				attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
 				attr.set("pellet-status-led", "src", "images/pellet-off.png");
 				attr.set("gas-status-led", "src", "images/gas-off.png");
 				style.set(sts.flameout.domNode, 'display', 'none');		
-                var d = new Date();
-                var dd = d.getDate();
-                var dm = d.getMonth()+1;
-                var dh = d.getHours();
-                var dM = d.getMinutes();
-                var ds = d.getSeconds();
-                html.set("update-time", (dd<10?"0"+dd:dd)+"/"+(dm<10?"0"+dm:dm)+"/"+d.getFullYear()+" - "+(dh<10?"0"+dh:dh)+":"+(dM<10?"0"+dM:dM) + "."+(ds<10?"0"+ds:ds)+"(ok)");
+                    html.set("update-time", utils.printDate(new Date()) + " (ko)" );
 				sts.timer = window.setTimeout( function(){ sts.update(); }, 5000 );
 			});
 		},

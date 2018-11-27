@@ -8,15 +8,6 @@
 using namespace FrameworkLibrary;
 
 Logger::Logger(const std::string &events_path):
-    _season_pellet_on_time(0),
-    _season_pellet_low_time(0),
-    _season_gas_on_time(0),
-    _today_gas_on_time(0),
-    _today_pellet_on_time(0),
-    _today_pellet_low_time(0),
-    _today_gas_on_since(0),
-    _today_pellet_on_since(0),
-    _today_pellet_low_on_since(0),
     _log_filename(events_path),
     _debug_filename(events_path+"_debug.txt"),
     _debug(false),
@@ -35,118 +26,6 @@ Logger::~Logger()
 {
 }
 
-void Logger::initializeStats()
-{
-    uint64_t today_day = _calculateDay( FrameworkTimer::getTimeEpoc() );
-
-    FILE* f = fopen( _log_filename.c_str(), "rb" );
-    uint64_t season_start = 0;
-    uint64_t season_stop = 0;
-    _calculateSeason( season_start, season_stop );
-
-    if ( f != nullptr )
-    {
-        uint64_t gas_on_since = 0;
-        uint64_t pellet_on_since = 0;
-        uint64_t pellet_low_on_since = 0;
-        while ( !feof(f) )
-        {
-            LogItem evt( f );
-            if ( evt.isValid() )
-            {
-                uint64_t event_time = evt.getTime();
-                bool in_season = (event_time >= season_start ) && (event_time <= season_stop );
-                bool is_today = _calculateDay( event_time ) == today_day;
-                if ( in_season || is_today )
-                {
-                    switch ( evt.getEvent() )
-                    {
-                    case  LogItem::GAS_ON:
-                        if ( in_season && (gas_on_since == 0) )
-                            gas_on_since = event_time;
-                        if ( is_today && (_today_gas_on_since == 0) )
-                            _today_gas_on_since = event_time;
-                        break;
-
-                    case LogItem::PELLET_MINIMUM:
-                        if ( in_season &&
-                             ( pellet_on_since > 0 ) &&
-                             ( pellet_low_on_since == 0 ) )
-                                pellet_low_on_since = event_time;
-                        if ( is_today &&
-                             ( _today_pellet_on_since > 0 ) &&
-                             ( _today_pellet_low_on_since == 0 ) )
-                                _today_pellet_low_on_since = event_time;
-                        break;
-
-                    case LogItem::PELLET_MODULATION:
-                        if ( in_season && (pellet_low_on_since > 0) )
-                        {
-                            _season_pellet_low_time += event_time - pellet_low_on_since;
-                            pellet_low_on_since = 0;
-                        }
-                        if ( is_today && (_today_pellet_low_on_since > 0 ) )
-                        {
-                            _today_pellet_low_time += event_time - _today_pellet_low_on_since;
-                            _today_pellet_low_on_since = 0;
-                        }
-                        break;
-
-                    case  LogItem::PELLET_ON:
-                        if ( in_season && (pellet_on_since == 0) )
-                            pellet_on_since = event_time;
-                        if ( is_today && (_today_pellet_on_since == 0) )
-                            _today_gas_on_since = event_time;
-                        break;
-
-                    case LogItem::PELLET_OFF:
-                        if ( in_season && (pellet_on_since > 0) )
-                        {
-                            _season_pellet_on_time += event_time - pellet_on_since;
-                            pellet_on_since = 0;
-                        }
-                        if ( is_today && (_today_pellet_on_since > 0 ) )
-                        {
-                            _today_pellet_on_time += event_time - _today_pellet_on_since;
-                            _today_pellet_on_since = 0;
-                        }
-                        if ( in_season && (pellet_low_on_since > 0) )
-                        {
-                            _season_pellet_low_time += event_time - pellet_low_on_since;
-                            pellet_low_on_since = 0;
-                        }
-                        if ( is_today && (_today_pellet_low_on_since > 0 ) )
-                        {
-                            _today_pellet_low_time += event_time - _today_pellet_low_on_since;
-                            _today_pellet_low_on_since = 0;
-                        }
-                        break;
-
-                    case LogItem::GAS_OFF:
-                        if ( is_today && (_today_gas_on_since > 0 ) )
-                        {
-                            _today_gas_on_time += event_time - _today_gas_on_since;
-                            _today_gas_on_since = 0;
-                        }
-                        if ( in_season && (gas_on_since > 0) )
-                        {
-                            _season_gas_on_time += event_time - gas_on_since;
-                            gas_on_since = 0;
-                        }
-                        break;
-                    }
-                }
-                else
-                {
-                    gas_on_since = 0;
-                    pellet_on_since = 0;
-                    pellet_low_on_since = 0;
-                }
-            }
-        }
-        fclose(f);
-    }
-}
 
 void Logger::logEvent(LogItem evt)
 {
@@ -183,13 +62,13 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
         bool end_found = false;
         fseek( read_file, 0, SEEK_END );
         long int file_len = ftell(read_file);
-        uint32_t item_size = LogItem::getSize();
-        uint32_t total_items = file_len / item_size;
+        int64_t item_size = LogItem::getSize();
+        int64_t total_items = file_len / item_size;
         LogItem item;
 
         // Search for start with a log2 approach
-        uint32_t step_size = total_items / 2;
-        uint32_t start_item = step_size;
+        int64_t step_size = total_items / 2;
+        int64_t start_item = step_size;
         while ( !start_found && (start_item != 0) && (start_item != (total_items-1) ) && (step_size > 0) )
         {
             step_size /= 2;
@@ -220,12 +99,73 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
     return ret;
 }
 
-uint64_t Logger::_calculateDay(uint64_t t)
+bool Logger::calculateStats(uint64_t from, uint64_t to, uint32_t &pellet_on_time, uint32_t &pellet_low_time, uint32_t &gas_on_time)
 {
-    uint64_t d = t / (3600*24);
-    return d;
+    bool ret = false;
+    pellet_on_time = pellet_low_time = gas_on_time = 0;
+    std::list<LogItem> items;
+    if ( fetchInterval( from, to, items ) )
+    {
+        uint64_t gas_on_since = 0;
+        uint64_t pellet_on_since = 0;
+        uint64_t pellet_low_on_since = 0;
+        for ( std::list<LogItem>::iterator i = items.begin(); i != items.end(); ++i )
+        {
+            uint64_t event_time = (*i).getTime();
+            switch ( (*i).getEvent() )
+            {
+            case  LogItem::GAS_ON:
+                if ( gas_on_since == 0 )
+                    gas_on_since = event_time;
+                break;
+
+            case LogItem::PELLET_MINIMUM:
+                if ( ( pellet_on_since > 0 ) &&
+                     ( pellet_low_on_since == 0 ) )
+                        pellet_low_on_since = event_time;
+                break;
+
+            case LogItem::PELLET_MODULATION:
+                if ( pellet_low_on_since > 0 )
+                {
+                    pellet_low_time += event_time - pellet_low_on_since;
+                    pellet_low_on_since = 0;
+                }
+                break;
+
+            case  LogItem::PELLET_ON:
+                if ( pellet_on_since == 0 )
+                    pellet_on_since = event_time;
+                break;
+
+            case LogItem::PELLET_OFF:
+                if ( pellet_on_since > 0 )
+                {
+                    pellet_on_time += event_time - pellet_on_since;
+                    pellet_on_since = 0;
+                }
+                if ( pellet_low_on_since > 0 )
+                {
+                    pellet_low_time += event_time - pellet_low_on_since;
+                    pellet_low_on_since = 0;
+                }
+                break;
+
+            case LogItem::GAS_OFF:
+                if ( gas_on_since > 0 )
+                {
+                    gas_on_time += event_time - gas_on_since;
+                    gas_on_since = 0;
+                }
+                break;
+            }
+        }
+        ret = items.size() > 1;
+    }
+    return ret;
 }
 
+/*
 void Logger::_calculateSeason(uint64_t &start, uint64_t &end)
 {
     time_t now = static_cast<time_t>(FrameworkTimer::getTimeEpoc());
@@ -260,7 +200,7 @@ void Logger::_calculateSeason(uint64_t &start, uint64_t &end)
         // Second season: the season will end on the divider date of NEXT year
         season_divider.tm_year++;
     end = static_cast<uint64_t>(mktime(&season_divider));
-}
+}*/
 
 void Logger::_printStamp(FILE *f)
 {

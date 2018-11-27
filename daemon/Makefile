@@ -11,7 +11,7 @@ FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./
 FRAMEWORK_OBJS := $(foreach src,$(FRAMEWORK_SRCS),obj/$(basename $(notdir $(src))).o)
 $(foreach o,$(FRAMEWORK_OBJS),$(eval FRAMEWORK_MAPS_$(basename $(notdir $(o))) := framework/$(basename $(notdir $(o))).cpp))
 
-all: obj pithermo_daemon ../cgi-bin/history ../cgi-bin/events
+all: obj pithermo_daemon ../cgi-bin/history ../cgi-bin/events ../cgi-bin/stats
 
 obj:
 	mkdir obj
@@ -61,6 +61,9 @@ obj/history_cgi.o: CGI/history_cgi.cpp
 obj/events_cgi.o: CGI/events_cgi.cpp
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 
+obj/stats_cgi.o: CGI/stats_cgi.cpp
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
+
 pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o ${DEMO_OBJ}
 	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib -lwiringPi
 
@@ -68,6 +71,9 @@ pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o 
 	g++ -o $@ $^ -lpthread -lrt -lm
 
 ../cgi-bin/events: obj/frameworktimer.o obj/frameworkutils.o obj/events_cgi.o obj/logitem.o obj/logger.o obj/debugprint.o
+	g++ -o $@ $^ -lpthread -lrt -lm
+
+../cgi-bin/stats: obj/frameworktimer.o obj/frameworkutils.o obj/stats_cgi.o obj/logitem.o obj/logger.o obj/debugprint.o obj/historyitem.o obj/history.o
 	g++ -o $@ $^ -lpthread -lrt -lm
 
 .PHONY: clean
