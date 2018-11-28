@@ -23,7 +23,13 @@ bool parse_POST()
         {
             from_day = from - from % DAY_OFFSET;
             to_day  = to - to % DAY_OFFSET + DAY_OFFSET;
-            return true;
+            uint64_t now = FrameworkTimer::getTimeEpoc();
+            if ( from < now )
+            {
+                if ( to_day > now )
+                    to_day = now;
+                return true;
+            }
         }
     }
     return false;
@@ -55,7 +61,7 @@ int main( int , char** )
 
             for ( uint64_t day = from_day; day < to_day; day += DAY_OFFSET )
             {
-                uint64_t end = day + DAY_OFFSET;
+                uint64_t end = FrameworkUtils_min<uint64_t>( to_day, day + DAY_OFFSET);
                 std::list<HistoryItem> datas;
                 uint32_t pellet_on_time = 0;
                 uint32_t pellet_low_time = 0;
