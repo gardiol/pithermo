@@ -82,3 +82,5 @@ clean:
 	rm -rf obj
 	rm -f pithermo_daemon
 	rm -f ../cgi-bin/history
+	rm -f ../cgi-bin/events
+	rm -f ../cgi-bin/stats
