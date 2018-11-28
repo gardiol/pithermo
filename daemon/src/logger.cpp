@@ -57,7 +57,8 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
     return fetchInterval(from, to, items, false, a, b, c);
 }
 
-bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items, bool search_prev, bool &last_pellet_on, bool &last_pellet_minimum_on, bool &last_gas_on)
+bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items, bool search_prev,
+                           bool &last_pellet_on, bool &last_pellet_minimum_on, bool &last_gas_on)
 {
     bool ret = false;
     items.clear();
@@ -72,43 +73,106 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
         int64_t total_items = file_len / item_size;
         LogItem item;
 
-        // Search for start with a log2 approach
-        int64_t step_size = total_items / 2;
-        int64_t start_item = step_size;
-        while ( !start_found && (start_item != 0) && (start_item != (total_items-1) ) && (step_size > 0) )
+        int64_t left = 0;
+        int64_t right = total_items;
+        bool error = false;
+        while ( !start_found && !error && (left != (right-1) ) )
         {
-            step_size /= 2;
+            int64_t start_item = (left+right)/2;
             long int cursor = start_item * item_size;
-            fseek( read_file, cursor, SEEK_SET );
-            item.read( read_file );
-            uint64_t item_time = item.getTime();
-            if ( item_time == from )
-                start_found = true;
-            else if ( item_time > from )
-                start_item -= step_size;
+            if ( fseek( read_file, cursor, SEEK_SET ) != -1 )
+            {
+                item.read( read_file );
+                if ( item.isValid() )
+                {
+                    uint64_t item_time = item.getTime();
+                    // This case is actually VERY difficult to happen!
+                    if ( item_time == from )
+                        start_found = true;
+                    else if ( item_time > from )
+                        right = start_item;
+                    else
+                        left = start_item;
+                }
+                else
+                    error = true;
+            }
             else
-                start_item += step_size;
+                error = true;
         }
 
-        // We need to find the last unmatched "on" events, as requested:
-        if ( search_prev )
+        if ( !error )
         {
-            // Searching backwards for an unmatched "on" event.
-            // Stop as soon as we find the firt "off" event or "on" event
-            // for each generator;
-            xxx;
-        }
+            // We need to find the last unmatched "on" events, as requested:
+            if ( search_prev )
+            {
+                last_gas_on = false;
+                last_pellet_on = false;
+                last_pellet_minimum_on = false;
+                bool gas_ok = false;
+                bool pellet_ok = false;
+                bool pellet_minimum_ok = false;
+                // Searching backwards for an unmatched "on" event.
+                // Stop as soon as we find the firt "off" event or "on" event
+                // for each generator;
+                long int start_pos = ftell( read_file );
+                // Go back at least TWO items (one is the start item already read)
+                long int pos = start_pos - item_size*2;
+                LogItem old_item;
+                while ( (pos >= 0) && (!gas_ok || !pellet_ok || !pellet_minimum_ok) )
+                {
+                    if ( fseek(read_file, pos, SEEK_SET) != -1 )
+                    {
+                        old_item.read(read_file);
+                        if ( old_item.isValid() )
+                        {
+                            uint64_t event = old_item.getEvent();
+                            if ( !gas_ok )
+                            {   // gas was on ONLY if last gas event was "ON"
+                                last_gas_on = event == LogItem::GAS_ON;
+                                // We stop checking for gas after we saw an ON or OFF event.
+                                if ( (event == LogItem::GAS_ON) || (event == LogItem::GAS_OFF) )
+                                    gas_ok = true;
+                            }
+                            if ( !pellet_minimum_ok )
+                            {   // Pellet is at minimum only if last event is MINIMUM
+                                last_pellet_minimum_on = event == LogItem::PELLET_MINIMUM;
+                                // If we see a MINIMUM or MODULATION event we can stop checking pellet minimum.
+                                if ( (event == LogItem::PELLET_MINIMUM) || (event == LogItem::PELLET_MODULATION ) )
+                                    pellet_minimum_ok = true;
+                            }
+                            if ( !pellet_ok )
+                            {
+                                // Pellet is ON only if last event is PELLET_ON
+                                last_pellet_on = event == LogItem::PELLET_ON;
+                                // When we see a PELLET_ON or PELLET_OFF events, we are done with pellet
+                                if ( (event == LogItem::PELLET_ON) || (event == LogItem::PELLET_OFF) )
+                                    pellet_ok = true;
+                            }
+                        }
+                        // Fetch previous item
+                        pos -= item_size;
+                    }
+                    else
+                        pos = -1;
+                }
+                // Back to original position to read the rest of the file
+                fseek(read_file, start_pos, SEEK_SET);
+            }
 
-        // Let's read until last:
-        while ( !end_found && item.isValid() && !feof(read_file) )
-        {
-            items.push_back( item );
-            if ( item.getTime() >= to )
-                end_found = true;
-            item.read( read_file );
-        }
-        fclose(read_file);
-        ret = true;
+            // Let's read until last:
+            while ( !end_found && item.isValid() && !feof(read_file) )
+            {
+                if ( item.getTime() >= to )
+                    end_found = true;
+                else
+                    items.push_back( item );
+                item.read( read_file );
+            }
+            fclose(read_file);
+            ret = true;
+
+        } // error looking for start!
     }
     return ret;
 }
@@ -127,19 +191,18 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
     uint64_t gas_on_since = 0;
     uint64_t pellet_on_since = 0;
     uint64_t pellet_low_on_since = 0;
-    if ( prev_valid )
-    {
-        if ( prev_pellet_on )
-            pellet_on_since = from;
-        if ( prev_pellet_minimum_on )
-            pellet_low_on_since = from;
-        if ( prev_gas_on )
-            gas_on_since = from;
-        ret = fetchInterval( from, to, items );
-    }
-    else
+    if ( !prev_valid )
         ret = fetchInterval( from, to, items, true,
                              prev_pellet_on, prev_pellet_minimum_on, prev_gas_on );
+    else
+        ret = fetchInterval( from, to, items );
+
+    if ( prev_pellet_on )
+        pellet_on_since = from;
+    if ( prev_pellet_minimum_on )
+        pellet_low_on_since = from;
+    if ( prev_gas_on )
+        gas_on_since = from;
 
     if ( ret )
     {
@@ -170,7 +233,11 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
 
             case  LogItem::PELLET_ON:
                 if ( pellet_on_since == 0 )
+                {
                     pellet_on_since = event_time;
+                    if ( pellet_low_on_since > 0 )
+                        pellet_low_on_since = event_time;
+                }
                 break;
 
             case LogItem::PELLET_OFF:
@@ -187,6 +254,8 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                 break;
 
             case LogItem::GAS_OFF:
+            // PELLET HOT might indicate that GAS is off by hardware
+            case LogItem::PELLET_HOT:
                 if ( gas_on_since > 0 )
                 {
                     gas_on_time += event_time - gas_on_since;

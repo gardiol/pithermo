@@ -97,7 +97,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 					if ( line_end != -1 ){
 						var row = new_rows.substr( pos, line_end-pos+1 );
 						var split_row = row.split(" ");
-                        sta.data[ parseInt(split_row[0]) ] = {0: parseFloat(split_row[1] / 3600.0), // pellet time
+                        sta.data[ parseInt(split_row[0]) ] = {0: ((parseFloat(split_row[1])-parseFloat(split_row[2])) / 3600.0), // pellet time
                                                              1: parseFloat(split_row[2] / 3600.0), // pellet min time
                                                              2: parseFloat(split_row[3] / 3600.0), // gas time
                                                              3: parseFloat(split_row[4]), // t min

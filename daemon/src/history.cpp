@@ -86,11 +86,43 @@ bool History::fetchInterval(uint64_t from, uint64_t to, std::list<HistoryItem> &
         bool end_found = false;
         fseek( read_file, 0, SEEK_END );
         long int file_len = ftell(read_file);
-        uint32_t item_size = HistoryItem::getSize();
-        uint32_t total_items = file_len / item_size;
+        int64_t item_size = HistoryItem::getSize();
+        int64_t total_items = file_len / item_size;
         HistoryItem item;
 
-        // Search for start with a log2 approach
+        int64_t left = 0;
+        int64_t right = total_items;
+        bool error = false;
+        while ( !start_found && !error && (left != (right-1) ) )
+        {
+            int64_t start_item = (left+right)/2;
+            long int cursor = start_item * item_size;
+            if ( fseek( read_file, cursor, SEEK_SET ) != -1 )
+            {
+                item.read( read_file );
+                if ( item.isValid() )
+                {
+                    uint64_t item_time = item.getTime();
+                    // This case is actually VERY difficult to happen!
+                    if ( item_time == from )
+                        start_found = true;
+                    else if ( item_time > from )
+                        right = start_item;
+                    else
+                        left = start_item;
+                }
+                else
+                    error = true;
+            }
+            else
+                error = true;
+        }
+
+        if ( !error )
+        {
+
+
+/*        // Search for start with a log2 approach
         uint32_t step_size = total_items / 2;
         uint32_t start_item = step_size;
         while ( !start_found && (start_item != 0) && (start_item != (total_items-1) ) && (step_size > 0) )
@@ -107,18 +139,19 @@ bool History::fetchInterval(uint64_t from, uint64_t to, std::list<HistoryItem> &
             else
                 start_item += step_size;
         }
-
+*/
         // Let's read until last:
-        while ( !end_found && item.isValid() && !feof(read_file) )
-        {
-            items.push_back( item );
-            if ( item.getTime() >= to )
-                end_found = true;
-            item.read( read_file );
-        }
-        if ( items.size() > 1 )
-            ret = true;
-        fclose(read_file);
+            while ( !end_found && item.isValid() && !feof(read_file) )
+            {
+                items.push_back( item );
+                if ( item.getTime() >= to )
+                    end_found = true;
+                item.read( read_file );
+            }
+            if ( items.size() > 1 )
+                ret = true;
+            fclose(read_file);
+        } // error looking for start
     }
     return ret;
 }
