@@ -119,7 +119,7 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
                 // Go back at least TWO items (one is the start item already read)
                 long int pos = start_pos - item_size*2;
                 LogItem old_item;
-                while ( (pos >= 0) && (!gas_ok || !pellet_ok || !pellet_minimum_ok) )
+                while ( !error && (pos >= 0) && (!gas_ok || !pellet_ok || !pellet_minimum_ok) )
                 {
                     if ( fseek(read_file, pos, SEEK_SET) != -1 )
                     {
@@ -149,30 +149,34 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
                                 if ( (event == LogItem::PELLET_ON) || (event == LogItem::PELLET_OFF) )
                                     pellet_ok = true;
                             }
+                            // Fetch previous item
+                            pos -= item_size;
                         }
-                        // Fetch previous item
-                        pos -= item_size;
+                        else
+                            error = true;
                     }
                     else
-                        pos = -1;
+                        error = true;
                 }
                 // Back to original position to read the rest of the file
                 fseek(read_file, start_pos, SEEK_SET);
             }
 
-            // Let's read until last:
-            while ( !end_found && item.isValid() && !feof(read_file) )
+            if ( !error )
             {
-                if ( item.getTime() >= to )
-                    end_found = true;
-                else
-                    items.push_back( item );
-                item.read( read_file );
+                // Let's read until last:
+                while ( !end_found && item.isValid() && !feof(read_file) )
+                {
+                    if ( item.getTime() >= to )
+                        end_found = true;
+                    else
+                        items.push_back( item );
+                    item.read( read_file );
+                }
+                ret = true;
             }
-            fclose(read_file);
-            ret = true;
-
         } // error looking for start!
+        fclose(read_file);
     }
     return ret;
 }
