@@ -53,6 +53,12 @@ void Logger::logDebug(const std::string &str)
 
 bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items)
 {
+    bool a,b,c;
+    return fetchInterval(from, to, items, false, a, b, c);
+}
+
+bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items, bool search_prev, bool &last_pellet_on, bool &last_pellet_minimum_on, bool &last_gas_on)
+{
     bool ret = false;
     items.clear();
     FILE* read_file = fopen( _log_filename.c_str(), "rb" );
@@ -84,6 +90,15 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
                 start_item += step_size;
         }
 
+        // We need to find the last unmatched "on" events, as requested:
+        if ( search_prev )
+        {
+            // Searching backwards for an unmatched "on" event.
+            // Stop as soon as we find the firt "off" event or "on" event
+            // for each generator;
+            xxx;
+        }
+
         // Let's read until last:
         while ( !end_found && item.isValid() && !feof(read_file) )
         {
@@ -92,23 +107,43 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
                 end_found = true;
             item.read( read_file );
         }
-        if ( items.size() > 1 )
-            ret = true;
         fclose(read_file);
+        ret = true;
     }
     return ret;
 }
 
-bool Logger::calculateStats(uint64_t from, uint64_t to, uint32_t &pellet_on_time, uint32_t &pellet_low_time, uint32_t &gas_on_time)
+bool Logger::calculateStats(uint64_t from, uint64_t to,
+                            bool& prev_valid,
+                            bool& prev_pellet_on,
+                            bool& prev_pellet_minimum_on,
+                            bool& prev_gas_on,
+                            uint32_t &pellet_on_time,
+                            uint32_t &pellet_low_time,
+                            uint32_t &gas_on_time)
 {
-    bool ret = false;
-    pellet_on_time = pellet_low_time = gas_on_time = 0;
+    bool ret = false;    
     std::list<LogItem> items;
-    if ( fetchInterval( from, to, items ) )
+    uint64_t gas_on_since = 0;
+    uint64_t pellet_on_since = 0;
+    uint64_t pellet_low_on_since = 0;
+    if ( prev_valid )
     {
-        uint64_t gas_on_since = 0;
-        uint64_t pellet_on_since = 0;
-        uint64_t pellet_low_on_since = 0;
+        if ( prev_pellet_on )
+            pellet_on_since = from;
+        if ( prev_pellet_minimum_on )
+            pellet_low_on_since = from;
+        if ( prev_gas_on )
+            gas_on_since = from;
+        ret = fetchInterval( from, to, items );
+    }
+    else
+        ret = fetchInterval( from, to, items, true,
+                             prev_pellet_on, prev_pellet_minimum_on, prev_gas_on );
+
+    if ( ret )
+    {
+        // This is for the selected period.
         for ( std::list<LogItem>::iterator i = items.begin(); i != items.end(); ++i )
         {
             uint64_t event_time = (*i).getTime();
@@ -160,8 +195,32 @@ bool Logger::calculateStats(uint64_t from, uint64_t to, uint32_t &pellet_on_time
                 break;
             }
         }
-        ret = items.size() > 1;
+        if ( pellet_on_since > 0 )
+        {
+            pellet_on_time += to - pellet_on_since;
+            prev_pellet_on = true;
+        }
+        else
+            prev_pellet_on = false;
+        if ( pellet_low_on_since > 0 )
+        {
+            pellet_low_time += to - pellet_low_on_since;
+            prev_pellet_minimum_on = true;
+        }
+        else
+            prev_pellet_minimum_on = false;
+        if ( gas_on_since > 0 )
+        {
+            gas_on_time += to - gas_on_since;
+            prev_gas_on = true;
+        }
+        else
+            prev_gas_on = false;
+        prev_valid = true;
+        ret = true;
     }
+    else
+        prev_valid = false;
     return ret;
 }
 

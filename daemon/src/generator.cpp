@@ -101,24 +101,6 @@ bool Generator::isHot()
     return fdb;
 }
 
-/*void Generator::newDayResetTimes()
-{
-    _today_on_time = 0;
-    _today_low_time = 0;
-    if ( _on_since > 0 )
-    {
-        uint64_t delta_on = FrameworkTimer::getTimeEpoc() - _on_since;
-        _season_on_time += delta_on;
-        _on_since = FrameworkTimer::getTimeEpoc();
-    }
-    if ( _on_low_since > 0 )
-    {
-        uint64_t delta_on = FrameworkTimer::getTimeEpoc() - _on_low_since;
-        _season_low_time += delta_on;
-        _on_low_since = FrameworkTimer::getTimeEpoc();
-    }
-}*/
-
 uint64_t Generator::lastOnTime()
 {
     return _on_since;

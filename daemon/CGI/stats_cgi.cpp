@@ -48,6 +48,11 @@ int main( int , char** )
             uint32_t total_pellet_low_time = 0;
             uint32_t total_gas_on_time = 0;
 
+            bool prev_valid = false;
+            bool prev_pellet_on = false;
+            bool prev_pellet_minimum_on = false;
+            bool prev_gas_on = false;
+
             for ( uint64_t day = from_day; day < to_day; day += DAY_OFFSET )
             {
                 uint64_t end = day + DAY_OFFSET;
@@ -61,7 +66,12 @@ int main( int , char** )
                 float min_et = 0;
                 float max_et = 0;
                 float avg_et = 0;
-                if ( logger.calculateStats( day, end, pellet_on_time, pellet_low_time, gas_on_time ) )
+                if ( logger.calculateStats( day, end,
+                                            prev_valid,
+                                            prev_pellet_on,
+                                            prev_pellet_minimum_on,
+                                            prev_gas_on,
+                                            pellet_on_time, pellet_low_time, gas_on_time ) )
                 {
                     total_pellet_on_time += pellet_on_time;
                     total_pellet_low_time += pellet_low_time;

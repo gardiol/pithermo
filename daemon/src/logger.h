@@ -32,8 +32,13 @@ public:
     }
 
     bool fetchInterval( uint64_t from, uint64_t to, std::list<LogItem>& items );
+    bool fetchInterval(uint64_t from, uint64_t to, std::list<LogItem>& items,
+                       bool search_prev,
+                        bool& last_pellet_on, bool& last_pellet_minimum_on, bool& last_gas_on);
+
     bool calculateStats(uint64_t from,
-                         uint64_t to,
+                         uint64_t to, bool &prev_valid,
+                        bool &prev_pellet_on, bool &prev_pellet_minimum_on, bool &prev_gas_on,
                          uint32_t& pellet_on_time,
                          uint32_t& pellet_low_time,
                          uint32_t& gas_on_time );
