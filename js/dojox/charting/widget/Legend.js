@@ -53,6 +53,7 @@ this._addLabel(t.dyn[i],x.legend||x.text||x.y);
 }
 }else{
 _4.forEach(s,function(x){
+if ( x.legend )
 this._addLabel(x.dyn,x.legend||x.name);
 },this);
 }

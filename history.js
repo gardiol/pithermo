@@ -155,8 +155,8 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 microTickStep: 0.1, microTicks: false,
                 fixLower: "major",  fixUpper: "major"
             });
-	hst.grp.addSeries("Temp", [],{ plot: "tempPlot"});
-	hst.grp.addSeries("TempExt", [],{ plot: "tempPlot", stroke: {color:"blue"} });
+	hst.grp.addSeries("Temp", [{x:0,y:0},{x:1,y:1}],{ plot: "tempPlot", legend:"Temperatura interna"});
+	hst.grp.addSeries("TempExt", [{x:0,y:0},{x:1,y:1}],{ plot: "tempPlot", legend:"Temperatura esterna", stroke: {color:"blue"} });
     
 	hst.grp.addPlot("humiPlot",{
                 type: Lines,lines: true, areas: false, markers: true,
@@ -171,8 +171,8 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 minorTickStep: 1,
                 fixLower: "major", fixUpper: "major"
             });
-	hst.grp.addSeries("Humi",[{x:0,y:0},{x:1,y:1}],{plot: "humiPlot"});
-	hst.grp.addSeries("HumiExt",[{x:0,y:0},{x:1,y:1}],{plot: "humiPlot", stroke: { color: "violet"} });
+	hst.grp.addSeries("Humi",[{x:0,y:0},{x:1,y:1}],{plot: "humiPlot", legend:"Umidità interna"});
+	hst.grp.addSeries("HumiExt",[{x:0,y:0},{x:1,y:1}],{plot: "humiPlot", legend: "Unidità esterna", stroke: { color: "violet"} });
 
     new Magnify( hst.grp, "tempPlot");
 	new Magnify( hst.grp, "humiPlot");
@@ -191,6 +191,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
         });
     
     hst.grp.render();        
+    new Legend({chartRef:hst.grp}, 'history-legend');
 
 	on(dom.byId("history-size"),"click", function(v) {
 		dclass.toggle(dom.byId("history-graph"), "history-big");

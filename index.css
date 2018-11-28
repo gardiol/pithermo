@@ -122,6 +122,20 @@ img.today-table-img {
     height: 14em;
 }
 
+#stats-controls {
+    text-align: center;
+    padding: 1em 0 1em 0;
+    background: linear-gradient(Salmon,LightGrey);
+    border-top: 2px groove gray;
+}
+
+#stats-total {
+   margin-top: 0.2em;
+   border: 1px dashed black;
+   display: inline-block;
+   padding: 0.4em;
+}
+
 
 /* History area specific */
 #history-graph {

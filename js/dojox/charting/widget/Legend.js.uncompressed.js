@@ -91,7 +91,8 @@ define("dojox/charting/widget/Legend", ["dojo/_base/declare", "dijit/_WidgetBase
 				}
 			}else{
 				arr.forEach(s, function(x){
-					this._addLabel(x.dyn, x.legend || x.name);
+                    if ( x.legend )
+                        this._addLabel(x.dyn, x.legend || "");
 				}, this);
 			}
 		},

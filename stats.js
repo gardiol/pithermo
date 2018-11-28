@@ -45,10 +45,17 @@ function( dom, attr, dclass, style, html, on,// Dojo
             },
 
             drawGraph: function(){
-				var axna = { 0:"Pellet", 1:"PelletLow", 2:"Gas", 3:"Mins", 4:"Maxs", 5:"Avgs" };
-                var show = { 0:dom.byId("stats-show-p").checked,1:dom.byId("stats-show-pl").checked,2:dom.byId("stats-show-g").checked,
-                             3:dom.byId("stats-show-t").checked,4:dom.byId("stats-show-t").checked, 5:dom.byId("stats-show-t").checked };
-				var list = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[] };
+				var axna = { 0:"Pellet", 1:"PelletLow", 2:"Gas", 3:"Mins", 4:"Maxs", 5:"Avgs", 6:"MinsE", 7:"MaxsE", 8:"AvgsE" };
+                var show = { 0:dom.byId("stats-show-a").checked&&dom.byId("stats-show-p").checked,
+                             1:dom.byId("stats-show-a").checked&&dom.byId("stats-show-pl").checked,
+                             2:dom.byId("stats-show-a").checked&&dom.byId("stats-show-g").checked,
+                             3:dom.byId("stats-show-ti").checked&&dom.byId("stats-show-tmin").checked, 
+                             4:dom.byId("stats-show-ti").checked&&dom.byId("stats-show-tmax").checked, 
+                             5:dom.byId("stats-show-ti").checked&&dom.byId("stats-show-tavg").checked,
+                             6:dom.byId("stats-show-te").checked&&dom.byId("stats-show-tmin").checked, 
+                             7:dom.byId("stats-show-te").checked&&dom.byId("stats-show-tmax").checked, 
+                             8:dom.byId("stats-show-te").checked&&dom.byId("stats-show-tavg").checked };
+				var list = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[] };
                 var tots = [];
                 var x = 1;
                 for (var time in sta.data){
@@ -151,9 +158,9 @@ function( dom, attr, dclass, style, html, on,// Dojo
 	sta.grp.addPlot("TimePlot", {type: StackedColumns, gap: 5 });     
     sta.grp.addAxis("x", { plot: "TimePlot", labelFunc: function(t,v,p){return utils.date2str(sta.grpRef[v]*1000)} });
     sta.grp.addAxis("y", { plot: "TimePlot", vertical:true, min: 0 });
-    sta.grp.addSeries("Pellet", [1,2,3,4,5,6,7,8,9,10],{  plot: "TimePlot", stroke: "black", fill: "purple", minorThicks: false } );
-	sta.grp.addSeries("PelletLow", [1,2,3,4,5,6,7,8,9,10],{ plot: "TimePlot",stroke: "black", fill: "blue" } );
-    sta.grp.addSeries("Gas", [1,2,3,4,5,6,7,8,9,10],{plot: "TimePlot",stroke: "black", fill: "yellow" } );
+    sta.grp.addSeries("Pellet", [1,2,3,4,5,6,7,8,9,10],{  plot: "TimePlot", /*stroke: "black", fill: "purple", */minorThicks: false, legend: "Ore pellet modulazione" } );
+	sta.grp.addSeries("PelletLow", [1,2,3,4,5,6,7,8,9,10],{ plot: "TimePlot",/*stroke: "black", fill: "blue", */legend: "Ore pellet minimo" } );
+    sta.grp.addSeries("Gas", [1,2,3,4,5,6,7,8,9,10],{plot: "TimePlot",/*stroke: "black", fill: "yellow",*/ legend: "Ore gas acceso" } );
     sta.grp.connectToPlot("TimePlot",
         function(evt){
             if ( evt.type == "onclick" ){
@@ -168,7 +175,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 
     sta.grp.addPlot("TotPlot", {type: Lines, lines: false, markers: true});     
     sta.grp.addAxis("y", { plot: "TotPlot", vertical:true, min: 0 });
-    sta.grp.addSeries("Totals", [1,2,3,4,5,6,7,8,9,10],{  plot: "TotPlot" } );
+    sta.grp.addSeries("Totals", [1,2,3,4,5,6,7,8,9,10],{  plot: "TotPlot", legend:"" } );
     new Magnify( sta.grp, "TotPlot");
 
     sta.grp.movePlotToFront( "TotPlot" );
@@ -189,9 +196,12 @@ function( dom, attr, dclass, style, html, on,// Dojo
                             majorTickStep: 5, majorTicks: true, majorLabels: true,
                             minorTickStep: 1, minorTicks: true, minorLabels: false,
                             microTickStep: 0.1, microTicks: false });
-    sta.grp.addSeries("Mins", [1,2,3,4,5,6,7,8,9,10],{  plot: "TempPlot" } );
-    sta.grp.addSeries("Maxs", [1,2,3,4,5,6,7,8,9,10],{  plot: "TempPlot" } );
-    sta.grp.addSeries("Avgs", [1,2,3,4,5,6,7,8,9,10],{  plot: "TempPlot" } );
+    sta.grp.addSeries("Mins", [1,2,3,4,5,6,7,8,9,10],{  plot: "TempPlot", legend:"Minima interna" } );
+    sta.grp.addSeries("Maxs", [1,2,3,4,5,6,7,8,9,10],{  plot: "TempPlot", legend:"Massima interna" } );
+    sta.grp.addSeries("Avgs", [1,2,3,4,5,6,7,8,9,10],{  plot: "TempPlot", legend:"Media interna" } );
+    sta.grp.addSeries("MinsE", [1,2,3,4,5,6,7,8,9,10],{  plot: "TempPlot", legend:"Minima esterna" } );
+    sta.grp.addSeries("MaxsE", [1,2,3,4,5,6,7,8,9,10],{  plot: "TempPlot", legend:"Massima esterna" } );
+    sta.grp.addSeries("AvgsE", [1,2,3,4,5,6,7,8,9,10],{  plot: "TempPlot", legend:"Media esterna" } );
     sta.grp.movePlotToFront( "TempPlot" );
     sta.grp.connectToPlot("TempPlot",
         function(evt){
@@ -205,51 +215,9 @@ function( dom, attr, dclass, style, html, on,// Dojo
             }
         });
     new Magnify( sta.grp, "TempPlot");
-    
+        
     sta.grp.render(); 
+    new Legend({chartRef:sta.grp, horizontal:3}, 'stats-legend');
 
     
-    /*
-	hst.grp.addAxis("x", 	{
-                plot:"tempPlot", 
-                majorTicks: true, majorLabels: true,
-                minorTicks: false,minorLabels: false,
-                microTicks: false,
-                labelFunc:function(text,value,prec){
-                    return utils.printDate(value*1000);
-                }
-            });
-	hst.grp.addAxis("y", 	{
-                plot:"tempPlot", 
-                vertical: true, 
-                dropLabels: false,
-                majorTickStep: 5, majorTicks: true, majorLabels: true,
-                minorTickStep: 1, minorTicks: true, minorLabels: false,
-                microTickStep: 0.1, microTicks: false,
-                fixLower: "major",  fixUpper: "major"
-            });
-	hst.grp.addSeries("Temp", [],{ plot: "tempPlot"});
-	hst.grp.addSeries("TempExt", [],{ plot: "tempPlot", stroke: {color:"blue"} });
-    
-	hst.grp.addPlot("humiPlot",{
-                type: Lines,lines: true, areas: false, markers: true,
-                tension: "X",
-                hAxis: "x",vAxis: "h",
-                stroke: {color: "yellow", width: 1	}
-            });
-	hst.grp.addAxis("h", 	{
-                plot:"humiPlot", 
-                vertical: true, leftBottom: false,
-                majorTickStep: 5, 
-                minorTickStep: 1,
-                fixLower: "major", fixUpper: "major"
-            });
-	hst.grp.addSeries("Humi",[],{plot: "humiPlot"});
-	hst.grp.addSeries("HumiExt",[],{plot: "humiPlot", stroke: { color: "violet"} });
-
-    new Magnify( hst.grp, "tempPlot");
-	new Magnify( hst.grp, "humiPlot");
-
-    
-*/    	
 });

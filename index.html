@@ -200,6 +200,8 @@
     </div><!-- history controls-->
     <div id="history-graph">
     </div>
+    <div id="history-legend">
+    </div>
 </div><!-- history area-->
 
 
@@ -218,10 +220,24 @@
 			<button data-dojo-id="statsRangeUpdate" data-dojo-type="dijit/form/Button" onClick="sta.update()" type="button">Aggiorna!</button>
 		</div>
 		<div>
-            <input id="stats-show-p" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/><label for="stats-show-p">Pellet(mod)</label>
-            <input id="stats-show-pl" data-dojo-type="dijit/form/CheckBox" value="2" checked onChange="sta.drawGraph()"/><label for="stats-show-pl">Pellet(min)</label>
-            <input id="stats-show-g" data-dojo-type="dijit/form/CheckBox" value="3" checked onChange="sta.drawGraph()"/><label for="stats-show-g">Gas</label>
-            <input id="stats-show-t" data-dojo-type="dijit/form/CheckBox" value="4" onChange="sta.drawGraph()"/><label for="stats-show-t">Temperatura</label>
+            <div>
+                <input id="stats-show-a" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/><label for="stats-show-p">Accensione</label>
+                (
+                Pellet
+                <input id="stats-show-p" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/><label for="stats-show-p">modulazione</label>
+                <input id="stats-show-pl" data-dojo-type="dijit/form/CheckBox" value="2" checked onChange="sta.drawGraph()"/><label for="stats-show-pl">minimo</label>
+                -
+                <input id="stats-show-g" data-dojo-type="dijit/form/CheckBox" value="3" checked onChange="sta.drawGraph()"/><label for="stats-show-g">Gas</label>
+                )
+            </div>
+            <div>
+                <input id="stats-show-ti" data-dojo-type="dijit/form/CheckBox" value="4" onChange="sta.drawGraph()"/><label for="stats-show-t">Temperatura interna</label>
+                <input id="stats-show-te" data-dojo-type="dijit/form/CheckBox" value="5" onChange="sta.drawGraph()"/><label for="stats-show-t">temperatura esterna</label>
+                (
+                <input id="stats-show-tmin" data-dojo-type="dijit/form/CheckBox" value="6" checked onChange="sta.drawGraph()"/><label for="stats-show-t">min</label>
+                <input id="stats-show-tmax" data-dojo-type="dijit/form/CheckBox" value="7" checked onChange="sta.drawGraph()"/><label for="stats-show-t">max</label>
+                <input id="stats-show-tavg" data-dojo-type="dijit/form/CheckBox" value="8" checked onChange="sta.drawGraph()"/><label for="stats-show-t">avg</label>
+                )
         </div>
         <div id="stats-total">
 			<div>
@@ -232,22 +248,12 @@
 			<div id="stats-total-gas">
 			</div>
 		</div>
-
     </div>
-    <div>
-		<div id="stats">
-			<div id="gas-stats">
-				<div id="-stats-te"></div>
-				<div id="-stats-ex"></div>
-			</div>
-			<div id="pellet-stats">
-				<div id="-stats-hu"></div>
-				<div id="-stats-hx"></div>
-			</div>
-		</div>
-		</div>
+    </div>
     </div><!-- stats controls-->
     <div id="stats-graph">
+    </div>
+    <div id="stats-legend">
     </div>
 </div><!-- stats area-->
 
