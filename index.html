@@ -4,7 +4,7 @@
 	<title>ThermoController</title>
 	<meta charset="UTF-8"/>
 	<link rel="stylesheet" href="js/dijit/themes/claro/claro.css"/>
-	<link rel="stylesheet" href="index.css?ver=20181129"/>
+	<link rel="stylesheet" href="index.css?ver=20181129_"/>
 	<script>dojoConfig = {parseOnLoad: true}</script>
 	<script src="js/dojo/dojo.js" data-dojo-config="async: true"></script>
 </head>
@@ -13,7 +13,7 @@
 <div id="loading">
 loading..
 </div>
-<div id="content" style="display:none;">
+<div id="content" style="visibility:hidden;">
 
 <div data-dojo-type="dijit/Dialog" data-dojo-id="eTemp" title="Modifica Temperatura">
 	<p class="dijitDialogPaneContentArea">
@@ -334,11 +334,11 @@ loading..
 
 <script src="utils.js?20181129"></script>
 <script src="production.js?20181129"></script>
-<script src="status.js?20181129"></script>
+<script src="status.js?20181129_"></script>
 <script src="events.js?20181129"></script>
 <script src="program.js?20181129"></script>
-<script src="history.js?20181129"></script>
-<script src="stats.js?20181129"></script>
+<script src="history.js?20181129_"></script>
+<script src="stats.js?20181129_"></script>
 <script language="javascript">
 require([
     "dojo/ready",
@@ -348,12 +348,14 @@ require([
 function(ready,dclass, style)
 {
 	ready(function(){
-        sts.update();
-        hst.update();
-        evt.update();
-        sta.update();
         dclass.toggle("loading", "hidden");
-        style.set("content", "display", "block");
+        style.set("content", "visibility", "visible");
+        sts.update();
+        evt.update();
+        window.setTimeout( function(){ 
+            hst.startup();
+            sta.startup();
+        }, 500 );
 	});
 });
 </script>

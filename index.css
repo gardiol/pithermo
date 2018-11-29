@@ -1,4 +1,9 @@
 
+#loading {
+    text-align: center;
+    font-size: 200%
+}
+
 .hidden {
     display: none !important;
 }
