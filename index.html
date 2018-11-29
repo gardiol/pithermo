@@ -4,11 +4,16 @@
 	<title>ThermoController</title>
 	<meta charset="UTF-8"/>
 	<link rel="stylesheet" href="js/dijit/themes/claro/claro.css"/>
-	<link rel="stylesheet" href="index.css?ver=20181128"/>
+	<link rel="stylesheet" href="index.css?ver=20181129"/>
 	<script>dojoConfig = {parseOnLoad: true}</script>
 	<script src="js/dojo/dojo.js" data-dojo-config="async: true"></script>
 </head>
 <body class="claro">
+
+<div id="loading">
+loading..
+</div>
+<div id="content" style="display:none;">
 
 <div data-dojo-type="dijit/Dialog" data-dojo-id="eTemp" title="Modifica Temperatura">
 	<p class="dijitDialogPaneContentArea">
@@ -104,8 +109,9 @@
             </div>
         </div><!-- temp pane-->
 
-        </div>
-    	<div id="pellet-status" class="status-boxes">
+    </div>
+    
+    <div id="pellet-status" class="status-boxes">
             <div class="status-title">
                 Stufa a pellet
             </div>
@@ -147,7 +153,7 @@
             </div>
         </div><!-- pellet status-->
             
-        <div id="gas-status" class="status-boxes">
+    <div id="gas-status" class="status-boxes">
             <div class="status-title">
                 Caldaia a gas
             </div>
@@ -159,9 +165,9 @@
                 Spegni
             </button>                    
         </div><!-- gas status-->
-    </div> <!-- status row-->        
-</div><!-- status controls-->
 
+    </div><!-- status main-->
+    
     <div id="events">
         <div>
             <div>
@@ -181,6 +187,7 @@
     <div id="messages">
         <ul id="messages-queue"></ul>
     </div>
+
 </div><!-- status area-->
     
 <div id="program-area">
@@ -270,7 +277,6 @@
     </div>
 </div><!-- history area-->
 
-
 <div id="stats-area">
   <div id="stats-controls">
 	 <div>
@@ -323,25 +329,31 @@
     </div>
 </div><!-- stats area-->
 
+</div>
 
-<script src="utils.js?20181128"></script>
-<script src="production.js?20181128"></script>
-<script src="status.js?20181128"></script>
-<script src="events.js?20181128"></script>
-<script src="program.js?20181128"></script>
-<script src="history.js?20181128"></script>
-<script src="stats.js?20181128"></script>
+
+<script src="utils.js?20181129"></script>
+<script src="production.js?20181129"></script>
+<script src="status.js?20181129"></script>
+<script src="events.js?20181129"></script>
+<script src="program.js?20181129"></script>
+<script src="history.js?20181129"></script>
+<script src="stats.js?20181129"></script>
 <script language="javascript">
 require([
     "dojo/ready",
+    "dojo/dom-class",
+    "dojo/dom-style",
     "dojo/parser"], 
-function(ready)
+function(ready,dclass, style)
 {
 	ready(function(){
         sts.update();
         hst.update();
         evt.update();
         sta.update();
+        dclass.toggle("loading", "hidden");
+        style.set("content", "display", "block");
 	});
 });
 </script>
