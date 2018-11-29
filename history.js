@@ -26,6 +26,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
           Chart, Default, Lines, Chris, Areas, Markers, Tooltip, Magnify, Legend )// Charing
 {
     hst = { 
+            ttipRect: null,
             hStart: null,
             hEnd: null,
 			timer: null,
@@ -182,12 +183,17 @@ function( dom, attr, dclass, style, html, on,// Dojo
         function(evt){
             if ( evt.type == "onclick" ){
                     var lt = hst.grp.getCoords();
-                    var aroundRect = {type: "rect"};
-                    aroundRect.x = Math.round(evt.cx + lt.x);
-                    aroundRect.y = Math.round(evt.cy + lt.y);
-                    aroundRect.w = aroundRect.h = 1;                    
-                    DijitTooltip.show("<div style='text-align:center;'>"+evt.y+"<br><span style='font-size:60%;'>" + utils.date2str(evt.x*1000) + "" + utils.time2str(evt.x*1000)+"</span></div>", aroundRect);
-            }
+                    hst.ttipRect = {type: "rect"};
+                    hst.ttipRect.x = Math.round(evt.cx + lt.x);
+                    hst.ttipRect.y = Math.round(evt.cy + lt.y);
+                    hst.ttipRect.w = hst.ttipRect.h = 1;    
+                    DijitTooltip.show("<div style='text-align:center;'>"+evt.y+"<br><span style='font-size:60%;'>" + utils.date2str(evt.x*1000) + "" + utils.time2str(evt.x*1000)+"</span></div>", hst.ttipRect,["after-centered", "before-centered"]);
+            } else if(evt.type === "onplotreset" || evt.type === "onmouseout"){
+                    if ( hst.ttipRect != null ){
+                        DijitTooltip.hide(hst.ttipRect);
+                        hst.ttipRect = null;
+                    }
+			}
         });
     
     hst.grp.render();        

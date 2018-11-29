@@ -208,11 +208,12 @@ img.today-table-img {
 
 .status-boxes {
    padding: 0.2em;
+   margin-bottom: 0.2em;
    display: inline-table;
    background: peru;
-   height: 18em;
-   width: 30%;
+   width: 45%;
    border: 1px dashed black;
+   vertical-align: middle;
 }
 
 .status-title {
@@ -231,8 +232,24 @@ img.today-table-img {
    vertical-align: middle;
 }
 
+#temp-pane {
+    height: 7.5em;
+}
+
+#temp-pane-curr {
+    height: 7.5em;
+}
+
 #temp-buttons {
 	padding: 1em;
+}
+
+#pellet-status {
+    height: 11em;
+}
+
+#gas-status {
+    height: 11em;
 }
 
 #temp-label, #humi-label {

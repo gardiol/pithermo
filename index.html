@@ -22,80 +22,146 @@
 </div>
 
 <div id="status-area">
-  <div id="status-info">
-    <div id="power-box" class="col">
-      <img alt="pwr" class="info-icon" id="power-led" src="images/spento.png"/>
-			<div class="col">
-				<div><button id="on-btn"></button></div>
-				<div><button id="off-btn"></button></div>
-			</div>
-		</div><!-- power box -->
-		<div id="mode-box" class="col">		
-			<div class="col">
-				<div><button id="auto-btn"></button></div>
-				<div><button id="manual-btn"></button></div>
-			</div>
-      <img alt="mde" class="info-icon" id="mode-led" src="images/manual.png"/>
-		</div><!-- mode box -->
-  </div><!-- status info-->
-  <div id="status-controls">
+
+    <div id="status-info">
+        <div id="power-box" class="col">
+            <img alt="pwr" class="info-icon" id="power-led" src="images/spento.png"/>
+            <div class="col">
+                <div>
+                    <button data-dojo-id="status_master_on" data-dojo-type="dijit/form/Button" data-dojo-props="onClick:function(){sts.confirm('Attivare impianto?','Attiva!','activate')}">
+                        Accendi impianto
+                    </button>
+                </div>
+                <div>
+                    <button data-dojo-id="status_master_off" data-dojo-type="dijit/form/Button" data-dojo-props="onClick:function(){sts.confirm('Disattivare impianto?','Disattiva!','deactivate')}">
+                        Spegni impianto
+                    </button>            
+                </div>
+            </div><!--col-->  
+        </div><!--power box-->    
+        <div id="mode-box" class="col">		
+            <div class="col">
+                <div>
+                    <button data-dojo-id="status_manual" data-dojo-type="dijit/form/Button" data-dojo-props="onClick:function(){sts.confirm('Passare in MANUALE?','Manuale!','manual')}">
+                        Manuale
+                    </button>
+                </div>
+                <div>
+                    <button data-dojo-id="status_auto" data-dojo-type="dijit/form/Button" data-dojo-props="onClick:function(){sts.confirm('Passare in AUTOMATICO?'+ (sts.status.warnings.modeswitch!=''?'<p>ATTENZIONE: '+sts.status.warnings.modeswitch+'</p>':''),'Automatico!','auto')}">
+                        Automatico
+                    </button>
+                </div>
+            </div><!--col-->
+            <img alt="mde" class="info-icon" id="mode-led" src="images/manual.png"/>
+        </div><!-- mode box -->
+    </div><!-- status info-->
+      
     <div id="status-main">
-      <div id="temp-pane" class="status-boxes">
-        <div class="status-title">Temperature</div>
-        <div>
-          <img alt="minTemp" class="temp-img" src="images/min-temp.png"/>
-		  <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.status.temp.min-0.1);}">-</button>		  
-		  <button id="min-temp"></button>
-		  <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.status.temp.min+0.1);}">+</button>		  
+    
+    <div>
+        <div id="temp-pane" class="status-boxes">
+            <div class="status-title">
+                Temperature impostate
+            </div>
+            <div>
+                <img alt="minTemp" class="temp-img" src="images/min-temp.png"/>
+                <button data-dojo-id="min_temp_m" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.status.temp.min-0.1)}">
+                    -
+                </button>
+                <button data-dojo-id="min_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.status.temp.min,'min','Cambia temperatura minima')}">
+                    XX.X°C                
+                </button>
+                <button data-dojo-id="min_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.status.temp.min+0.1)}">
+                    +
+                </button>  
+            </div>
+            <div>
+                <img alt="maxTemp" class="temp-img" src="images/max-temp.png"/>
+                <button data-dojo-id="max_temp_m" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.status.temp.max-0.1)}">
+                    -
+                </button>                
+                <button data-dojo-id="max_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.status.temp.max,'max','Cambia temperatura massima')}">
+                    XX.X°C                
+                </button>
+                <button data-dojo-id="max_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.status.temp.max+0.1)}">
+                    +
+                </button>
+            </div>
+        </div><!-- temp pane-->
+      
+        <div id="temp-pane" class="status-boxes">
+            <div class="status-title">
+                Temperature attuali
+            </div>
+            <div id="temp-stats">
+                Temperatura: <span id="temp-label"></span>
+            </div>
+            <div>
+                Umidità: <span id="humi-label"></span>
+            </div>
+            <div>
+                <span id="update-time">--</span>
+            </div>
+        </div><!-- temp pane-->
+
         </div>
-        <div>
-          <img alt="maxTemp" class="temp-img" src="images/max-temp.png"/>
-		  <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.status.temp.max-0.1);}">-</button>		  
-		  <button id="max-temp"></button>
-		  <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.status.temp.max+0.1);}">+</button>		  
-        </div>
-        <div id="temp-buttons">
-          <img id="temp-reset" src="images/restore.png" class="button-img celated" style="margin-right: 1em;" />
-          <img id="temp-apply" src="images/apply.png" class="button-img celated" />
-        </div>
-        <div class="status-title"></div>
-        <div id="temp-stats">
-          Temperatura:
-				  <span id="temp-label"></span>
-				</div>
-				<div>
-				  Umidità:
-					<span id="humi-label"></span>
-        </div>
-        <span id="update-time">--</span>
-      </div><!-- temp pane-->
     	<div id="pellet-status" class="status-boxes">
-        <div class="status-title">Stufa a pellet</div>
-				<div>
-					<div class="col">
-						<div><button id="pellet-on-btn"></button></div>
-						<div><button id="pellet-minimum-on-btn"></button></div>
-					</div>
-					<div class="col">
-						<div><img alt="psl" class="status-icon" id="pellet-status-led" src="images/pellet-off.png"/></div>
-						<div><img alt="pmsl" class="status-icon-sub" id="pellet-minimum-status-led" src="images/pellet-modulazione.png"/></div>
-						<div><img alt="pfl" class="status-icon-temp" id="pellet-feedback-led" src="images/min-temp.png"/></div>
-					</div>
-					<div class="col">
-						<div><button id="pellet-off-btn"></button></div>
-						<div><button id="pellet-minimum-off-btn"></button></div>
-					</div>
-				</div>
-				<div><button id="pellet-flameout-reset-btn"></button></div>
-            </div><!-- pellet status-->
-            <div id="gas-status" class="status-boxes">
-                <div class="status-title">Caldaia a gas</div>
-                <button id="gas-on-btn"></button>	
-                <img alt="gl" class="status-icon" id="gas-status-led" src="images/gas-off.png"/>
-                <button id="gas-off-btn"></button>	
-            </div><!-- gas status-->
-        </div> <!-- status row-->
-    </div><!-- status controls-->
+            <div class="status-title">
+                Stufa a pellet
+            </div>
+            <div>
+                <div class="col">
+                    <div>
+                        <button data-dojo-id="pellet_on" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.confirm('Accendo il PELLET?','Accendi!','pellet-on')}">
+                            Accendi
+                        </button>                    
+                    </div>
+                    <div>
+                        <button data-dojo-id="pellet_minimum_on" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.confirm('Pellet al MINIMO?','al minimo!','pellet-minimum-on')}">
+                            minimo
+                        </button>                    
+                    </div>
+                </div>
+                <div class="col">
+                            <img alt="pmsl" class="status-icon-sub" id="pellet-minimum-status-led" src="images/pellet-modulazione.png"/>
+                            <img alt="psl" class="status-icon" id="pellet-status-led" src="images/pellet-off.png"/>
+                            <img alt="pfl" class="status-icon-temp" id="pellet-feedback-led" src="images/min-temp.png"/>
+                </div>
+                <div class="col">
+                    <div>
+                        <button data-dojo-id="pellet_off" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.confirm('Spengo il PELLET?','Spegni!','pellet-off')}">
+                            Spegni
+                        </button>                    
+                    </div>
+                    <div>		
+                        <button data-dojo-id="pellet_minimum_off" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.confirm('Pellet in modulazione?','in modulazione!','pellet-minimum-off')}">
+                            modulazione
+                        </button>                    
+                    </div>
+                </div>
+            </div>
+            <div>
+                <button data-dojo-id="pellet_flameout_reset" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.confirm('Reset pellet flameout?','Resetta il flameout!','reset-flameout')}">
+                    RESET FLAMEOUT
+                </button>                    
+            </div>
+        </div><!-- pellet status-->
+            
+        <div id="gas-status" class="status-boxes">
+            <div class="status-title">
+                Caldaia a gas
+            </div>
+            <button data-dojo-id="gas_on" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.confirm('Accendo il GAS?','Accendi!','gas-on')}">
+                Accendi
+            </button>                    
+            <img alt="gl" class="status-icon" id="gas-status-led" src="images/gas-off.png"/>
+            <button data-dojo-id="gas_off" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.confirm('Spengo il GAS?','Spegni!','gas-off')}">
+                Spegni
+            </button>                    
+        </div><!-- gas status-->
+    </div> <!-- status row-->        
+</div><!-- status controls-->
+
     <div id="events">
         <div>
             <div>
