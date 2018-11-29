@@ -28,6 +28,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
           Chart, Default, Lines, StackedColumns,StackedAreas,Chris, Areas, Markers, Tooltip, Magnify, Legend )// Charing
 {
     sta = { 
+            ttipRect: null,
             hStart: null,
             hEnd: null,
 			timer: null,
@@ -149,7 +150,21 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     function(err){
 						sta.timer = window.setTimeout( function(){ sta.update(); }, 60 * 1000 * 15);
 					});                    
-			}
+			},
+            showTip:function(r,t,p){
+                    var lt = sta.grp.getCoords();
+                    sta.ttipRect = {type: "rect"};
+                    sta.ttipRect.x = Math.round(r.x + lt.x);
+                    sta.ttipRect.y = Math.round(r.y + lt.y);
+                    sta.ttipRect.w = sta.ttipRect.h = 1;    
+                    DijitTooltip.show(t, sta.ttipRect,p);
+            },
+            hideTip:function(){
+                    if ( sta.ttipRect != null ){
+                        DijitTooltip.hide(sta.ttipRect);
+                        sta.ttipRect = null;
+                    }
+            }
 		};
     
     
@@ -164,13 +179,10 @@ function( dom, attr, dclass, style, html, on,// Dojo
     sta.grp.connectToPlot("TimePlot",
         function(evt){
             if ( evt.type == "onclick" ){
-                    var lt = sta.grp.getCoords();
-                    var aroundRect = {type: "rect"};
-                    aroundRect.x = Math.round(evt.cx + lt.x);
-                    aroundRect.y = Math.round(evt.cy + lt.y);
-                    aroundRect.w = aroundRect.h = 1;                    
-                    DijitTooltip.show("<div style='text-align:center;'>"+evt.y.toFixed(1)+"h</div>", aroundRect);
-            }
+                sta.showTip( evt.shape.shape, evt.y.toFixed(1)+"h", ["above"] );
+            } else if(evt.type === "onplotreset" || evt.type === "onmouseout"){
+                sta.hideTip();
+			}
         });
 
     sta.grp.addPlot("TotPlot", {type: Lines, lines: false, markers: true});     
@@ -182,13 +194,10 @@ function( dom, attr, dclass, style, html, on,// Dojo
     sta.grp.connectToPlot("TotPlot",
         function(evt){
             if ( evt.type == "onclick" ){
-                    var lt = sta.grp.getCoords();
-                    var aroundRect = {type: "rect"};
-                    aroundRect.x = Math.round(evt.cx + lt.x);
-                    aroundRect.y = Math.round(evt.cy + lt.y);
-                    aroundRect.w = aroundRect.h = 1;                    
-                    DijitTooltip.show("<div style='text-align:center;'>"+evt.y.toFixed(1)+"h</div>", aroundRect);
-            }
+                sta.showTip( {x:evt.cx,y:evt.cy}, evt.y.toFixed(1)+"h",["after-centered", "before-centered"] );
+            } else if(evt.type === "onplotreset" || evt.type === "onmouseout"){
+                sta.hideTip();
+			}
         });
 
     sta.grp.addPlot("TempPlot", {hAxis: "x", vAxis:"t", type: Lines, lines: true, markers: true});     
@@ -206,13 +215,10 @@ function( dom, attr, dclass, style, html, on,// Dojo
     sta.grp.connectToPlot("TempPlot",
         function(evt){
             if ( evt.type == "onclick" ){
-                    var lt = sta.grp.getCoords();
-                    var aroundRect = {type: "rect"};
-                    aroundRect.x = Math.round(evt.cx + lt.x);
-                    aroundRect.y = Math.round(evt.cy + lt.y);
-                    aroundRect.w = aroundRect.h = 1;                    
-                    DijitTooltip.show("<div style='text-align:center;'>"+evt.y.toFixed(1)+"°</div>", aroundRect);
-            }
+                sta.showTip( {x:evt.cx,y:evt.cy}, evt.y.toFixed(1)+"°",["after-centered", "before-centered"] );
+            } else if(evt.type === "onplotreset" || evt.type === "onmouseout"){
+                sta.hideTip();
+			}
         });
     new Magnify( sta.grp, "TempPlot");
         
