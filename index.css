@@ -297,4 +297,5 @@ img#pellet-feedback-led {
 #messages-queue {
 	list-style: none;
     vertical-align: middle;
+    margin-left: 1em;
 }

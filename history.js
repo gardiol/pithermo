@@ -172,10 +172,10 @@ function( dom, attr, dclass, style, html, on,// Dojo
                         fixLower: "major", fixUpper: "major"
                     });
             hst.grp.addSeries("Humi",[{x:0,y:0},{x:1,y:1}],{plot: "humiPlot", legend:"Umidità interna"});
-            hst.grp.addSeries("HumiExt",[{x:0,y:0},{x:1,y:1}],{plot: "humiPlot", legend: "Unidità esterna", stroke: { color: "violet"} });
+            hst.grp.addSeries("HumiExt",[{x:0,y:0},{x:1,y:1}],{plot: "humiPlot", legend: "Umidità esterna", stroke: { color: "violet"} });
 
-            new Magnify( hst.grp, "tempPlot");
-            new Magnify( hst.grp, "humiPlot");
+            new Magnify( hst.grp, "tempPlot", { scale: 4 });
+            new Magnify( hst.grp, "humiPlot", { scale: 4 });
 
             
             hst.grp.connectToPlot("tempPlot",

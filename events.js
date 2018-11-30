@@ -56,11 +56,11 @@ function( dom, dclass, on, dc)    // Dojo
                     var t = utils.printDate( split_row[0]*1000 );
                     var m = evt.msgs[ parseInt(split_row[1]) ];
                     var e = m ? m : "-evento-sconosciuto-(" + split_row[1] + ")"; 
-                    dc.place("<li>" + t + " -- " + e + "</li>", "messages-queue","first");                    
+                    dc.place("<div>" + t + " -- " + e + "</div>", "messages-queue","first");                    
                     pos = line_end+1;
                 } else {
                     if ( new_rows.substr( pos ) == "+" )
-                        dc.place("<li>(troppi eventi, solo i primi 120 sono visualizzati)</li>", "messages-queue", "first");
+                        dc.place("<div>(troppi eventi, solo i primi 120 sono visualizzati)</div>", "messages-queue", "first");
                     pos = len;
                 }
             }

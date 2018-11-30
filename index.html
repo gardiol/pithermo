@@ -17,8 +17,8 @@ loading..
 
 <div data-dojo-type="dijit/Dialog" data-dojo-id="eTemp" title="Modifica Temperatura">
 	<p class="dijitDialogPaneContentArea">
-		<label for="temp">Temperatura (°C):</label>
-		<input data-dojo-type="dijit/form/NumberSpinner" name="temp" data-dojo-id="eTempVal" smallDelta=0.1 style="width:6em;" constraints="{ min:-100,max:100,places:1}"/>
+		Temperatura (°C):
+		<input data-dojo-type="dijit/form/NumberSpinner" data-dojo-id="eTempVal" smallDelta=0.1 style="width:6em;" constraints="{ min:-100,max:100,places:1}"/>
 	</p>
     <div class="dijitDialogPaneActionBar">
         <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp(eTemp.attr('minOrMax'),eTempVal.get('value'));}">Salva</button>
@@ -64,6 +64,22 @@ loading..
     <div id="status-main">
     
     <div>
+      
+        <div id="temp-pane-curr" class="status-boxes">
+            <div class="status-title">
+                Temperature attuali
+            </div>
+            <div id="temp-stats">
+                Temperatura: <span id="temp-label"></span>
+            </div>
+            <div>
+                Umidità: <span id="humi-label"></span>
+            </div>
+            <div>
+                <span id="update-time">--</span>
+            </div>
+        </div><!-- temp pane-->
+
         <div id="temp-pane" class="status-boxes">
             <div class="status-title">
                 Temperature impostate
@@ -93,21 +109,6 @@ loading..
                 </button>
             </div>
         </div><!-- temp pane-->
-      
-        <div id="temp-pane-curr" class="status-boxes">
-            <div class="status-title">
-                Temperature attuali
-            </div>
-            <div id="temp-stats">
-                Temperatura: <span id="temp-label"></span>
-            </div>
-            <div>
-                Umidità: <span id="humi-label"></span>
-            </div>
-            <div>
-                <span id="update-time">--</span>
-            </div>
-        </div><!-- temp pane-->
 
     </div>
     
@@ -129,9 +130,15 @@ loading..
                     </div>
                 </div>
                 <div class="col">
-                            <img alt="pmsl" class="status-icon-sub" id="pellet-minimum-status-led" src="images/pellet-modulazione.png"/>
                             <img alt="psl" class="status-icon" id="pellet-status-led" src="images/pellet-off.png"/>
+                </div>
+                <div class="col">
+                            <div>
                             <img alt="pfl" class="status-icon-temp" id="pellet-feedback-led" src="images/min-temp.png"/>
+                            </div>
+                            <div>
+                            <img alt="pmsl" class="status-icon-sub" id="pellet-minimum-status-led" src="images/pellet-modulazione.png"/>
+                            </div>
                 </div>
                 <div class="col">
                     <div>
@@ -171,21 +178,21 @@ loading..
     <div id="events">
         <div>
             <div>
-                <input data-dojo-id="eventsUseRange" name="events-today" data-dojo-type="dijit/form/CheckBox" onChange="evt.toggleRange();"/>
-                <label for="events-today">Scegli periodo</label>
+                <input data-dojo-id="eventsUseRange" data-dojo-type="dijit/form/CheckBox" onChange="evt.toggleRange();"/>
+                Scegli periodo
                 <img id="events-size" src="images/enlarge.png" class="temp-img" style="margin-left: 3em;"/>
             </div>
             <div id="events-range" class="hidden">
-                <label for="events-start">Dal:</label>
-                <input data-dojo-id="eventsStart" name="events-start" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
-                <label for="events-end">al:</label>
-                <input data-dojo-id="eventsEnd" name="events-end" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
+                Dal:
+                <input data-dojo-id="eventsStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
+                al:
+                <input data-dojo-id="eventsEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
                 <button data-dojo-id="eventsRangeUpdate" data-dojo-type="dijit/form/Button" onClick="evt.update()" type="button">Aggiorna!</button>
             </div>
         </div>
     </div>
     <div id="messages">
-        <ul id="messages-queue"></ul>
+        <div id="messages-queue"></div>
     </div>
 
 </div><!-- status area-->
@@ -240,21 +247,21 @@ loading..
   <div id="history-controls">
 	 <div>
         <div>
-            <input data-dojo-id="historyUseRange" name="history-today" data-dojo-type="dijit/form/CheckBox" onChange="hst.toggleRange();"/>
-            <label for="history-today">Scegli periodo</label>
+            <input data-dojo-id="historyUseRange" data-dojo-type="dijit/form/CheckBox" onChange="hst.toggleRange();"/>
+            Scegli periodo
         </div>
 		<div id="history-range" class="hidden">
-			<label for="history-start">Dal:</label>
-			<input data-dojo-id="historyStart" name="history-start" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
-			<label for="history-end">al:</label>
-			<input data-dojo-id="historyEnd" name="history-end" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
+			Dal:
+			<input data-dojo-id="historyStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
+			al:
+			<input data-dojo-id="historyEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
 			<button data-dojo-id="historyRangeUpdate" data-dojo-type="dijit/form/Button" onClick="hst.update()" type="button">Aggiorna!</button>
 		</div>
         <div>
-            <input id="show-temp" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="hst.drawGraph()"/><label for="show-temp">Temperatura</label>
-            <input id="show-humi" data-dojo-type="dijit/form/CheckBox" value="2" onChange="hst.drawGraph()"/><label for="show-humi">Umidità</label>
-            <input id="show-ext-temp" data-dojo-type="dijit/form/CheckBox" value="3" checked onChange="hst.drawGraph()"/><label for="show-ext-temp">Temperatura externa</label>
-            <input id="show-ext-humi" data-dojo-type="dijit/form/CheckBox" value="4" onChange="hst.drawGraph()"/><label for="show-ext-humi">Umidità esterna</label>
+            <input id="show-temp" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="hst.drawGraph()"/>Temperatura
+            <input id="show-humi" data-dojo-type="dijit/form/CheckBox" value="2" onChange="hst.drawGraph()"/>Umidità
+            <input id="show-ext-temp" data-dojo-type="dijit/form/CheckBox" value="3" checked onChange="hst.drawGraph()"/>Temperatura esterna
+            <input id="show-ext-humi" data-dojo-type="dijit/form/CheckBox" value="4" onChange="hst.drawGraph()"/>Umidità esterna
             <img id="history-size" src="images/enlarge.png" class="temp-img" style="margin-left: 3em;"/>
         </div>
     </div>
@@ -281,34 +288,34 @@ loading..
   <div id="stats-controls">
 	 <div>
         <div>
-            <input data-dojo-id="statsUseRange" name="stats-today" data-dojo-type="dijit/form/CheckBox" onChange="sta.toggleRange();"/>
-            <label for="stats-today">Scegli periodo</label>
+            <input data-dojo-id="statsUseRange" data-dojo-type="dijit/form/CheckBox" onChange="sta.toggleRange();"/>
+            Scegli periodo
         </div>
 		<div id="stats-range" class="hidden">
-			<label for="stats-start">Dal:</label>
-			<input data-dojo-id="statsStart" name="stats-start" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
-			<label for="stats-end">al:</label>
-			<input data-dojo-id="statsEnd" name="stats-end" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
+			Dal:
+			<input data-dojo-id="statsStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
+			al:
+			<input data-dojo-id="statsEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
 			<button data-dojo-id="statsRangeUpdate" data-dojo-type="dijit/form/Button" onClick="sta.update()" type="button">Aggiorna!</button>
 		</div>
 		<div>
             <div>
-                <input id="stats-show-a" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/><label for="stats-show-p">Accensione</label>
-                (
-                Pellet
-                <input id="stats-show-p" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/><label for="stats-show-p">modulazione</label>
-                <input id="stats-show-pl" data-dojo-type="dijit/form/CheckBox" value="2" checked onChange="sta.drawGraph()"/><label for="stats-show-pl">minimo</label>
-                -
-                <input id="stats-show-g" data-dojo-type="dijit/form/CheckBox" value="3" checked onChange="sta.drawGraph()"/><label for="stats-show-g">Gas</label>
-                )
+                <input id="stats-show-a" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/>Tempi:
+                
+                Pellet (
+                <input id="stats-show-p" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/>modulazione
+                <input id="stats-show-pl" data-dojo-type="dijit/form/CheckBox" value="2" checked onChange="sta.drawGraph()"/>minimo
+                ) 
+                <input id="stats-show-g" data-dojo-type="dijit/form/CheckBox" value="3" checked onChange="sta.drawGraph()"/>Gas
             </div>
             <div>
-                <input id="stats-show-ti" data-dojo-type="dijit/form/CheckBox" value="4" onChange="sta.drawGraph()"/><label for="stats-show-t">Temperatura interna</label>
-                <input id="stats-show-te" data-dojo-type="dijit/form/CheckBox" value="5" onChange="sta.drawGraph()"/><label for="stats-show-t">temperatura esterna</label>
+                Temperature:
+                <input id="stats-show-ti" data-dojo-type="dijit/form/CheckBox" value="4" onChange="sta.drawGraph()"/>interne
+                <input id="stats-show-te" data-dojo-type="dijit/form/CheckBox" value="5" onChange="sta.drawGraph()"/>esterne
                 (
-                <input id="stats-show-tmin" data-dojo-type="dijit/form/CheckBox" value="6" checked onChange="sta.drawGraph()"/><label for="stats-show-t">min</label>
-                <input id="stats-show-tmax" data-dojo-type="dijit/form/CheckBox" value="7" checked onChange="sta.drawGraph()"/><label for="stats-show-t">max</label>
-                <input id="stats-show-tavg" data-dojo-type="dijit/form/CheckBox" value="8" checked onChange="sta.drawGraph()"/><label for="stats-show-t">avg</label>
+                <input id="stats-show-tmin" data-dojo-type="dijit/form/CheckBox" value="6" checked onChange="sta.drawGraph()"/>min
+                <input id="stats-show-tmax" data-dojo-type="dijit/form/CheckBox" value="7" checked onChange="sta.drawGraph()"/>max
+                <input id="stats-show-tavg" data-dojo-type="dijit/form/CheckBox" value="8" checked onChange="sta.drawGraph()"/>avg
                 )
         </div>
         <div id="stats-total">
