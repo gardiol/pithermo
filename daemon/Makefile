@@ -67,7 +67,7 @@ obj/stats_cgi.o: CGI/stats_cgi.cpp
 pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o ${DEMO_OBJ}
 	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib -lwiringPi
 
-../cgi-bin/history: obj/frameworktimer.o obj/frameworkutils.o obj/history_cgi.o obj/historyitem.o obj/history.o obj/debugprint.o
+../cgi-bin/history: obj/frameworktimer.o obj/frameworkutils.o obj/history_cgi.o obj/historyitem.o obj/history.o obj/debugprint.o obj/logitem.o obj/logger.o
 	g++ -o $@ $^ -lpthread -lrt -lm
 
 ../cgi-bin/events: obj/frameworktimer.o obj/frameworkutils.o obj/events_cgi.o obj/logitem.o obj/logger.o obj/debugprint.o

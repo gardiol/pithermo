@@ -120,26 +120,6 @@ bool History::fetchInterval(uint64_t from, uint64_t to, std::list<HistoryItem> &
 
         if ( !error )
         {
-
-
-/*        // Search for start with a log2 approach
-        uint32_t step_size = total_items / 2;
-        uint32_t start_item = step_size;
-        while ( !start_found && (start_item != 0) && (start_item != (total_items-1) ) && (step_size > 0) )
-        {
-            step_size /= 2;
-            long int cursor = start_item * item_size;
-            fseek( read_file, cursor, SEEK_SET );
-            item.read( read_file );
-            uint64_t item_time = item.getTime();
-            if ( item_time == from )
-                start_found = true;
-            else if ( item_time > from )
-                start_item -= step_size;
-            else
-                start_item += step_size;
-        }
-*/
         // Let's read until last:
             while ( !end_found && item.isValid() && !feof(read_file) )
             {

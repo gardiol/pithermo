@@ -13,34 +13,30 @@ public:
     Program();
     ~Program();
 
-    void setTime( int d, int h, int f );
-    bool getGas() const
-    {
-        return _gas_program[_d][_h][_f];
-    }
-    bool getPellet() const
-    {
-        return _pellet_program[_d][_h][_f];
-    }
+    bool useHigh() const;
+    bool usePellet() const;
+    bool useGas() const;
 
-    bool getPelletMinimum() const
-    {
-        return _pellet_minimum_program[_d][_h][_f];
-    }
+    void setTime( int d, int h, int f );
 
     bool change( const std::string& p );
     void loadConfig( const ConfigData* c );
-    void saveConfig( ConfigData* c );
+    void saveConfig( ConfigData* c ) const;
 
-    void writeJSON( FILE* file );
+    void writeJSON( FILE* file ) const;
 
 private:
+    enum ProgramType { LOW_GAS,
+                       LOW_PELLET,
+                       HIGH_GAS,
+                       HIGH_PELLET,
+                       HIGH_AUTO,
+                       ERROR};
+
     std::size_t _d;
     std::size_t _h;
     std::size_t _f;
-    std::vector<std::vector<std::vector<bool> > > _gas_program;
-    std::vector<std::vector<std::vector<bool> > > _pellet_program;
-    std::vector<std::vector<std::vector<bool> > > _pellet_minimum_program;
+    std::vector<std::vector<std::vector<ProgramType> > > _program;
 };
 
 #endif // PROGRAM_H

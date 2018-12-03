@@ -23,7 +23,7 @@ public:
         return _temp;
     }
 
-    float getHimidity() const
+    float getHumidity() const
     {
         return _humidity;
     }

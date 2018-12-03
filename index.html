@@ -19,6 +19,8 @@ loading..
 	<p class="dijitDialogPaneContentArea">
 		Temperatura (°C):
 		<input data-dojo-type="dijit/form/NumberSpinner" data-dojo-id="eTempVal" smallDelta=0.1 style="width:6em;" constraints="{ min:-100,max:100,places:1}"/>
+    <table id="eTempTable">
+    </table>
 	</p>
     <div class="dijitDialogPaneActionBar">
         <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp(eTemp.attr('minOrMax'),eTempVal.get('value'));}">Salva</button>
@@ -134,10 +136,13 @@ loading..
                 </div>
                 <div class="col">
                             <div>
-                            <img alt="pfl" class="status-icon-temp" id="pellet-feedback-led" src="images/min-temp.png"/>
+                                <img alt="fml" class="status-icon-flame celated" id="pellet-flameout-led" src="images/flameout.png"/>
                             </div>
                             <div>
-                            <img alt="pmsl" class="status-icon-sub" id="pellet-minimum-status-led" src="images/pellet-modulazione.png"/>
+                                <img alt="pfl" class="status-icon-temp" id="pellet-feedback-led" src="images/min-temp.png"/>
+                            </div>
+                            <div>
+                                <img alt="pmsl" class="status-icon-sub" id="pellet-minimum-status-led" src="images/pellet-modulazione.png"/>
                             </div>
                 </div>
                 <div class="col">
@@ -152,11 +157,6 @@ loading..
                         </button>                    
                     </div>
                 </div>
-            </div>
-            <div>
-                <button data-dojo-id="pellet_flameout_reset" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.confirm('Reset pellet flameout?','Resetta il flameout!','reset-flameout')}">
-                    RESET FLAMEOUT
-                </button>                    
             </div>
         </div><!-- pellet status-->
             
@@ -205,26 +205,28 @@ loading..
   </div>
   <div id="program-editor" class="hidden">
     <div id="program-selector">
+    <div id="hot-label">HOT</div>
+      <div id="select-pelletgas">
+        <img alt="x" id="select-pelletgas-img" src="images/pellet-gas.png"/>
+        <span>Automatico</span>
+      </div>
+      <div id="select-gas">
+        <img alt="g" id="select-gas-img" src="images/gas.png"/>
+        <span>Gas</span>
+      </div>
+      <div id="select-pellet">
+        <img alt="p" id="select-pellets-img" src="images/pellet.png"/>
+        <span>Pellet</span>
+      </div>
+    <div id="cold-label">COLD</div>
   	  <div id="select-off">
   		 <img alt="o" id="select-off-img" src="images/off-select.png"/>
-  			<span>Off</span>
-  		</div>
-  		<div id="select-pelletgas">
-  			<img alt="x" id="select-pelletgas-img" src="images/pellet-gas.png"/>
-  			<span>Automatico</span>
-  		</div>
-  		<div id="select-gas">
-  			<img alt="g" id="select-gas-img" src="images/gas.png"/>
-  			<span>Gas</span>
-  		</div>
-  		<div id="select-pellet">
-  			<img alt="p" id="select-pellets-img" src="images/pellet.png"/>
-  			<span>Pellet (auto)</span>
-  		</div>
-  		<div id="select-pellet-minimum">
-  			<img alt="m" id="select-pellet-minimum-img" src="images/pellet-min.png"/>
-  			<span>Pellet (minimo)</span>
-  		</div>
+         <span>Gas</span>
+      </div>
+      <div id="select-pellet-minimum">
+        <img alt="m" id="select-pellet-minimum-img" src="images/pellet-min.png"/>
+        <span>Pellet</span>
+      </div>
     </div>
   	<div id="program-change" class="celated">
       <img id="program-apply" class="button-img" src="images/apply.png"/>

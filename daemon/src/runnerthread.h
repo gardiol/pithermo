@@ -19,6 +19,9 @@ class Command;
 class RunnerThread : public ScheduledThread
 {
 public:
+    enum ModeType { MANUAL_MODE,
+                    AUTO_MODE };
+
     RunnerThread( ConfigFile* config,
                   const std::string& exchange_path,
                   const std::string& hst,
@@ -29,11 +32,15 @@ public:
 
 private:
     bool scheduledRun(uint64_t, uint64_t);
+    bool _checkCommands();
+    bool _checkAntiIce();
+    bool _checkFlameout();
+    bool _checkTargetTemperature(float sensor_temp,
+                                 float target_temperature,
+                                 bool &over_temp,
+                                 bool &under_temp);
     bool _updateCurrentTime(uint64_t new_time);
     void _updateStatus();
-    bool _checkCommands();
-    bool _checkFlameout();
-    bool _checkSpecialConditions();
     void _saveConfig();
 
 
@@ -51,18 +58,14 @@ private:
     std::list<Command*> _commands_list;
     BaseMutex _commands_mutex;
 
-    bool _manual_mode;
-    bool _activated;
-    bool _manual_gas_on;
+    ModeType _current_mode;
+    bool _heating_activated;
 
     // Special conditions:
     bool _anti_ice_active;
     bool _over_temp;
-    uint64_t _over_temp_start_time;
     bool _under_temp;
     bool _pellet_flameout;
-    bool _resume_gas_on;
-    bool _resume_pellet_mod;
 
     bool _prev_pellet_hot;
     float _min_temp;
@@ -78,14 +81,6 @@ private:
 
     float _current_ext_temp;
     float _current_ext_humidity;
-
-    uint64_t _temp_trend_last_valid;
-    // Previous temperature
-    float _temp_trend_prev;
-    // Speed change of temperature (D')
-    float _temp_trend_D1prev;
-    // Mean acceleration change of temperature (D'', mean)
-    float _temp_trend_D2mean;
 
     uint64_t _pellet_startup_delay;
 };

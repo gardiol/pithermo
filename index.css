@@ -42,6 +42,19 @@
    padding: 0.4em;
 }
 
+#hot-label {
+    background: red;
+    color: white;
+    border: none !important;
+}
+
+#cold-label {
+    background: blue;
+    color: white;
+    height: 100%;
+    border: none !important;
+}
+
 #program-selector > div {
 	display: inline-block;
 	border: 2px solid gray;
@@ -267,6 +280,10 @@ img.status-icon {
 
 img.status-icon-sub {
 	height: 1em;
+}
+
+img.status-icon-flame {
+	height: 2em;
 }
 
 img.info-icon {

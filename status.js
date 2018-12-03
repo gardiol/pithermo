@@ -5,16 +5,18 @@ require([
     "dojo/dom-attr",
     "dojo/dom-class",
     "dojo/dom-style",
+    "dojo/dom-construct",
     "dojo/html",
     "dojo/on",
     "dijit/ConfirmDialog",
     "dijit/form/Button", 
     "dijit/form/NumberSpinner",
     "dojo/domReady!"], 
-function( dom, attr, dclass, style, html, on,// Dojo
+function( dom, attr, dclass, style, dc, html, on,// Dojo
           ConfirmDialog, Button, NumberSpinner)// Dijit
 {
     sts = {
+        tempBts: {},
         timer: null,
         status: null,		
         confirm: function(msg,ok,cmd){
@@ -31,7 +33,14 @@ function( dom, attr, dclass, style, html, on,// Dojo
         setTemp:function(v,w,t){
             eTempVal.set("value", v );
             eTemp.set("minOrMax", w);
-            eTemp.set("title", t)
+            eTemp.set("title", t);
+            var s=Math.floor(v)-2;
+            for ( var r = 0; r < 5; r++ ){
+                for ( var c = 0; c < 5; c++ ){                
+                    var btn = sts.tempBts[r][c];
+                    btn.set("label", (s+r)+"."+(c*2));
+                }
+            }    
             eTemp.show();		  
         },        
         saveTemp: function(m,v){	
@@ -39,6 +48,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
         },
         
         disableAll:function(){
+            dclass.add("pellet-flameout-led", "celated");
             pellet_on.set("disabled", true );
             pellet_off.set("disabled", true );
             pellet_minimum_on.set("disabled", true );
@@ -57,7 +67,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 			max_temp_p.set("disabled", true);
             min_temp.set("label", "XX.X°C" );
 			max_temp.set("label", "XX.X°C" );
-            dclass.add(pellet_flameout_reset.domNode, "celated");
         },
 
         update: function(){
@@ -126,9 +135,9 @@ function( dom, attr, dclass, style, html, on,// Dojo
                             attr.set("pellet-status-led", "src", sts.status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
                             attr.set("gas-status-led", "src", sts.status.gas.command == "on" ? "images/gas-on.png":"images/gas-off.png");    
                             if ( sts.status.pellet.flameout == "on" )
-                                dclass.remove(pellet_flameout_reset.domNode, "celated");
+                                dclass.remove("pellet-flameout-led", "celated");
                             else
-                                dclass.add(pellet_flameout_reset.domNode, "celated");
+                                dclass.add("pellet-flameout-led", "celated");
                         } else { // not enabled
                             sts.disableAll();
                             status_master_on.set("disabled", false );
@@ -155,4 +164,19 @@ function( dom, attr, dclass, style, html, on,// Dojo
             }
         };
 	
+       
+        for ( var r = 0; r < 5; r++ ){
+            var x = dc.create("tr", null, dom.byId("eTempTable") );
+            sts.tempBts[r] = {};
+            for ( var c = 0; c < 5; c++ ){                
+                sts.tempBts[r][c] = new Button({
+                        label:'xx.x',
+                        onClick: function(){
+                            eTempVal.set("value", parseFloat(this.get("label")) );
+                        }
+                    }, dc.create("td",{}, x) );
+                sts.tempBts[r][c].startup();
+            }
+        }    
+        
 });

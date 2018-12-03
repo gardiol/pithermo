@@ -194,7 +194,7 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
     std::list<LogItem> items;
     uint64_t gas_on_since = 0;
     uint64_t pellet_on_since = 0;
-    uint64_t pellet_low_on_since = 0;
+    uint64_t pellet_low_on_since = 0;    
     if ( !prev_valid )
         ret = fetchInterval( from, to, items, true,
                              prev_pellet_on, prev_pellet_minimum_on, prev_gas_on );
@@ -210,6 +210,7 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
 
     if ( ret )
     {
+        bool pellet_hot = false;
         // This is for the selected period.
         for ( std::list<LogItem>::iterator i = items.begin(); i != items.end(); ++i )
         {
@@ -217,7 +218,7 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
             switch ( (*i).getEvent() )
             {
             case  LogItem::GAS_ON:
-                if ( gas_on_since == 0 )
+                if ( (gas_on_since == 0) && !pellet_hot )
                     gas_on_since = event_time;
                 break;
 
@@ -257,14 +258,20 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                 }
                 break;
 
-            case LogItem::GAS_OFF:
-            // PELLET HOT might indicate that GAS is off by hardware
             case LogItem::PELLET_HOT:
+                // PELLET HOT might indicate that GAS is off by hardware
+                pellet_hot = true;
+            [[fallthrough]];
+            case LogItem::GAS_OFF:
                 if ( gas_on_since > 0 )
                 {
                     gas_on_time += event_time - gas_on_since;
                     gas_on_since = 0;
                 }
+                break;
+
+            case LogItem::PELLET_COLD:
+                pellet_hot = false;
                 break;
             }
         }

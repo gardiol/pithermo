@@ -53,7 +53,6 @@ public:
 
     void read( FILE* file );
     void write( FILE* file );
-    void writeText( FILE* file );
 
 private:
     uint64_t _time;

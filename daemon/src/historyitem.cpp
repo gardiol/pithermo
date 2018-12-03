@@ -115,13 +115,3 @@ void HistoryItem::write(FILE *file)
     }
 }
 
-void HistoryItem::writeText(FILE *file)
-{
-    if ( file != nullptr )
-        fprintf(file, "%llu %f %f %f %f\n",
-                static_cast<unsigned long long int>(_time),
-                static_cast<double>(_temp),
-                static_cast<double>(_humidity),
-                static_cast<double>(_ext_temp),
-                static_cast<double>(_ext_humidity) );
-}

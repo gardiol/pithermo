@@ -7,25 +7,15 @@ Program::Program():
     _h(0),
     _f(0)
 {
-    _gas_program.resize(7);
-    _pellet_program.resize(7);
-    _pellet_minimum_program.resize(7);
+    _program.resize(7);
     for ( std::size_t d = 0; d < 7; d++ )
     {
-        _gas_program[d].resize(24);
-        _pellet_program[d].resize(24);
-        _pellet_minimum_program[d].resize(24);
+        _program[d].resize(24);
         for ( std::size_t h = 0; h < 24; h++ )
         {
-            _gas_program[d][h].resize(2);
-            _pellet_program[d][h].resize(2);
-            _pellet_minimum_program[d][h].resize(2);
+            _program[d][h].resize(2);
             for ( std::size_t f = 0; f < 2; f++ )
-            {
-                _gas_program[d][h][f] = false;
-                _pellet_program[d][h][f] = false;
-                _pellet_minimum_program[d][h][f] = false;
-            }
+                _program[d][h][f] = LOW_GAS;
         }
     }
 }
@@ -33,6 +23,30 @@ Program::Program():
 Program::~Program()
 {
 
+}
+
+bool Program::useHigh() const
+{
+    ProgramType p = _program[_d][_h][_f];
+    return p == Program::HIGH_AUTO ||
+           p == Program::HIGH_GAS ||
+           p == Program::HIGH_PELLET ;
+}
+
+bool Program::usePellet() const
+{
+    ProgramType p = _program[_d][_h][_f];
+    return  p == Program::HIGH_PELLET ||
+            p == Program::HIGH_AUTO ||
+            p == Program::LOW_PELLET;
+}
+
+bool Program::useGas() const
+{
+    ProgramType p = _program[_d][_h][_f];
+    return p == Program::HIGH_GAS ||
+           p == Program::HIGH_AUTO ||
+           p == Program::LOW_GAS;
 }
 
 void Program::setTime(int d, int h, int f)
@@ -49,13 +63,14 @@ void Program::setTime(int d, int h, int f)
 
 bool Program::change(const std::string &p)
 {
-    bool ret = false;
+    bool modified = false;
     std::vector<std::string> days = FrameworkUtils::string_split( p, "]" );
     if ( days.size() >= 7 )
     {
         for ( std::size_t d = 0; d < 7; d++ )
         {
             std::string day_str = FrameworkUtils::string_replace(FrameworkUtils::string_replace(FrameworkUtils::string_replace(days[d], "[", "" ), "\"", ""), ",", "");
+            FrameworkUtils::string_tolower( day_str );
             for ( std::size_t h = 0; h < 24; h++ )
             {
                 for ( std::size_t f = 0; f < 2; f++ )
@@ -64,55 +79,32 @@ bool Program::change(const std::string &p)
                     {
                         char p = day_str[0];
                         day_str = day_str.substr( 1 );
-                        bool gas_on = _gas_program[d][h][f];
-                        bool pellet_on = _pellet_program[d][h][f];
-                        bool pellet_minimum_on = _pellet_minimum_program[d][h][f];
-                        if ( p == 'x' || p == 'X' )
+                        ProgramType t = ERROR;
+                        if ( p == 'x' )
+                            t = HIGH_AUTO;
+                        else if ( p == 'g' )
+                            t = HIGH_GAS;
+                        else if ( p == 'p' )
+                            t = HIGH_PELLET;
+                        else if ( p == 'm' )
+                            t = LOW_PELLET;
+                        else if ( p == 'o' )
+                            t = LOW_GAS;
+
+                        if ( t != ERROR )
                         {
-                            if ( !ret && (!gas_on || !pellet_on) )
-                                ret = true;
-                            _gas_program[d][h][f] = true;
-                            _pellet_program[d][h][f] = true;
-                            _pellet_minimum_program[d][h][f] = false;
-                        }
-                        else if ( p == 'g' || p == 'G' )
-                        {
-                            if ( !ret && (!gas_on || pellet_on) )
-                                ret = true;
-                            _gas_program[d][h][f] = true;
-                            _pellet_program[d][h][f] = false;
-                            _pellet_minimum_program[d][h][f] = false;
-                        }
-                        else if ( p == 'p' || p == 'P' )
-                        {
-                            if ( !ret && (gas_on || !pellet_on) )
-                                ret = true;
-                            _gas_program[d][h][f] = false;
-                            _pellet_program[d][h][f] = true;
-                            _pellet_minimum_program[d][h][f] = false;
-                        }
-                        else if ( p == 'm' || p == 'M' )
-                        {
-                            if ( !ret && (gas_on || !pellet_minimum_on) )
-                                ret = true;
-                            _gas_program[d][h][f] = false;
-                            _pellet_program[d][h][f] = true;
-                            _pellet_minimum_program[d][h][f] = true;
-                        }
-                        else if ( p == 'o' || p == 'O' )
-                        {
-                            if ( !ret && (gas_on || pellet_on) )
-                                ret = true;
-                            _gas_program[d][h][f] = false;
-                            _pellet_program[d][h][f] = false;
-                            _pellet_minimum_program[d][h][f] = false;
+                            if ( _program[d][h][f] != t )
+                            {
+                                modified = true;
+                                _program[d][h][f] = t;
+                            }
                         }
                     }
-                }
-            }
-        }
+                } // f
+            } //h
+        } //d
     }
-    return ret;
+    return modified;
 }
 
 void Program::loadConfig(const ConfigData *c)
@@ -133,18 +125,16 @@ void Program::loadConfig(const ConfigData *c)
                     {
                         std::string token = tokens[t++];
                         FrameworkUtils::string_tolower( token );
-                        if ( (token == "g") || (token == "x") )
-                            _gas_program[d][h][f] = true;
+                        if ( token == "g" )
+                            _program[d][h][f] = HIGH_GAS;
+                        else if ( token == "x" )
+                            _program[d][h][f] = HIGH_AUTO;
+                        if ( token == "p" )
+                            _program[d][h][f] = HIGH_PELLET;
+                        else if ( token == "m" )
+                            _program[d][h][f] = LOW_PELLET;
                         else
-                            _gas_program[d][h][f] = false;
-                        if ( (token == "p") || (token == "x") || (token == "m") )
-                            _pellet_program[d][h][f] = true;
-                        else
-                            _pellet_program[d][h][f] = false;
-                        if ( (token == "m") )
-                            _pellet_minimum_program[d][h][f] = true;
-                        else
-                            _pellet_minimum_program[d][h][f] = false;
+                            _program[d][h][f] = LOW_GAS;
                     }
                 }
             }
@@ -152,7 +142,7 @@ void Program::loadConfig(const ConfigData *c)
     }
 }
 
-void Program::saveConfig(ConfigData *c)
+void Program::saveConfig(ConfigData *c) const
 {
     for ( std::size_t d = 0; d < 7; d++ )
     {
@@ -162,22 +152,25 @@ void Program::saveConfig(ConfigData *c)
         {
             for ( std::size_t f = 0; f < 2; f++ )
             {
-                bool gas_on = _gas_program[d][h][f];
-                bool pellet_on = _pellet_program[d][h][f];
-                bool pellet_minimum_on = _pellet_minimum_program[d][h][f];
-                if ( gas_on && pellet_on )
-                    value += "x";
-                else if ( gas_on )
-                    value += "g";
-                else if ( pellet_on )
+                switch ( _program[d][h][f] )
                 {
-                    if ( pellet_minimum_on )
-                        value += "m";
-                    else
-                        value += "p";
-                }
-                else
+                case HIGH_AUTO:
+                    value += "x";
+                    break;
+                case HIGH_GAS:
+                    value += "g";
+                    break;
+                case HIGH_PELLET:
+                    value += "p";
+                    break;
+                case LOW_PELLET:
+                    value += "m";
+                    break;
+                case LOW_GAS:
+                case ERROR:
                     value += "o";
+                    break;
+                }
                 value += ",";
             }
         }
@@ -185,7 +178,7 @@ void Program::saveConfig(ConfigData *c)
     }
 }
 
-void Program::writeJSON(FILE *file)
+void Program::writeJSON(FILE *file) const
 {
     char s[5] = "\"_\",";
     fwrite("[", 1, 1, file );
@@ -196,10 +189,25 @@ void Program::writeJSON(FILE *file)
         {
             for ( std::size_t f = 0; f < 2; f++ )
             {
-                bool pellet_on = _pellet_program[d][h][f];
-                bool gas_on = _gas_program[d][h][f];
-                bool pellet_minimum_on = _pellet_minimum_program[d][h][f];
-                s[1] = pellet_on ? (gas_on ? 'x' : (pellet_minimum_on ? 'm' : 'p') ) : (gas_on ? 'g' : 'o');
+                switch ( _program[d][h][f] )
+                {
+                case HIGH_AUTO:
+                    s[1] = 'x';
+                    break;
+                case HIGH_GAS:
+                    s[1] = 'g';
+                    break;
+                case HIGH_PELLET:
+                    s[1] = 'p';
+                    break;
+                case LOW_PELLET:
+                    s[1] = 'm';
+                    break;
+                case LOW_GAS:
+                case ERROR:
+                    s[1] = 'o';
+                    break;
+                }
                 // disegna , solo alla fine della giornata:
                 fwrite(s, ((h != 23) || (f != 1)) ? 4 : 3,1, file );
             }

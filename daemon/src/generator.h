@@ -17,7 +17,10 @@ public:
               LogItem::Event on_event,
               LogItem::Event off_event,
               LogItem::Event low_event,
-              LogItem::Event high_event );
+              LogItem::Event high_event,
+              LogItem::Event missed_start_event,
+              LogItem::Event missed_start_clear_event,
+              uint64_t max_hot_timeout );
 
     virtual ~Generator();
 
@@ -29,6 +32,8 @@ public:
     bool isOn();
     bool isHot();
     bool isLow();
+
+    bool checkHotTimeout(uint64_t now);
 
     uint64_t lastOnTime();
 
@@ -45,11 +50,15 @@ private:
     int _power_gpio;
 
     uint64_t _on_since;
+    uint64_t _max_hot_timeout;
+    bool _missed_start;
 
     LogItem::Event _on_event;
     LogItem::Event _off_event;
     LogItem::Event _low_event;
     LogItem::Event _high_event;
+    LogItem::Event _missed_start_event;
+    LogItem::Event _missed_start_clear_event;
 };
 
 #endif // GENERATOR_H

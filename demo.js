@@ -30,10 +30,6 @@ function( request, dom, attr, dclass, style, domConstruct, html, query, json, on
 	var local_events = [{"t":1525582853,"e":4},{"t":1525584653,"e":8},{"t":1525600602,"e":16777216}];
 	
 	putRequest = function( req, data, ok_func, ko_func ){
-		if ( data.data == "reset-flameout" ){
-			local_status.pellet.flameout = "off";
-			ok_func();
-		}
 		else if ( data == "activate" ){
 			local_status.active = "on";
 			ok_func();

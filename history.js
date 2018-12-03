@@ -92,7 +92,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     pos = line_end+1;
                 } else {
                     pos = len;
-                    }
+                }
             }
             hst.drawGraph();
         },
@@ -115,9 +115,12 @@ function( dom, attr, dclass, style, html, on,// Dojo
             var eDate = hst.hEnd;eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(59);
             var startDate = Math.floor( sDate / 1000 );
             var endDate = Math.floor( eDate / 1000 ); 
-
+            var n_samples = (endDate-startDate)/300;
+            if ( n_samples < 2 ) n_samples = 2;
+            if ( n_samples > 60 ) n_samples = 60;
+            
             hst.clearData();
-            postRequest("cgi-bin/history",startDate+":"+endDate+":60",
+            postRequest("cgi-bin/history",startDate+":"+endDate+":"+n_samples.toFixed(0),
                 function(result){
                     if ( result )
                         hst.setData(result);

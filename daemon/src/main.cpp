@@ -258,7 +258,7 @@ int main(int argc, char** argv)
                                     ss << "ext-temp"
                                        << ext_id << ":"
                                        << temp_sensor->getTemp() << ":"
-                                       << temp_sensor->getHimidity();
+                                       << temp_sensor->getHumidity();
                                     std::string send_data = ss.str();
                                     remote_client.writeData( send_data.c_str(), static_cast<int>( send_data.length() ) );
                                     temp_sensor->printStatus();
