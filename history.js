@@ -30,8 +30,11 @@ function( dom, attr, dclass, style, html, on,// Dojo
         hStart: null,
         hEnd: null,
         timer: null,
-        data:  {},
-
+        data: {},
+        mins: null,
+        maxs: null,
+        avgs: null,
+        
         grp: new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25}),
 
         toggleRange: function(){
@@ -40,9 +43,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
         },
         
         drawGraph: function(){
-            var mins = { 0:NaN,1:NaN,2:NaN,3:NaN };
-            var maxs = { 0:NaN,1:NaN,2:NaN,3:NaN };
-            var meds = { 0:NaN,1:NaN,2:NaN,3:NaN };
             var axna = { 0:"Temp", 1:"Humi", 2:"TempExt", 3:"HumiExt" };
             var show = { 0:dom.byId("show-temp").checked,
                             1:dom.byId("show-humi").checked,
@@ -54,21 +54,14 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     var val = hst.data[time][n];
                     if ( show[n] )
                         list[n].push( {x:time, y:val.toFixed(1) } ); 
-                    if ( isNaN(mins[n]) || (mins[n] > val) )
-                        mins[n] = val;
-                    if ( isNaN(maxs[n]) || (maxs[n] < val) )
-                        maxs[n] = val;
-                    if ( isNaN(meds[n]) ){
-                        meds[n] = val;
-                    } else {
-                        meds[n] = (meds[n]+val)/2;
-                    }
                 }
             }
-            html.set(dom.byId("history-stats-te"), "T(int): " + mins[0].toFixed(1) + " ...(" + meds[0].toFixed(1) + ")... " + maxs[0].toFixed(1) + "" );
-            html.set(dom.byId("history-stats-ex"), "T(est): " + mins[2].toFixed(1) + " ...(" + meds[2].toFixed(1) + ")... " + maxs[2].toFixed(1) + "" );
-            html.set(dom.byId("history-stats-hu"), "H(int): " + mins[1].toFixed(1) + " ...(" + meds[1].toFixed(1) + ")... " + maxs[1].toFixed(1) + "" );
-            html.set(dom.byId("history-stats-hx"), "H(est): " + mins[3].toFixed(1) + " ...(" + meds[3].toFixed(1) + ")... " + maxs[3].toFixed(1) + "" );
+            if ( hst.mins ){
+                html.set(dom.byId("history-stats-te"), "T(int): " + hst.mins[0].toFixed(1) + " ...(" + hst.avgs[0].toFixed(1) + ")... " + hst.maxs[0].toFixed(1) + "" );
+                html.set(dom.byId("history-stats-ex"), "T(est): " + hst.mins[2].toFixed(1) + " ...(" + hst.avgs[2].toFixed(1) + ")... " + hst.maxs[2].toFixed(1) + "" );
+                html.set(dom.byId("history-stats-hu"), "H(int): " + hst.mins[1].toFixed(1) + " ...(" + hst.avgs[1].toFixed(1) + ")... " + hst.maxs[1].toFixed(1) + "" );
+                html.set(dom.byId("history-stats-hx"), "H(est): " + hst.mins[3].toFixed(1) + " ...(" + hst.avgs[3].toFixed(1) + ")... " + hst.maxs[3].toFixed(1) + "" );
+            }
             for ( var n in list )
                 hst.grp.updateSeries( axna[n], list[n] );                
             hst.grp.render();        
@@ -76,6 +69,9 @@ function( dom, attr, dclass, style, html, on,// Dojo
 			
         clearData: function(){
             hst.data = {};
+            hst.mins = null;
+            hst.maxs = null;
+            hst.avgs = null;
             hst.drawGraph();                                
         },
     
@@ -91,6 +87,11 @@ function( dom, attr, dclass, style, html, on,// Dojo
                                                                     2: parseFloat(split_row[3]), 3: parseFloat(split_row[4]) };
                     pos = line_end+1;
                 } else {
+                    var row = new_rows.substr( pos );
+                    var split_row = row.split(" ");
+                    hst.mins = {0: parseFloat(split_row[0]), 1: parseFloat(split_row[3]), 2:parseFloat(split_row[6]), 3:parseFloat(split_row[9]) };
+                    hst.maxs = {0: parseFloat(split_row[1]), 1: parseFloat(split_row[4]), 2:parseFloat(split_row[7]), 3:parseFloat(split_row[10]) };
+                    hst.avgs = {0: parseFloat(split_row[2]), 1: parseFloat(split_row[5]), 2:parseFloat(split_row[8]), 3:parseFloat(split_row[11]) };                    
                     pos = len;
                 }
             }

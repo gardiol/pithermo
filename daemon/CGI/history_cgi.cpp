@@ -52,10 +52,40 @@ int main( int , char** )
                 bool pellet_off = false;
                 bool gas_on = false;
                 bool gas_off = false;
+                float min_t = 0, max_t = 0, avg_t = 0,
+                        min_et = 0, max_et = 0, avg_et = 0,
+                        min_h = 0, max_h = 0, avg_h = 0,
+                        min_eh = 0, max_eh = 0, avg_eh = 0;
+                bool first = true;
                 for ( std::list<HistoryItem>::iterator i = history_items.begin(); i != history_items.end(); ++i )
                 {
                     bool skip_events = false;
                     uint64_t history_time = (*i).getTime();
+                    float temp = (*i).getTemp();
+                    float humi = (*i).getHumidity();
+                    float temp_e = (*i).getExtTemp();
+                    float humi_e = (*i).getExtHumidity();
+                    if ( first || ( temp < min_t ) )
+                        min_t = temp;
+                    if ( first || ( temp_e < min_et ) )
+                        min_et = temp_e;
+                    if ( first || ( humi < min_h ) )
+                        min_h = humi;
+                    if ( first || ( humi_e < min_eh ) )
+                        min_eh = humi_e;
+                    if ( first || ( temp > max_t ) )
+                        max_t = temp;
+                    if ( first || ( temp_e > max_et ) )
+                        max_et = temp_e;
+                    if ( first || ( humi > max_h ) )
+                        max_h = humi;
+                    if ( first || ( humi_e > max_eh ) )
+                        max_eh = humi_e;
+                    avg_t = first ? temp : (avg_t+temp)/2.0f;
+                    avg_et = first ? temp_e : (avg_et+temp_e)/2.0f;
+                    avg_h = first ? humi : (avg_h+humi)/2.0f;
+                    avg_eh = first ? humi_e : (avg_eh+humi_e)/2.0f;
+
                     while ( (e != events_items.end()) && !skip_events )
                     {
                         if ( (*e).getTime() <= history_time )
@@ -78,10 +108,10 @@ int main( int , char** )
                     {
                         printf("%llu %f %f %f %f %d %d %d %d\n",
                                static_cast<unsigned long long int>(history_time),
-                               static_cast<double>((*i).getTemp()),
-                               static_cast<double>((*i).getHumidity()),
-                               static_cast<double>((*i).getExtTemp()),
-                               static_cast<double>((*i).getExtHumidity()),
+                               static_cast<double>(temp),
+                               static_cast<double>(humi),
+                               static_cast<double>(temp_e),
+                               static_cast<double>(humi_e),
                                pellet_on ? 1:0,
                                pellet_off ? 1:0,
                                gas_on ? 1:0,
@@ -89,7 +119,14 @@ int main( int , char** )
                         gas_off = gas_on = pellet_off = pellet_on = false;
                     }
                     n_item++;
+                    first = false;
                 }
+                printf("%f %f %f %f %f %f %f %f %f %f %f %f",
+                       static_cast<double>(min_t), static_cast<double>(max_t), static_cast<double>(avg_t),
+                       static_cast<double>(min_h), static_cast<double>(max_h), static_cast<double>(avg_h),
+                       static_cast<double>(min_et), static_cast<double>(max_et), static_cast<double>(avg_et),
+                       static_cast<double>(min_eh), static_cast<double>(max_eh), static_cast<double>(avg_eh) );
+
                 ret = 0;
             }
         }
