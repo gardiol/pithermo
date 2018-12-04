@@ -529,7 +529,7 @@ bool RunnerThread::_checkTargetTemperature(float sensor_temp,
 {
     bool update_status = false;
     bool new_over = sensor_temp > (target_temperature+0.1f);
-    bool new_under = sensor_temp < target_temperature;
+    bool new_under = sensor_temp < (target_temperature-0.1f);
 
     if ( new_over != over_temp )
     {
