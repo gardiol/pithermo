@@ -75,6 +75,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
             hst.mins = null;
             hst.maxs = null;
             hst.avgs = null;
+            hst.xref = [];
             hst.drawGraph();                                
         },
     
