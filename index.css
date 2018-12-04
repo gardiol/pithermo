@@ -96,7 +96,7 @@ img.today-table-img {
 }
 
 .program-selected {
-	background: coral;
+    border: 4px dashed darkred !important;
 }
 
 #program-changed {

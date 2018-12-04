@@ -38,14 +38,20 @@ int main( int , char** )
 
             if ( logger.fetchInterval( from_time, to_time, items ) )
             {
-                uint32_t n_item = 0;
+                uint64_t n_items = items.size();
+                uint64_t skip_items = 0;
+                if ( n_items > n_samples )
+                    skip_items = n_items - n_samples;
                 for ( std::list<LogItem>::iterator i = items.begin();
-                      (i != items.end()) && (n_item < n_samples); ++i )
+                      i != items.end();
+                      ++i )
                 {
-                    (*i).writeText( stdout );
-                    n_item++;
+                    if ( skip_items > 0 )
+                        skip_items--;
+                    else
+                        (*i).writeText( stdout );
                 }
-                if ( n_item < items.size() )
+                if ( n_samples > items.size() )
                     printf("+");
                 ret = 0;
             }

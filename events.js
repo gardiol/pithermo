@@ -60,7 +60,7 @@ function( dom, dclass, on, dc)    // Dojo
                     pos = line_end+1;
                 } else {
                     if ( new_rows.substr( pos ) == "+" )
-                        dc.place("<div>(troppi eventi, solo i primi 120 sono visualizzati)</div>", "messages-queue", "first");
+                        dc.place("<div>(troppi eventi, solo i primi 120 sono visualizzati)</div>", "messages-queue", "last");
                     pos = len;
                 }
             }

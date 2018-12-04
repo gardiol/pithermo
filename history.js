@@ -36,8 +36,18 @@ function( dom, attr, dclass, style, html, on,// Dojo
         maxs: null,
         avgs: null,
         xref: [],
+        xScale: 1,
+        xOffset: 0,
+        xFirstSet:true,
         
         grp: new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25}),
+
+        scrollX:function(){
+            hst.xFirstSet = false;
+            hst.xOffset = history_offset.getValue();
+            hst.grp.setAxisWindow( "x", hst.xScale, hst.xOffset );
+            hst.grp.render(); 
+        },
 
         toggleRange: function(){
             dclass.toggle(dom.byId("history-range"), "hidden");
@@ -51,6 +61,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
                          2:dom.byId("show-ext-temp").checked,
                          3:dom.byId("show-ext-humi").checked, 4:true, 5:true, 6:true, 7:true };
             var list = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[] };
+            var n_points = 0;
             for (var time in hst.data){
                 hst.xref.push( time );
                 for ( var n in axna ){
@@ -58,6 +69,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     if ( show[n] )
                         list[n].push( parseFloat(val.toFixed(1)) );
                 }
+                n_points++;
             }
             if ( hst.mins ){
                 html.set(dom.byId("history-stats-te"), "T(int): " + hst.mins[0].toFixed(1) + " ...(" + hst.avgs[0].toFixed(1) + ")... " + hst.maxs[0].toFixed(1) + "" );
@@ -66,7 +78,16 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 html.set(dom.byId("history-stats-hx"), "H(est): " + hst.mins[3].toFixed(1) + " ...(" + hst.avgs[3].toFixed(1) + ")... " + hst.maxs[3].toFixed(1) + "" );
             }
             for ( var n in axna )
-                hst.grp.updateSeries( axna[n], list[n] );                
+                hst.grp.updateSeries( axna[n], list[n] );    
+
+            var oo = hst.xOffset;
+            hst.xScale = n_points/60;
+            if ( hst.xFirstSet || (hst.xOffset > n_points - 60) )
+                hst.xOffset = n_points - 60;
+            hst.grp.setAxisWindow("x", hst.xScale, hst.xOffset ); 
+            history_offset.set("minimum", 0 );
+            history_offset.set("maximum", n_points-60 );
+            history_offset.setValue( hst.xOffset );
             hst.grp.render();        
         },
 			
@@ -126,9 +147,9 @@ function( dom, attr, dclass, style, html, on,// Dojo
             var eDate = hst.hEnd;eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(59);
             var startDate = Math.floor( sDate / 1000 );
             var endDate = Math.floor( eDate / 1000 ); 
-            var n_samples = (endDate-startDate)/300;
+            var n_samples = (endDate-startDate)/600; // 1pt every 10 mins
             if ( n_samples < 2 ) n_samples = 2;
-            if ( n_samples > 60 ) n_samples = 60;
+            if ( n_samples > 600 ) n_samples = 600; 
             
             hst.clearData();
             postRequest("cgi-bin/history",startDate+":"+endDate+":"+n_samples.toFixed(0),
@@ -212,7 +233,10 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 });
 
             hst.grp.addPlot("eventsPlot",{ type: Columns, hAxis: "x", vAxis:"e" });
-            hst.grp.addAxis("e", {plot:"eventsPlot", vertical: true, min: 0, max: 1 });
+            hst.grp.addAxis("e", {plot:"eventsPlot", vertical: true, min: 0, max: 1,
+                                majorTicks: false, majorLabels: false,
+                                minorTicks: false, minorLabels: false,
+                                microTicks: false, microLabels: false });
             hst.grp.addSeries("GasOn",[0,1],{plot: "eventsPlot", legend:"Gas ON"});
             hst.grp.addSeries("GasOff",[0,1],{plot: "eventsPlot", legend:"Gas OFF"});
             hst.grp.addSeries("PelletOn",[0,1],{plot: "eventsPlot", legend:"Pellet ON"});
@@ -234,7 +258,9 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 dclass.toggle(dom.byId("history-graph"), "history-big");
                 hst.grp.resize();
             });
+                
             hst.update();
         }
+                
     };
 });
