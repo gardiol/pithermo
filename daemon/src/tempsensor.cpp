@@ -42,8 +42,17 @@ bool TempSensor::readSensor()
 {
     bool ret = false;
 #ifdef DEMO
-    _temp = 28.0;
-    _humidity = 50.0;
+    FILE* demo_file = fopen("demo.tmp", "r");
+    if ( demo_file != nullptr )
+    {
+        fscanf( demo_file, "%f %f", &_temp, &_humidity );
+        fclose(demo_file);
+    }
+    else
+    {
+        _temp = 20;
+        _humidity = 50.0f;
+    }
     ret = _at_lease_one_read_ok = true;
     _timestamp = FrameworkTimer::getTimeEpoc();
 #else

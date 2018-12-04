@@ -42,17 +42,12 @@
    padding: 0.4em;
 }
 
-#hot-label {
-    background: red;
-    color: white;
-    border: none !important;
+.hot-prg {
+    background: pink;
 }
 
-#cold-label {
-    background: blue;
-    color: white;
-    height: 100%;
-    border: none !important;
+.cold-prg {
+    background: cyan;
 }
 
 #program-selector > div {

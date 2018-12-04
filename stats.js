@@ -169,7 +169,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
         startup: function(){
             sta.grp.setTheme(Chris);
             
-            sta.grp.addPlot("TimePlot", {type: StackedColumns, gap: 5 });     
+            sta.grp.addPlot("TimePlot", {type: StackedColumns, gap: 5 });
             sta.grp.addAxis("x", { plot: "TimePlot", labelFunc: function(t,v,p){return utils.date2str(sta.grpRef[v]*1000)} });
             sta.grp.addAxis("y", { plot: "TimePlot", vertical:true, min: 0 });
             sta.grp.addSeries("Pellet", [1,2,3,4,5,6,7,8,9,10],{  plot: "TimePlot", /*stroke: "black", fill: "purple", */minorThicks: false, legend: "Ore pellet modulazione" } );

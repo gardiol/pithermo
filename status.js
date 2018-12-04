@@ -29,11 +29,8 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                 function(err){alert("Command error: " + err );});
             });
             dialog.show();
-        },                
-        setTemp:function(v,w,t){
-            eTempVal.set("value", v );
-            eTemp.set("minOrMax", w);
-            eTemp.set("title", t);
+        },
+        updTempBts: function(v){
             var s=Math.floor(v)-2;
             for ( var r = 0; r < 5; r++ ){
                 for ( var c = 0; c < 5; c++ ){                
@@ -41,6 +38,12 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                     btn.set("label", (s+r)+"."+(c*2));
                 }
             }    
+        },
+        setTemp:function(v,w,t){
+            eTempVal.set("value", v );
+            eTemp.set("minOrMax", w);
+            eTemp.set("title", t);
+            sts.updTempBts(v);
             eTemp.show();		  
         },        
         saveTemp: function(m,v){	
@@ -173,6 +176,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                         label:'xx.x',
                         onClick: function(){
                             eTempVal.set("value", parseFloat(this.get("label")) );
+                            sts.updTempBts(eTempVal.get("value"));
                         }
                     }, dc.create("td",{}, x) );
                 sts.tempBts[r][c].startup();

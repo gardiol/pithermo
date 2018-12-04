@@ -112,7 +112,7 @@ bool Generator::checkHotTimeout( uint64_t now )
                 }
             }
         }   // If it's OFF (or ON but now HOT) and we have had a problem, we should reset it now:
-        else if ( !_missed_start )
+        else if ( _missed_start )
         {
             _logger->logDebug("missed start cleared - "+_name );
             _logger->logEvent( _missed_start_clear_event );

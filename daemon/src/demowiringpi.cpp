@@ -19,14 +19,14 @@ void pinMode(int pin, int mode)
 
 int digitalRead(int pin)
 {
-    if ( pin > 0 && pin < 256 )
+    if ( pin >= 0 && pin < 256 )
         return demo_store[pin];
     return 0;
 }
 
 void digitalWrite(int pin, int value)
 {
-    if ( pin > 0 && pin < 256 )
+    if ( pin >= 0 && pin < 256 )
         demo_store[pin] = value;
 }
 
