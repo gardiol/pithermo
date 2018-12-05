@@ -51,7 +51,7 @@ int main( int , char** )
                     else
                         (*i).writeText( stdout );
                 }
-                if ( n_samples > items.size() )
+                if ( items.size() > n_samples )
                     printf("+");
                 ret = 0;
             }

@@ -32,7 +32,7 @@ loading..
 
     <div id="status-info">
         <div id="power-box" class="col">
-            <img alt="pwr" class="info-icon" id="power-led" src="images/spento.png"/>
+            <img alt="pwr" class="info-icon" id="power-led" src="images/spento.png?1"/>
             <div class="col">
                 <div>
                     <button data-dojo-id="status_master_on" data-dojo-type="dijit/form/Button" data-dojo-props="onClick:function(){sts.confirm('Attivare impianto?','Attiva!','activate')}">
@@ -59,7 +59,7 @@ loading..
                     </button>
                 </div>
             </div><!--col-->
-            <img alt="mde" class="info-icon" id="mode-led" src="images/manual.png"/>
+            <img alt="mde" class="info-icon" id="mode-led" src="images/manual.png?1"/>
         </div><!-- mode box -->
     </div><!-- status info-->
       
@@ -87,7 +87,7 @@ loading..
                 Temperature impostate
             </div>
             <div>
-                <img alt="minTemp" class="temp-img" src="images/min-temp.png"/>
+                <img alt="minTemp" class="temp-img" src="images/min-temp.png?1"/>
                 <button data-dojo-id="min_temp_m" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.status.temp.min-0.1)}">
                     -
                 </button>
@@ -99,7 +99,7 @@ loading..
                 </button>  
             </div>
             <div>
-                <img alt="maxTemp" class="temp-img" src="images/max-temp.png"/>
+                <img alt="maxTemp" class="temp-img" src="images/max-temp.png?1"/>
                 <button data-dojo-id="max_temp_m" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.status.temp.max-0.1)}">
                     -
                 </button>                
@@ -132,17 +132,17 @@ loading..
                     </div>
                 </div>
                 <div class="col">
-                            <img alt="psl" class="status-icon" id="pellet-status-led" src="images/pellet-off.png"/>
+                            <img alt="psl" class="status-icon" id="pellet-status-led" src="images/pellet-off.png?1"/>
                 </div>
                 <div class="col">
                             <div>
-                                <img alt="fml" class="status-icon-flame celated" id="pellet-flameout-led" src="images/flameout.png"/>
+                                <img alt="fml" class="status-icon-flame celated" id="pellet-flameout-led" src="images/flameout.png?1"/>
                             </div>
                             <div>
-                                <img alt="pfl" class="status-icon-temp" id="pellet-feedback-led" src="images/min-temp.png"/>
+                                <img alt="pfl" class="status-icon-temp" id="pellet-feedback-led" src="images/min-temp.png?1"/>
                             </div>
                             <div>
-                                <img alt="pmsl" class="status-icon-sub" id="pellet-minimum-status-led" src="images/pellet-modulazione.png"/>
+                                <img alt="pmsl" class="status-icon-sub" id="pellet-minimum-status-led" src="images/pellet-modulazione.png?1"/>
                             </div>
                 </div>
                 <div class="col">
@@ -167,7 +167,7 @@ loading..
             <button data-dojo-id="gas_on" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.confirm('Accendo il GAS?','Accendi!','gas-on')}">
                 Accendi
             </button>                    
-            <img alt="gl" class="status-icon" id="gas-status-led" src="images/gas-off.png"/>
+            <img alt="gl" class="status-icon" id="gas-status-led" src="images/gas-off.png?1"/>
             <button data-dojo-id="gas_off" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.confirm('Spengo il GAS?','Spegni!','gas-off')}">
                 Spegni
             </button>                    
@@ -180,7 +180,7 @@ loading..
             <div>
                 <input data-dojo-id="eventsUseRange" data-dojo-type="dijit/form/CheckBox" onChange="evt.toggleRange();"/>
                 Scegli periodo
-                <img id="events-size" src="images/enlarge.png" class="temp-img" style="margin-left: 3em;"/>
+                <img id="events-size" src="images/enlarge.png?1" class="temp-img" style="margin-left: 3em;"/>
             </div>
             <div id="events-range" class="hidden">
                 Dal:
@@ -206,30 +206,30 @@ loading..
   <div id="program-editor" class="hidden">
     <div id="program-selector">
       <div id="select-pelletgas" class="hot-prg" >
-        <img alt="x" id="select-pelletgas-img" src="images/pellet-gas.png"/>
+        <img alt="x" id="select-pelletgas-img" src="images/pellet-gas.png?1"/>
         <span>Gas+Pellet</span>
       </div>
       <div id="select-gas" class="hot-prg">
-        <img alt="g" id="select-gas-img" src="images/gas.png"/>
+        <img alt="g" id="select-gas-img" src="images/gas.png?1"/>
         <span>Gas</span>
       </div>
       <div id="select-pellet" class="hot-prg">
-        <img alt="p" id="select-pellets-img" src="images/pellet.png"/>
+        <img alt="p" id="select-pellets-img" src="images/pellet.png?1"/>
         <span>Pellet</span>
       </div>
   	  <div id="select-off" class="cold-prg">
-  		 <img alt="o" id="select-off-img" src="images/off-select.png"/>
+  		 <img alt="o" id="select-off-img" src="images/off-select.png?1"/>
          <span>Gas</span>
       </div>
       <div id="select-pellet-minimum" class="cold-prg">
-        <img alt="m" id="select-pellet-minimum-img" src="images/pellet-min.png"/>
+        <img alt="m" id="select-pellet-minimum-img" src="images/pellet-min.png?1"/>
         <span>Pellet</span>
       </div>
     </div>
   	<div id="program-change" class="celated">
-      <img id="program-apply" class="button-img" src="images/apply.png"/>
+      <img id="program-apply" class="button-img" src="images/apply.png?1"/>
       <span id="program-changed">Salvare il programma modificato?</span>
-      <img id="program-restore" class="button-img" src="images/restore.png"/>
+      <img id="program-restore" class="button-img" src="images/restore.png?1"/>
     </div>
     <div id="program-content">
       <div>
@@ -262,7 +262,7 @@ loading..
             <input id="show-humi" data-dojo-type="dijit/form/CheckBox" value="2" onChange="hst.drawGraph()"/>Umidità
             <input id="show-ext-temp" data-dojo-type="dijit/form/CheckBox" value="3" checked onChange="hst.drawGraph()"/>Temperatura esterna
             <input id="show-ext-humi" data-dojo-type="dijit/form/CheckBox" value="4" onChange="hst.drawGraph()"/>Umidità esterna
-            <img id="history-size" src="images/enlarge.png" class="temp-img" style="margin-left: 3em;"/>
+            <img id="history-size" src="images/enlarge.png?1" class="temp-img" style="margin-left: 3em;"/>
         </div>
     </div>
     <div>

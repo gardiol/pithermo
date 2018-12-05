@@ -93,15 +93,15 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 				var c = prg.program[d][h*2+f];
 				var src = "images/";
 				if ( c == 'p' ){
-				    src += "pellet.png";
+				    src += "pellet.png?1";
 				} else if ( c == 'g' ){
-				    src += "gas.png";
+				    src += "gas.png?1";
 				} else if ( c == 'x' ){
-				    src += "pellet-gas.png";
+				    src += "pellet-gas.png?1";
 				} else if ( c == 'm' ){
-				    src += "pellet-min.png";
+				    src += "pellet-min.png?1";
 				} else {
-				    src += "off.png";
+				    src += "off.png?1";
 				}
 				return src;
 			}
@@ -237,17 +237,17 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 		var dr = dc.create("tr", {class: "header-row"}, prg.programT[d]["table"] );
 		prg.programT[d]["copy"] = dc.create("th", null, dr );
 		prg.programT[d]["copy"]["_d"] = d;
-		prg.programT[d]["copy"]["_img"] = dc.create("img", { class:"copy", src: "images/copy.png" }, prg.programT[d]["copy"] );
+		prg.programT[d]["copy"]["_img"] = dc.create("img", { class:"copy", src: "images/copy.png?1" }, prg.programT[d]["copy"] );
 		on(prg.programT[d]["copy"], "click", function(evt){
 			if ( prg.program ){
 			    var d = evt.currentTarget._d;
 			    if ( prg.copyDFrom === null ){
 			        prg.copyDFrom = d;
 			        for ( var x = 0; x < 7; x++ )
-			            attr.set(prg.programT[x]["copy"]["_img"], "src", (x==d) ? "images/cancel_copy.png" : "images/paste.png");
+			            attr.set(prg.programT[x]["copy"]["_img"], "src", (x==d) ? "images/cancel_copy.png?1" : "images/paste.png?1");
 			    } else {
 			        for ( var x = 0; x < 7; x++ )
-			            attr.set(prg.programT[x]["copy"]["_img"], "src", "images/copy.png" );
+			            attr.set(prg.programT[x]["copy"]["_img"], "src", "images/copy.png?1" );
 			        for ( var n = 0; n < prg.program[d].length; n++ )
 			            prg.program[d][n] = prg.program[prg.copyDFrom][n]; 	
 			        prg.copyDFrom = null;
@@ -279,7 +279,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
       });
 		prg.programT[d]["extr"] = dc.create("th", null, dr );
 		prg.programT[d]["extr"]["_d"] = d;
-		prg.programT[d]["extr"]["_img"] = dc.create("img", { class:"copy", src: "images/restore.png" }, prg.programT[d]["extr"] );
+		prg.programT[d]["extr"]["_img"] = dc.create("img", { class:"copy", src: "images/restore.png?1" }, prg.programT[d]["extr"] );
 		on(prg.programT[d]["extr"], "click", function(evt){
           if ( prg.program ){
               var d = evt.currentTarget._d;
@@ -315,7 +315,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 				prg.programT[d][h]["h"] = dc.create("th", { innerHTML: h < 10 ? "0"+h:h}, hr );
 				for ( var f = 0; f < 2; f++ ){
 					prg.programT[d][h][f] = dc.create("td", null, hr );            
-					prg.programT[d][h][f]["_img"] = dc.create("img", { src: "images/off.png" }, prg.programT[d][h][f] );  
+					prg.programT[d][h][f]["_img"] = dc.create("img", { src: "images/off.png?1" }, prg.programT[d][h][f] );  
 					prg.programT[d][h][f]["_img"]["_d"] = d;        
 					prg.programT[d][h][f]["_img"]["_h"] = h;        
 					prg.programT[d][h][f]["_img"]["_f"] = f;
@@ -347,7 +347,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 		prg.todayT[h] = [];
 		prg.todayT[h]["_h"] = dc.create("td", { innerHTML: ""}, h_row );                 
 		prg.todayT[h]["_c"] = dc.create("td", { innerHTML: ""}, c_row );                 
-		prg.todayT[h]["_img"] = dc.create("img", { class: "today-table-img", src: "images/off.png" }, prg.todayT[h]["_c"] );            
+		prg.todayT[h]["_img"] = dc.create("img", { class: "today-table-img", src: "images/off.png?1" }, prg.todayT[h]["_c"] );            
 	}
 
 });

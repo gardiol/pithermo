@@ -131,12 +131,12 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                                 gas_off.set("disabled", true );
                                 gas_on.set("disabled", true );
                             }
-                            attr.set("mode-led", "src", sts.status.mode == "manual" ? "images/manual.png":"images/auto.png");                
-                            attr.set("power-led", "src", sts.status.active != "on" ? "images/spento.png":"images/acceso.png");                
-                            attr.set("pellet-feedback-led", "src", sts.status.pellet.status == "on" ? "images/max-temp.png":"images/min-temp.png");                
-                            attr.set("pellet-minimum-status-led", "src", sts.status.pellet.minimum == "on" ? "images/pellet-minimo.png":"images/pellet-modulazione.png");
-                            attr.set("pellet-status-led", "src", sts.status.pellet.command == "on" ? "images/pellet-on.png":"images/pellet-off.png");
-                            attr.set("gas-status-led", "src", sts.status.gas.command == "on" ? "images/gas-on.png":"images/gas-off.png");    
+                            attr.set("mode-led", "src", sts.status.mode == "manual" ? "images/manual.png?1":"images/auto.png?1");                
+                            attr.set("power-led", "src", sts.status.active != "on" ? "images/spento.png?1":"images/acceso.png?1");                
+                            attr.set("pellet-feedback-led", "src", sts.status.pellet.status == "on" ? "images/max-temp.png?1":"images/min-temp.png?1");                
+                            attr.set("pellet-minimum-status-led", "src", sts.status.pellet.minimum == "on" ? "images/pellet-minimo.png?1":"images/pellet-modulazione.png?1");
+                            attr.set("pellet-status-led", "src", sts.status.pellet.command == "on" ? "images/pellet-on.png?1":"images/pellet-off.png?1");
+                            attr.set("gas-status-led", "src", sts.status.gas.command == "on" ? "images/gas-on.png?1":"images/gas-off.png?1");    
                             if ( sts.status.pellet.flameout == "on" )
                                 dclass.remove("pellet-flameout-led", "celated");
                             else
@@ -157,10 +157,10 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                     sts.disableAll();
                     html.set("temp-label", "--" );
                     html.set("humi-label", "--" );                
-                    attr.set("pellet-feedback-led", "src", "images/min-temp.png");
-                    attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
-                    attr.set("pellet-status-led", "src", "images/pellet-off.png");
-                    attr.set("gas-status-led", "src", "images/gas-off.png");
+                    attr.set("pellet-feedback-led", "src", "images/min-temp.png?1");
+                    attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png?1");
+                    attr.set("pellet-status-led", "src", "images/pellet-off.png?1");
+                    attr.set("gas-status-led", "src", "images/gas-off.png?1");
                     html.set("update-time", utils.printDate(new Date()) + " (ko)" );
                     sts.timer = window.setTimeout( function(){ sts.update(); }, 5000 );
                 });
