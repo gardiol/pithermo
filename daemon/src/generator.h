@@ -59,6 +59,7 @@ private:
     LogItem::Event _high_event;
     LogItem::Event _missed_start_event;
     LogItem::Event _missed_start_clear_event;
+    bool _quiet;
 };
 
 #endif // GENERATOR_H

@@ -29,7 +29,8 @@ Generator::Generator(const std::string &n,
     _low_event(low_event),
     _high_event(high_event),
     _missed_start_event(missed_start_event),
-    _missed_start_clear_event(missed_start_clear_event)
+    _missed_start_clear_event(missed_start_clear_event),
+    _quiet(true)
 {
     setGPIOoutput( _command_gpio );
     setGPIOoutput( _power_gpio );
@@ -44,6 +45,7 @@ Generator::Generator(const std::string &n,
     }
     else
         switchOff();
+    _quiet = false;
 }
 
 Generator::~Generator()
@@ -53,20 +55,30 @@ Generator::~Generator()
 bool Generator::switchOn()
 {    // on = LOW/false
     if ( _on_since == 0 )
+    {
         _on_since = FrameworkTimer::getTimeEpoc();
+        if ( !_quiet )
+        {
+            _logger->logEvent( _on_event );
+            _logger->logDebug( _name + " ON");
+        }
+    }
     writeGPIObool( _command_gpio, false );
-    _logger->logEvent( _on_event );
-    _logger->logDebug( _name + " ON");
     return true;
 }
 
 bool Generator::switchOff()
 {    // off = HIGH/true
     if ( _on_since > 0 )
+    {
         _on_since = 0;
+        if ( !_quiet )
+        {
+            _logger->logEvent( _off_event );
+            _logger->logDebug( _name + " OFF");
+        }
+    }
     writeGPIObool( _command_gpio, true );
-    _logger->logEvent( _off_event );
-    _logger->logDebug( _name + " OFF");
     return true;
 }
 
@@ -76,15 +88,21 @@ bool Generator::setPower(Generator::PowerLevel pl)
     writeGPIObool( _power_gpio, pl != POWER_LOW );
     if ( pl == POWER_LOW )
     {
-        if ( _low_event != LogItem::NO_EVENT )
-            _logger->logEvent( _low_event );
-        _logger->logDebug( _name + " LOW");
+        if ( !_quiet )
+        {
+            if ( _low_event != LogItem::NO_EVENT )
+                _logger->logEvent( _low_event );
+            _logger->logDebug( _name + " LOW");
+        }
     }
     else
     {
-        if ( _low_event != LogItem::NO_EVENT )
-            _logger->logEvent( _high_event );
-        _logger->logDebug( _name + " HIGH");
+        if ( !_quiet )
+        {
+            if ( _low_event != LogItem::NO_EVENT )
+                _logger->logEvent( _high_event );
+            _logger->logDebug( _name + " HIGH");
+        }
     }
 	return true;
 }
@@ -106,16 +124,22 @@ bool Generator::checkHotTimeout( uint64_t now )
             {   // Check timeout on hot...
                 if ( (_on_since + _max_hot_timeout) < now )
                 {   // Generator has NOT turned on properly!!!
-                    _logger->logDebug("missed start detected - "+_name+" was never hot after startup time");
-                    _logger->logEvent( _missed_start_event );
+                    if ( !_quiet )
+                    {
+                        _logger->logDebug("missed start detected - "+_name+" was never hot after startup time");
+                        _logger->logEvent( _missed_start_event );
+                    }
                     _missed_start = true;
                 }
             }
         }   // If it's OFF (or ON but now HOT) and we have had a problem, we should reset it now:
         else if ( _missed_start )
         {
-            _logger->logDebug("missed start cleared - "+_name );
-            _logger->logEvent( _missed_start_clear_event );
+            if ( !_quiet )
+            {
+                _logger->logDebug("missed start cleared - "+_name );
+                _logger->logEvent( _missed_start_clear_event );
+            }
             _missed_start = false;
         }
     }

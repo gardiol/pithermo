@@ -45,7 +45,7 @@ void Logger::logDebug(const std::string &str)
         if ( f != nullptr )
         {
             _printStamp(f);
-            fprintf(f, "%s\n", str.c_str() );
+            fprintf(f, " %s\n", str.c_str() );
             fclose(f);
         }
     }
