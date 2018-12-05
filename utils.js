@@ -5,7 +5,7 @@ var utils = {
         d =d instanceof Date?d:new Date(d);
         var dy=d.getDate();
         var dm=d.getMonth()+1;
-        return(dy<10?"0":"")+dy+"/"+(dm<10?"0":"")+dm+"/"+d.getFullYear();                         
+        return(dy<10?"0":"")+dy+"/"+(dm<10?"0":"")+dm+"/"+(""+d.getFullYear()).substr(2);                         
     },
     time2str:function(d){
         d =d instanceof Date?d:new Date(d);

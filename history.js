@@ -15,6 +15,7 @@ require([
     "dojox/charting/axis2d/Default", 
     "dojox/charting/plot2d/Columns",
     "dojox/charting/plot2d/Lines",
+    "dojox/charting/plot2d/Grid",
     "dojox/charting/themes/Chris",
     "dojox/charting/plot2d/Areas",
     "dojox/charting/plot2d/Markers",
@@ -24,7 +25,7 @@ require([
     "dojo/domReady!"], 
 function( dom, attr, dclass, style, html, on,// Dojo
           CheckBox, Select, DateTextBox, DijitTooltip,// Dijit
-          Chart, Default, Columns, Lines, Chris, Areas, Markers, Tooltip, Magnify, Legend )// Charing
+          Chart, Default, Columns, Lines, Grid, Chris, Areas, Markers, Tooltip, Magnify, Legend )// Charing
 {
     hst = { 
         ttipRect: null,
@@ -45,6 +46,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
         scrollX:function(){
             hst.xFirstSet = false;
             hst.xOffset = history_offset.getValue();
+            hst.xScale = history_scale.getValue();
             hst.grp.setAxisWindow( "x", hst.xScale, hst.xOffset );
             hst.grp.render(); 
         },
@@ -80,14 +82,13 @@ function( dom, attr, dclass, style, html, on,// Dojo
             for ( var n in axna )
                 hst.grp.updateSeries( axna[n], list[n] );    
 
-            var oo = hst.xOffset;
-            hst.xScale = n_points/60;
-            if ( hst.xFirstSet || (hst.xOffset > n_points - 60) )
-                hst.xOffset = n_points - 60;
             hst.grp.setAxisWindow("x", hst.xScale, hst.xOffset ); 
             history_offset.set("minimum", 0 );
             history_offset.set("maximum", n_points-60 );
             history_offset.setValue( hst.xOffset );
+            history_scale.set("minimum", 1 );
+            history_scale.set("maximum", n_points/60 );
+            history_scale.setValue( hst.xScale );
             hst.grp.render();        
         },
 			
@@ -149,7 +150,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
             var endDate = Math.floor( eDate / 1000 ); 
             var n_samples = (endDate-startDate)/600; // 1pt every 10 mins
             if ( n_samples < 2 ) n_samples = 2;
-            if ( n_samples > 600 ) n_samples = 600; 
+            if ( n_samples > 6*48 ) n_samples = 6*48; 
             
             hst.clearData();
             postRequest("cgi-bin/history",startDate+":"+endDate+":"+n_samples.toFixed(0),
@@ -181,13 +182,13 @@ function( dom, attr, dclass, style, html, on,// Dojo
         startup:function(){
             hst.grp.setTheme(Chris);
             
-            hst.grp.addPlot("tempPlot",{tension: "X", type: Lines,lines: true, areas: false, markers: true, hAxis:"x", vAxis:"t"});
-            hst.grp.addAxis("x", 	{plot:"tempPlot", 
-                        majorTicks: true, majorLabels: true,
-                        minorTicks: false,minorLabels: false,
+            hst.grp.addPlot("tempPlot",{tension: "X", type: Lines,lines: true, areas: false, markers: false, hAxis:"x", vAxis:"t"});
+            hst.grp.addAxis("x", 	{plot:"tempPlot",
+                        majorTickStep: 6, majorTicks: true, majorLabels: true,
+                        minorTicks: true, minorLabels: true,
                         microTicks: false,microLabels: false,
                         labelFunc:function(text,value,prec){
-                            return utils.printDate( hst.xref[value]*1000);
+                            return utils.date2str( hst.xref[value]*1000)+"<br> "+utils.time2str( hst.xref[value]*1000);
                         }
                     });
             hst.grp.addAxis("t", 	{plot:"tempPlot", 
@@ -212,7 +213,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     }
                 });
             
-            hst.grp.addPlot("humiPlot",{ type: Lines,lines: true, areas: false, markers: true, tension: "X", hAxis: "x",vAxis: "h" });
+            hst.grp.addPlot("humiPlot",{ type: Lines,lines: true, areas: false, markers: false, tension: "X", hAxis: "x",vAxis: "h" });
             hst.grp.addAxis("h", {plot:"humiPlot", vertical: true, leftBottom: false,
                                     majorTickStep: 10, majorTicks: true, majorLabels: true,
                                     minorTickStep: 1, minorTicks: true, minorLabels: false,
@@ -251,6 +252,14 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     }
                 });
             
+            hst.grp.addPlot("gridPlot", { type: Grid, hAxis: "x",vAxis: "t",
+                    hMajorLines: true,
+                    hMinorLines: true,
+                    vMajorLines: false,
+                    vMinorLines: false,
+                    majorHLine: { color: "gray", width: 1, style: "dash"},
+                    minorHLine: { color: "gray", width: 1, style: "dot" } });
+            
             hst.grp.render();        
             new Legend({chartRef:hst.grp, horizontal:4}, 'history-legend');
 
@@ -258,7 +267,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 dclass.toggle(dom.byId("history-graph"), "history-big");
                 hst.grp.resize();
             });
-                
+            
             hst.update();
         }
                 
