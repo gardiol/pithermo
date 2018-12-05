@@ -146,7 +146,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             status_master_on.set("disabled", false );
                         }
                         html.set("temp-label",sts.status.temp.int.toFixed(1) + "C (" + sts.status.temp.ext.toFixed(1) + "C)" );
-                        html.set("humi-label", sts.status.temp.hum.toFixed(1) + "% (" + sts.status.temp.ext_hum.tofixed(1) + "%)" );
+                        html.set("humi-label", sts.status.temp.hum.toFixed(1) + "% (" + sts.status.temp.ext_hum.toFixed(1) + "%)" );
                         prg.update(sts.status.program);
                         html.set("update-time", utils.printDate(new Date()) + " (ok)" );
                         sts.timer = window.setTimeout( function(){ sts.update(); }, 1000 );
