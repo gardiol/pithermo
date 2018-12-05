@@ -38,6 +38,7 @@ Generator::Generator(const std::string &n,
     _logger->logDebug(_name + " starting..." );
     if ( isOn() )
     {
+        _logger->logDebug(_name + " seems to be ON" );
         switchOn();
         if ( isLow() )
             setPower( POWER_LOW );
@@ -45,7 +46,10 @@ Generator::Generator(const std::string &n,
             setPower( POWER_HIGH );
     }
     else
+    {
+        _logger->logDebug(_name + " seems to be OFF" );
         switchOff();
+    }
     _logger->logDebug(_name + " started." );
     _quiet = false;
 }
