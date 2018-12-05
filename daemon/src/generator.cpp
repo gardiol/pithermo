@@ -30,7 +30,7 @@ Generator::Generator(const std::string &n,
     _high_event(high_event),
     _missed_start_event(missed_start_event),
     _missed_start_clear_event(missed_start_clear_event),
-    _quiet(false)
+    _quiet(true)
 {
     setGPIOoutput( _command_gpio );
     setGPIOoutput( _power_gpio );

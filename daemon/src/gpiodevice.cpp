@@ -32,11 +32,7 @@ bool GPIODevice::readPGIObool(int gpio_no)
 { // false : LOW : relé closed - true : HIGH : relé open
     if ( gpio_no > -1 )
     {
-/*        // First read, always in input:
-        if ( _values.find( gpio_no ) == _values.end() )
-            pinMode( gpio_no, INPUT );
-        else*/
-            pinMode( gpio_no, _mode[ gpio_no ] );
+        pinMode( gpio_no, _mode[ gpio_no ] );
         _values[ gpio_no ] = (digitalRead( gpio_no ) == HIGH);
         return _values[ gpio_no ];
     }
