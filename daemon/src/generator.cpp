@@ -30,11 +30,12 @@ Generator::Generator(const std::string &n,
     _high_event(high_event),
     _missed_start_event(missed_start_event),
     _missed_start_clear_event(missed_start_clear_event),
-    _quiet(true)
+    _quiet(false)
 {
     setGPIOoutput( _command_gpio );
     setGPIOoutput( _power_gpio );
     setGPIOinput( _status_gpio );
+    _logger->logDebug(_name + " starting..." );
     if ( isOn() )
     {
         switchOn();
@@ -45,6 +46,7 @@ Generator::Generator(const std::string &n,
     }
     else
         switchOff();
+    _logger->logDebug(_name + " started." );
     _quiet = false;
 }
 

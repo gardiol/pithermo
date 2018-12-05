@@ -108,8 +108,8 @@ RunnerThread::RunnerThread(ConfigFile *config,
                              LogItem::PELLET_FLAMEOUT_ON, LogItem::PELLET_FLAMEOUT_OFF, _pellet_startup_delay ); // command = 2, status = 7, min/mod=5
     _temp_sensor = new TempSensor( _logger, 1, _temp_correction ); // 1 temp sensor
 
-    // Ensure we print at next check
-    _prev_pellet_hot = !_pellet->isHot();
+    // Ensure we DO NOT print at next check
+    _prev_pellet_hot = _pellet->isHot();
 
     _updateStatus();
     startThread();

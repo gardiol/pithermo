@@ -197,6 +197,7 @@ int main(int argc, char** argv)
                 if ( logger.isValid() )
                 {
                     logger.enableDebug( enable_debug );
+                    logger.logDebug( "start" );
                     logger.logEvent( LogItem::START );
 
 #if defined(FRAMEWORK_PLATFORM_LINUX)
