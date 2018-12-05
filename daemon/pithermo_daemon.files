@@ -1,3 +1,4 @@
+test/test_temp.cpp
 CGI/events_cgi.cpp
 CGI/history_cgi.cpp
 CGI/stats_cgi.cpp
@@ -6,8 +7,6 @@ src/demowiringpi.h
 src/demowiringpi.h
 src/tempsensor.cpp
 src/tempsensor.h
-#WiringOP-Zero/wiringPi/wiringPi.c
-#WiringOP-Zero/wiringPi/wiringPi.h
 framework/basecomminterface.cpp
 framework/basecomminterface.h
 framework/basemutex.cpp

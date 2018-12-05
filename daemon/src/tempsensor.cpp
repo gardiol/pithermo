@@ -18,6 +18,8 @@ TempSensor::TempSensor(Logger *l, uint8_t gpio, float temp_correction):
     _logger(l),
     _temp(0.0),
     _humidity(0.0),
+    _temp_history_sum(0.0f),
+    _humi_history_sum(0.0f),
     _timestamp(0),
     _gpio(gpio),
     _temp_correction(temp_correction),
@@ -32,9 +34,10 @@ TempSensor::~TempSensor()
 
 void TempSensor::printStatus()
 {
-    _logger->logDebug("Sensor reads - t: " + FrameworkUtils::ftostring( _temp ) +
-                      " h: " + FrameworkUtils::ftostring( _humidity ) +
-                      " - Last successful read: "  + FrameworkUtils::utostring( _timestamp ) );
+    if ( _logger != NULL )
+        _logger->logDebug("Sensor reads - t: " + FrameworkUtils::ftostring( _temp ) +
+                          " h: " + FrameworkUtils::ftostring( _humidity ) +
+                          " - Last successful read: "  + FrameworkUtils::utostring( _timestamp ) );
 }
 
 
@@ -143,5 +146,23 @@ bool TempSensor::readSensor()
         ret = _at_lease_one_read_ok; // not yet a first read
 
 #endif
+    if ( ret )
+    {
+        _temp_history.push_back( _temp );
+        _humi_history.push_back( _humidity );
+        uint64_t size = _temp_history.size();
+        if ( size > 10 )
+        {
+            _temp_history_sum -= _temp_history.front();
+            _humi_history_sum -= _humi_history.front();
+            _temp_history.pop_front();
+            _humi_history.pop_front();
+            size -= 1;
+        }
+        _temp_history_sum = _temp_history_sum+_temp;
+        _humi_history_sum = _humi_history_sum+_humidity;
+        _temp = _temp_history_sum / static_cast<float>(size);
+        _humidity = _humi_history_sum / static_cast<float>(size);
+    }
     return ret;
 }

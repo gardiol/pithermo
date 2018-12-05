@@ -5,13 +5,14 @@ else
 $(info Build per PC - DEMO specified)
 CFLAGS=-fPIC -g -Wall -std=c++11 -DDEMO
 DEMO_OBJ=obj/demowiringpi.o
+DEMO_TGT=test_temp
 endif
 
 FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./framework/basethread.cpp ./framework/cmdlineparser.cpp ./framework/configdata.cpp ./framework/configfile.cpp ./framework/debugprint.cpp ./framework/udpsocket.cpp ./framework/frameworksighandler.cpp ./framework/frameworktimer.cpp ./framework/frameworkutils.cpp ./framework/genericcommdevice.cpp ./framework/memorychecker.cpp ./framework/profiler.cpp ./framework/profilerinternal.cpp ./framework/scheduledthread.cpp ./framework/socketcommdevice.cpp ./framework/tcpclient.cpp ./framework/tcpserver.cpp ./framework/transmissionstats.cpp
 FRAMEWORK_OBJS := $(foreach src,$(FRAMEWORK_SRCS),obj/$(basename $(notdir $(src))).o)
 $(foreach o,$(FRAMEWORK_OBJS),$(eval FRAMEWORK_MAPS_$(basename $(notdir $(o))) := framework/$(basename $(notdir $(o))).cpp))
 
-all: obj pithermo_daemon ../cgi-bin/history ../cgi-bin/events ../cgi-bin/stats
+all: obj pithermo_daemon ../cgi-bin/history ../cgi-bin/events ../cgi-bin/stats $(DEMO_TGT)
 
 obj:
 	mkdir obj
@@ -64,6 +65,9 @@ obj/events_cgi.o: CGI/events_cgi.cpp
 obj/stats_cgi.o: CGI/stats_cgi.cpp
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 
+obj/test_temp.o: test/test_temp.cpp src/logitem.h src/tempsensor.cpp src/tempsensor.h
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
+
 pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o ${DEMO_OBJ}
 	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib -lwiringPi
 
@@ -74,6 +78,9 @@ pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o 
 	g++ -o $@ $^ -lpthread -lrt -lm
 
 ../cgi-bin/stats: obj/frameworktimer.o obj/frameworkutils.o obj/stats_cgi.o obj/logitem.o obj/logger.o obj/debugprint.o obj/historyitem.o obj/history.o
+	g++ -o $@ $^ -lpthread -lrt -lm
+
+test_temp: obj/frameworktimer.o obj/frameworkutils.o obj/test_temp.o obj/tempsensor.o obj/gpiodevice.o obj/demowiringpi.o obj/debugprint.o obj/logger.o obj/logitem.o
 	g++ -o $@ $^ -lpthread -lrt -lm
 
 .PHONY: clean

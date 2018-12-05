@@ -50,7 +50,8 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _half_hour(0),
     _current_ext_temp(0.0),
     _current_ext_humidity(0.0),
-    _pellet_startup_delay(60*45)
+    _pellet_startup_delay(60*45),
+    _hysteresis(0.1f)
 {
     _status_json_template.push_back("{\"mode\":\"");
     _status_json_template.push_back("\",\"active\":\"");
@@ -84,6 +85,8 @@ RunnerThread::RunnerThread(ConfigFile *config,
             _pellet_startup_delay = static_cast<uint64_t>(FrameworkUtils::string_toi( _config->getValue( "pellet_startup_delay" ) ) );
         _temp_correction = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "temp_correction" ) ) );
         _program.loadConfig( _config->getSection( "program" ) );
+        if ( _config->hasValue( "hysteresis" ) )
+            _hysteresis = FrameworkUtils::string_tof( _config->getValue( "hysteresis" ) );
     }
     else
         _saveConfig();
@@ -494,7 +497,7 @@ bool RunnerThread::_checkAntiIce()
     }
     else if ( _anti_ice_active )
     {
-        if ( _temp_sensor->getTemp() > 6.0f )
+        if ( _temp_sensor->getTemp() > 8.0f )
         {
             _logger->logDebug("Anti-ice OFF (gas spento)");
             _logger->logEvent( LogItem::ANTI_ICE_OFF );
@@ -524,18 +527,20 @@ bool RunnerThread::_checkFlameout()
 
 bool RunnerThread::_checkTargetTemperature(float sensor_temp,
                                            float target_temperature,
-                                           bool& over_temp,
-                                           bool& under_temp)
+                                           bool& prev_over_temp,
+                                           bool& prev_under_temp)
 {
     bool update_status = false;
-    bool new_over = sensor_temp > (target_temperature+0.1f);
-    bool new_under = sensor_temp < (target_temperature-0.1f);
+    if ( prev_under_temp )
+        target_temperature += _hysteresis;
+    bool new_over = sensor_temp > target_temperature;
+    bool new_under = sensor_temp < target_temperature;
 
-    if ( new_over != over_temp )
+    if ( new_over != prev_over_temp )
     {
-        over_temp = new_over;
+        prev_over_temp = new_over;
         update_status = true;
-        if ( over_temp )
+        if ( prev_over_temp )
         {
             _logger->logDebug("over target temp start");
             _logger->logEvent( LogItem::OVER_TEMP_ON );
@@ -546,9 +551,9 @@ bool RunnerThread::_checkTargetTemperature(float sensor_temp,
             _logger->logEvent( LogItem::OVER_TEMP_OFF );
         }
     }
-    if ( new_under != under_temp )
+    if ( new_under != prev_under_temp )
     {
-        under_temp = new_under;
+        prev_under_temp = new_under;
         update_status = true;
         if ( new_under )
         {
@@ -604,6 +609,7 @@ void RunnerThread::_saveConfig()
     _config->setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
     _config->setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
     _config->setValue( "pellet_startup_delay", FrameworkUtils::utostring(_pellet_startup_delay) );
+    _config->setValue( "hysteresis", FrameworkUtils::ftostring( _hysteresis ) );
 
     ConfigData* prog_section = _config->getSection( "program" );
     if ( prog_section == nullptr )

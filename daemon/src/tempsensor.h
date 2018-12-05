@@ -39,6 +39,11 @@ private:
     Logger* _logger;
     float _temp;
     float _humidity;
+    float _temp_history_sum;
+    float _humi_history_sum;
+    std::list<float> _temp_history;
+    std::list<float> _humi_history;
+
     uint64_t _timestamp;
     FrameworkTimer _timer;
     uint8_t _gpio;
