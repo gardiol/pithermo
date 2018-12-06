@@ -182,10 +182,10 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
 }
 
 bool Logger::calculateStats(uint64_t from, uint64_t to,
-                            bool& prev_valid,
-                            bool& prev_pellet_on,
-                            bool& prev_pellet_minimum_on,
-                            bool& prev_gas_on,
+                            bool& on_are_valid,
+                            bool& pellet_on,
+                            bool& pellet_minimum_on,
+                            bool& gas_on,
                             uint32_t &pellet_on_time,
                             uint32_t &pellet_low_time,
                             uint32_t &gas_on_time)
@@ -195,17 +195,17 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
     uint64_t gas_on_since = 0;
     uint64_t pellet_on_since = 0;
     uint64_t pellet_low_on_since = 0;    
-    if ( !prev_valid )
+    if ( !on_are_valid )
         ret = fetchInterval( from, to, items, true,
-                             prev_pellet_on, prev_pellet_minimum_on, prev_gas_on );
+                             pellet_on, pellet_minimum_on, gas_on );
     else
         ret = fetchInterval( from, to, items );
 
-    if ( prev_pellet_on )
+    if ( pellet_on )
         pellet_on_since = from;
-    if ( prev_pellet_minimum_on )
+    if ( pellet_minimum_on )
         pellet_low_on_since = from;
-    if ( prev_gas_on )
+    if ( gas_on )
         gas_on_since = from;
 
     if ( ret )
@@ -220,15 +220,18 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
             case  LogItem::GAS_ON:
                 if ( (gas_on_since == 0) && !pellet_hot )
                     gas_on_since = event_time;
+                gas_on = true;
                 break;
 
             case LogItem::PELLET_MINIMUM:
+                pellet_minimum_on = true;
                 if ( ( pellet_on_since > 0 ) &&
                      ( pellet_low_on_since == 0 ) )
                         pellet_low_on_since = event_time;
                 break;
 
             case LogItem::PELLET_MODULATION:
+                pellet_minimum_on = false;
                 if ( pellet_low_on_since > 0 )
                 {
                     pellet_low_time += event_time - pellet_low_on_since;
@@ -240,9 +243,11 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                 if ( pellet_on_since == 0 )
                 {
                     pellet_on_since = event_time;
-                    if ( pellet_low_on_since > 0 )
+                    // Pellet at minimum? Calculate the time for it too...
+                    if ( pellet_minimum_on )
                         pellet_low_on_since = event_time;
                 }
+                pellet_on = true;
                 break;
 
             case LogItem::PELLET_OFF:
@@ -251,11 +256,12 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                     pellet_on_time += event_time - pellet_on_since;
                     pellet_on_since = 0;
                 }
-                if ( pellet_low_on_since > 0 )
+                if ( pellet_low_on_since > 0 ) // Where at minimum? Calculate the time too...
                 {
                     pellet_low_time += event_time - pellet_low_on_since;
                     pellet_low_on_since = 0;
                 }
+                pellet_on = false;
                 break;
 
             case LogItem::PELLET_HOT:
@@ -268,6 +274,7 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                     gas_on_time += event_time - gas_on_since;
                     gas_on_since = 0;
                 }
+                gas_on = false;
                 break;
 
             case LogItem::PELLET_COLD:
@@ -275,32 +282,19 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                 break;
             }
         }
-        if ( pellet_on_since > 0 )
+        if ( pellet_on )
         {
             pellet_on_time += to - pellet_on_since;
-            prev_pellet_on = true;
+            if ( pellet_minimum_on )
+                pellet_low_time += to - pellet_low_on_since;
         }
-        else
-            prev_pellet_on = false;
-        if ( pellet_low_on_since > 0 )
-        {
-            pellet_low_time += to - pellet_low_on_since;
-            prev_pellet_minimum_on = true;
-        }
-        else
-            prev_pellet_minimum_on = false;
-        if ( gas_on_since > 0 )
-        {
+        if ( gas_on )
             gas_on_time += to - gas_on_since;
-            prev_gas_on = true;
-        }
-        else
-            prev_gas_on = false;
-        prev_valid = true;
+        on_are_valid = true;
         ret = true;
     }
     else
-        prev_valid = false;
+        on_are_valid = false;
     return ret;
 }
 

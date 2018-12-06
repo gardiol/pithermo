@@ -77,7 +77,9 @@ int main( int , char** )
                                             prev_pellet_on,
                                             prev_pellet_minimum_on,
                                             prev_gas_on,
-                                            pellet_on_time, pellet_low_time, gas_on_time ) )
+                                            pellet_on_time,
+                                            pellet_low_time,
+                                            gas_on_time ) )
                 {
                     total_pellet_on_time += pellet_on_time;
                     total_pellet_low_time += pellet_low_time;
