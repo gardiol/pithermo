@@ -19,13 +19,14 @@ require([
     "dojox/charting/themes/Chris",
     "dojox/charting/plot2d/Areas",
     "dojox/charting/plot2d/Markers",
+    "dojox/charting/plot2d/Grid",
     "dojox/charting/action2d/Tooltip",
     "dojox/charting/action2d/Magnify",
     "dojox/charting/widget/Legend",
     "dojo/domReady!"], 
 function( dom, attr, dclass, style, html, on,// Dojo
           CheckBox, Select, DateTextBox, DijitTooltip,// Dijit
-          Chart, Default, Lines, StackedColumns,StackedAreas,Chris, Areas, Markers, Tooltip, Magnify, Legend )// Charing
+          Chart, Default, Lines, StackedColumns,StackedAreas,Chris, Areas, Markers, Grid, Tooltip, Magnify, Legend )// Charing
 {
     sta = { 
         ttipRect: null,
@@ -169,12 +170,15 @@ function( dom, attr, dclass, style, html, on,// Dojo
         startup: function(){
             sta.grp.setTheme(Chris);
             
-            sta.grp.addPlot("TimePlot", {type: StackedColumns, gap: 5 });
+            sta.grp.addPlot("TimePlot", {type: StackedColumns, gap: 5,  hAxis:"x", vAxis:"y" });
             sta.grp.addAxis("x", { plot: "TimePlot", labelFunc: function(t,v,p){return utils.date2str(sta.grpRef[v]*1000)} });
-            sta.grp.addAxis("y", { plot: "TimePlot", vertical:true, min: 0 });
-            sta.grp.addSeries("Pellet", [1,2,3,4,5,6,7,8,9,10],{  plot: "TimePlot", /*stroke: "black", fill: "purple", */minorThicks: false, legend: "Ore pellet modulazione" } );
-            sta.grp.addSeries("PelletLow", [1,2,3,4,5,6,7,8,9,10],{ plot: "TimePlot",/*stroke: "black", fill: "blue", */legend: "Ore pellet minimo" } );
-            sta.grp.addSeries("Gas", [1,2,3,4,5,6,7,8,9,10],{plot: "TimePlot",/*stroke: "black", fill: "yellow",*/ legend: "Ore gas acceso" } );
+            sta.grp.addAxis("y", { plot: "TimePlot", vertical:true, min: 0,
+                        majorTickStep: 5, majorTicks: true, majorLabels: true,
+                        minorTickStep: 1, minorTicks: true, minorLabels: true,
+            });
+            sta.grp.addSeries("Pellet", [1,2,3,4,5,6,7,8,9,10],{  plot: "TimePlot", minorThicks: false, legend: "Ore pellet modulazione" } );
+            sta.grp.addSeries("PelletLow", [1,2,3,4,5,6,7,8,9,10],{ plot: "TimePlot",legend: "Ore pellet minimo" } );
+            sta.grp.addSeries("Gas", [1,2,3,4,5,6,7,8,9,10],{plot: "TimePlot", legend: "Ore gas acceso" } );
             sta.grp.connectToPlot("TimePlot",
                 function(evt){
                     if ( evt.type == "onclick" ){
@@ -184,8 +188,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     }
                 });
 
-            sta.grp.addPlot("TotPlot", {type: Lines, lines: false, markers: true});     
-            sta.grp.addAxis("y", { plot: "TotPlot", vertical:true, min: 0 });
+            sta.grp.addPlot("TotPlot", {type: Markers, lines: false, markers: true,  hAxis:"x", vAxis:"y"});     
             sta.grp.addSeries("Totals", [1,2,3,4,5,6,7,8,9,10],{  plot: "TotPlot", legend:"" } );
             new Magnify( sta.grp, "TotPlot");
 
@@ -202,8 +205,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
             sta.grp.addPlot("TempPlot", {hAxis: "x", vAxis:"t", type: Lines, lines: true, markers: true});     
             sta.grp.addAxis("t", { plot: "TempPlot", vertical:true, leftBottom: false,
                                     majorTickStep: 5, majorTicks: true, majorLabels: true,
-                                    minorTickStep: 1, minorTicks: true, minorLabels: false,
-                                    microTickStep: 0.1, microTicks: false });
+                                    minorTickStep: 1, minorTicks: true, minorLabels: true });
             sta.grp.addSeries("Mins", [1,2,3,4,5,6,7,8,9,10],{  plot: "TempPlot", legend:"Minima interna" } );
             sta.grp.addSeries("Maxs", [1,2,3,4,5,6,7,8,9,10],{  plot: "TempPlot", legend:"Massima interna" } );
             sta.grp.addSeries("Avgs", [1,2,3,4,5,6,7,8,9,10],{  plot: "TempPlot", legend:"Media interna" } );
@@ -220,7 +222,23 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     }
                 });
             new Magnify( sta.grp, "TempPlot");
-                
+                                    
+            sta.grp.addPlot("gridTimePlot", { type: Grid, hAxis: "x",vAxis: "y",
+                    hMajorLines: true,
+                    hMinorLines: true,
+                    vMajorLines: false,
+                    vMinorLines: false,
+                    majorHLine: { color: "gray", width: 1, style: "dash"},
+                    minorHLine: { color: "gray", width: 1, style: "dot" } });
+
+            sta.grp.addPlot("gridTempPlot", { type: Grid, hAxis: "x",vAxis: "t",
+                    hMajorLines: true,
+                    hMinorLines: true,
+                    vMajorLines: false,
+                    vMinorLines: false,
+                    majorHLine: { color: "blue", width: 1, style: "dash"},
+                    minorHLine: { color: "blue", width: 1, style: "dot" } });
+
             sta.grp.render(); 
             new Legend({chartRef:sta.grp, horizontal:3}, 'stats-legend');
             sta.update();
