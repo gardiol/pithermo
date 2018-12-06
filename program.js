@@ -97,11 +97,11 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 				} else if ( c == 'g' ){
 				    src += "gas.png?1";
 				} else if ( c == 'x' ){
-				    src += "pellet-gas.png?1";
+				    src += "pellet-gas-1.png?1";
 				} else if ( c == 'm' ){
-				    src += "pellet-min.png?1";
+				    src += "pellet-min-1.png?1";
 				} else {
-				    src += "off.png?1";
+				    src += "off-1.png?1";
 				}
 				return src;
 			}
@@ -315,7 +315,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 				prg.programT[d][h]["h"] = dc.create("th", { innerHTML: h < 10 ? "0"+h:h}, hr );
 				for ( var f = 0; f < 2; f++ ){
 					prg.programT[d][h][f] = dc.create("td", null, hr );            
-					prg.programT[d][h][f]["_img"] = dc.create("img", { src: "images/off.png?1" }, prg.programT[d][h][f] );  
+					prg.programT[d][h][f]["_img"] = dc.create("img", { src: "images/off-1.png?1" }, prg.programT[d][h][f] );  
 					prg.programT[d][h][f]["_img"]["_d"] = d;        
 					prg.programT[d][h][f]["_img"]["_h"] = h;        
 					prg.programT[d][h][f]["_img"]["_f"] = f;
@@ -347,7 +347,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 		prg.todayT[h] = [];
 		prg.todayT[h]["_h"] = dc.create("td", { innerHTML: ""}, h_row );                 
 		prg.todayT[h]["_c"] = dc.create("td", { innerHTML: ""}, c_row );                 
-		prg.todayT[h]["_img"] = dc.create("img", { class: "today-table-img", src: "images/off.png?1" }, prg.todayT[h]["_c"] );            
+		prg.todayT[h]["_img"] = dc.create("img", { class: "today-table-img", src: "images/off-1.png?1" }, prg.todayT[h]["_c"] );            
 	}
 
 });

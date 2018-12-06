@@ -4,7 +4,7 @@
 	<title>ThermoController</title>
 	<meta charset="UTF-8"/>
 	<link rel="stylesheet" href="js/dijit/themes/claro/claro.css"/>
-	<link rel="stylesheet" href="index.css?ver=20181204_"/>
+	<link rel="stylesheet" href="index.css?ver=20181206"/>
 	<script>dojoConfig = {parseOnLoad: true}</script>
 	<script src="js/dojo/dojo.js" data-dojo-config="async: true"></script>
 </head>
@@ -206,7 +206,7 @@ loading..
   <div id="program-editor" class="hidden">
     <div id="program-selector">
       <div id="select-pelletgas" class="hot-prg" >
-        <img alt="x" id="select-pelletgas-img" src="images/pellet-gas.png?1"/>
+        <img alt="x" id="select-pelletgas-img" src="images/pellet-gas-1.png?1"/>
         <span>Gas+Pellet</span>
       </div>
       <div id="select-gas" class="hot-prg">
@@ -218,11 +218,11 @@ loading..
         <span>Pellet</span>
       </div>
   	  <div id="select-off" class="cold-prg">
-  		 <img alt="o" id="select-off-img" src="images/off-select.png?1"/>
+  		 <img alt="o" id="select-off-img" src="images/off-select-1.png?1"/>
          <span>Gas</span>
       </div>
       <div id="select-pellet-minimum" class="cold-prg">
-        <img alt="m" id="select-pellet-minimum-img" src="images/pellet-min.png?1"/>
+        <img alt="m" id="select-pellet-minimum-img" src="images/pellet-min-1.png?1"/>
         <span>Pellet</span>
       </div>
     </div>
@@ -277,9 +277,12 @@ loading..
 			</div>
 		</div>
     </div>
-    <div data-dojo-id="history_offset" data-dojo-type="dijit/form/HorizontalSlider" value="1" showButtons="true" intermediateChanges="true" data-dojo-props="onClick:function(){hst.scrollX()}">
-    </div>
-    <div data-dojo-id="history_scale" data-dojo-type="dijit/form/HorizontalSlider" value="1" showButtons="true" intermediateChanges="true" data-dojo-props="onClick:function(){hst.scrollX()}">    
+    <div>
+        <button data-dojo-id="history_zoom_left" data-dojo-type="dijit/form/Button" onClick="hst.fuzzle(-1,1)" type="button">&lt;&lt;</button>
+        <button data-dojo-id="history_zoom_out" data-dojo-type="dijit/form/Button" onClick="hst.fuzzle(0,1.2)" type="button">+</button>
+        <button data-dojo-id="history_zoom_reset" data-dojo-type="dijit/form/Button" onClick="hst.fuzzle(0,0)" type="button">=</button>
+        <button data-dojo-id="history_zoom_in" data-dojo-type="dijit/form/Button" onClick="hst.fuzzle(0,0.8)" type="button">-</button>
+        <button data-dojo-id="history_zoom_right" data-dojo-type="dijit/form/Button" onClick="hst.fuzzle(1,1)" type="button">&gt;&gt;</button>
     </div>
 </div><!-- history controls-->
     <div id="history-graph">
@@ -346,9 +349,9 @@ loading..
 <script src="utils.js?20181229_"></script>
 <script src="production.js?20181129_"></script>
 <script src="status.js?20181229__"></script>
-<script src="events.js?20181230_"></script>
+<script src="events.js?20181206"></script>
 <script src="program.js?20181229_"></script>
-<script src="history.js?20181205"></script>
+<script src="history.js?20181206"></script>
 <script src="stats.js?20181230_"></script>
 <script language="javascript">
 require([

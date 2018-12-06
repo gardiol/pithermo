@@ -137,7 +137,7 @@ img.today-table-img {
 
 #stats-controls {
     text-align: center;
-    padding: 1em 0 1em 0;
+    padding: 1em 0 0.2em 0;
     background: linear-gradient(Salmon,LightGrey);
     border-top: 2px groove gray;
 }
@@ -168,7 +168,7 @@ img.today-table-img {
 
 #history-controls {
     text-align: center;
-    padding: 1em 0 1em 0;
+    padding: 1em 0 0.2em 0;
     background: linear-gradient(PeachPuff,LightGrey);
     border-top: 2px groove gray;
 }

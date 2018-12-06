@@ -37,16 +37,16 @@ function( dom, attr, dclass, style, html, on,// Dojo
         maxs: null,
         avgs: null,
         xref: [],
+        nPoints:0,
         xScale: 1,
         xOffset: 0,
-        xFirstSet:true,
         
         grp: new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25}),
 
-        scrollX:function(){
-            hst.xFirstSet = false;
-            hst.xOffset = history_offset.getValue();
-            hst.xScale = history_scale.getValue();
+        fuzzle:function(o,s){
+            hst.xScale = Math.min( hst.nPoints/60, Math.max( 1, hst.xScale * s ) );
+            var step = (hst.nPoints/60)*hst.xScale;
+            hst.xOffset = Math.min( hst.nPoints-60, Math.max( 0, hst.xOffset + o * step) );            
             hst.grp.setAxisWindow( "x", hst.xScale, hst.xOffset );
             hst.grp.render(); 
         },
@@ -63,7 +63,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
                          2:dom.byId("show-ext-temp").checked,
                          3:dom.byId("show-ext-humi").checked, 4:true, 5:true, 6:true, 7:true };
             var list = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[] };
-            var n_points = 0;
+            hst.nPoints = 0;
             for (var time in hst.data){
                 hst.xref.push( time );
                 for ( var n in axna ){
@@ -71,7 +71,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     if ( show[n] )
                         list[n].push( parseFloat(val.toFixed(1)) );
                 }
-                n_points++;
+                hst.nPoints++;
             }
             if ( hst.mins ){
                 html.set(dom.byId("history-stats-te"), "T(int): " + hst.mins[0].toFixed(1) + " ...(" + hst.avgs[0].toFixed(1) + ")... " + hst.maxs[0].toFixed(1) + "" );
@@ -83,12 +83,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 hst.grp.updateSeries( axna[n], list[n] );    
 
             hst.grp.setAxisWindow("x", hst.xScale, hst.xOffset ); 
-            history_offset.set("minimum", 0 );
-            history_offset.set("maximum", n_points-60 );
-            history_offset.setValue( hst.xOffset );
-            history_scale.set("minimum", 1 );
-            history_scale.set("maximum", n_points/60 );
-            history_scale.setValue( hst.xScale );
             hst.grp.render();        
         },
 			
@@ -98,6 +92,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
             hst.maxs = null;
             hst.avgs = null;
             hst.xref = [];
+            hst.nPoints = 0;
             hst.drawGraph();                                
         },
     
