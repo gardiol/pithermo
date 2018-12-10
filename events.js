@@ -95,7 +95,7 @@ function( dom, dclass, on, dc)    // Dojo
 				function(err){
 					dc.empty("messages-queue");
 					dc.place("<li>Impossibile leggere la lista degli eventi!</li>", "messages-queue","first");
-                    evt.timer = window.setTimeout( function(){ evt.update(); }, 60 * 1000 );
+                    evt.timer = window.setTimeout( function(){ evt.update(); }, 5 * 1000 );
 				});
 		}
 	};

@@ -149,8 +149,8 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                         html.set("humi-label", sts.status.temp.hum.toFixed(1) + "% (" + sts.status.temp.ext_hum.toFixed(1) + "%)" );
                         prg.update(sts.status.program);
                         html.set("update-time", utils.printDate(new Date()) + " (ok)" );
-                        sts.timer = window.setTimeout( function(){ sts.update(); }, 1000 );
                     } // result is valid
+                    sts.timer = window.setTimeout( function(){ sts.update(); }, 1000 );
                 }, 
                 function(err){
                     sts.status = null;
