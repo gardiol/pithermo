@@ -53,12 +53,15 @@ void Logger::logDebug(const std::string &str)
 
 bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items)
 {
-    bool a,b,c;
-    return fetchInterval(from, to, items, false, a, b, c);
+    bool a,b,c,d;
+    return fetchInterval(from, to, items, false, a, b, c, d);
 }
 
 bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items, bool search_prev,
-                           bool &last_pellet_on, bool &last_pellet_minimum_on, bool &last_gas_on)
+                           bool &last_pellet_on,
+                           bool &last_pellet_minimum_on,
+                           bool &last_gas_on,
+                           bool &last_pellet_flameout)
 {
     bool ret = false;
     items.clear();
@@ -109,9 +112,11 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
                 last_gas_on = false;
                 last_pellet_on = false;
                 last_pellet_minimum_on = false;
+                last_pellet_flameout = false;
                 bool gas_ok = false;
                 bool pellet_ok = false;
                 bool pellet_minimum_ok = false;
+                bool pellet_flameout_ok = false;
                 // Searching backwards for an unmatched "on" event.
                 // Stop as soon as we find the firt "off" event or "on" event
                 // for each generator;
@@ -119,7 +124,7 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
                 // Go back at least TWO items (one is the start item already read)
                 long int pos = start_pos - item_size*2;
                 LogItem old_item;
-                while ( !error && (pos >= 0) && (!gas_ok || !pellet_ok || !pellet_minimum_ok) )
+                while ( !error && (pos >= 0) && (!gas_ok || !pellet_ok || !pellet_minimum_ok || !pellet_flameout_ok) )
                 {
                     if ( fseek(read_file, pos, SEEK_SET) != -1 )
                     {
@@ -140,6 +145,14 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
                                 // If we see a MINIMUM or MODULATION event we can stop checking pellet minimum.
                                 if ( (event == LogItem::PELLET_MINIMUM) || (event == LogItem::PELLET_MODULATION ) )
                                     pellet_minimum_ok = true;
+                            }
+                            if ( !pellet_flameout_ok )
+                            {
+                                last_pellet_flameout = event == LogItem::PELLET_FLAMEOUT_ON;
+                                if ( (event == LogItem::PELLET_FLAMEOUT_OFF) ||
+                                     (event == LogItem::PELLET_FLAMEOUT_ON) ||
+                                     (event == LogItem::PELLET_HOT ) )
+                                    pellet_flameout_ok = true;
                             }
                             if ( !pellet_ok )
                             {
@@ -186,18 +199,19 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                             bool& pellet_on,
                             bool& pellet_minimum_on,
                             bool& gas_on,
+                            bool& pellet_flameout,
                             uint32_t &pellet_on_time,
                             uint32_t &pellet_low_time,
                             uint32_t &gas_on_time)
 {
-    bool ret = false;    
+    bool ret = false;
     std::list<LogItem> items;
     uint64_t gas_on_since = 0;
     uint64_t pellet_on_since = 0;
     uint64_t pellet_low_on_since = 0;    
     if ( !on_are_valid )
         ret = fetchInterval( from, to, items, true,
-                             pellet_on, pellet_minimum_on, gas_on );
+                             pellet_on, pellet_minimum_on, gas_on, pellet_flameout );
     else
         ret = fetchInterval( from, to, items );
 
@@ -225,29 +239,49 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
 
             case LogItem::PELLET_MINIMUM:
                 pellet_minimum_on = true;
-                if ( ( pellet_on_since > 0 ) &&
-                     ( pellet_low_on_since == 0 ) )
-                        pellet_low_on_since = event_time;
+                if ( !pellet_flameout )
+                {
+                    if ( ( pellet_on_since > 0 ) &&
+                         ( pellet_low_on_since == 0 ) )
+                            pellet_low_on_since = event_time;
+                }
                 break;
 
             case LogItem::PELLET_MODULATION:
                 pellet_minimum_on = false;
-                if ( pellet_low_on_since > 0 )
+                if ( !pellet_flameout )
                 {
-                    pellet_low_time += event_time - pellet_low_on_since;
-                    pellet_low_on_since = 0;
+                    if ( pellet_low_on_since > 0 )
+                    {
+                        pellet_low_time += event_time - pellet_low_on_since;
+                        pellet_low_on_since = 0;
+                    }
                 }
                 break;
 
             case  LogItem::PELLET_ON:
-                if ( pellet_on_since == 0 )
+                if ( !pellet_flameout )
                 {
-                    pellet_on_since = event_time;
-                    // Pellet at minimum? Calculate the time for it too...
-                    if ( pellet_minimum_on )
-                        pellet_low_on_since = event_time;
+                    if (pellet_on_since == 0)
+                    {
+                        pellet_on_since = event_time;
+                        // Pellet at minimum? Calculate the time for it too...
+                        if ( pellet_minimum_on )
+                            pellet_low_on_since = event_time;
+                    }
+                    pellet_on = true;
                 }
-                pellet_on = true;
+                break;
+
+            case LogItem::PELLET_FLAMEOUT_ON:
+                pellet_flameout = true;
+                pellet_on_since = 0;
+                pellet_low_on_since = 0;
+                pellet_on = false;
+                break;
+
+            case LogItem::PELLET_FLAMEOUT_OFF:
+                pellet_flameout = false;
                 break;
 
             case LogItem::PELLET_OFF:
@@ -267,6 +301,7 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
             case LogItem::PELLET_HOT:
                 // PELLET HOT might indicate that GAS is off by hardware
                 pellet_hot = true;
+                pellet_flameout = false;
             [[fallthrough]];
             case LogItem::GAS_OFF:
                 if ( gas_on_since > 0 )

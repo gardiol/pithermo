@@ -58,6 +58,7 @@ int main( int , char** )
             bool prev_pellet_on = false;
             bool prev_pellet_minimum_on = false;
             bool prev_gas_on = false;
+            bool prev_pellet_flameout = false;
 
             for ( uint64_t day = from_day; day < to_day; day += DAY_OFFSET )
             {
@@ -77,6 +78,7 @@ int main( int , char** )
                                             prev_pellet_on,
                                             prev_pellet_minimum_on,
                                             prev_gas_on,
+                                            prev_pellet_flameout,
                                             pellet_on_time,
                                             pellet_low_time,
                                             gas_on_time ) )
@@ -84,8 +86,8 @@ int main( int , char** )
                     total_pellet_on_time += pellet_on_time;
                     total_pellet_low_time += pellet_low_time;
                     total_gas_on_time += gas_on_time;
-                     if ( history.calculateStats( day, end, min_t, max_t, avg_t, min_et, max_et, avg_et ) )
-                     {
+                    if ( history.calculateStats( day, end, min_t, max_t, avg_t, min_et, max_et, avg_et ) )
+                    {
                         printf("%llu %lu %lu %lu %f %f %f %f %f %f\n",
                                static_cast<unsigned long long int>(day),
                                static_cast<unsigned long int>(pellet_on_time),
@@ -97,7 +99,7 @@ int main( int , char** )
                                static_cast<double>(min_et),
                                static_cast<double>(max_et),
                                static_cast<double>(avg_et) );
-                     }
+                    }
                 }
             }
             printf("Totals %lu %lu %lu",
