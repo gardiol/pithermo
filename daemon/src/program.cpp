@@ -129,7 +129,7 @@ void Program::loadConfig(const ConfigData *c)
                             _program[d][h][f] = HIGH_GAS;
                         else if ( token == "x" )
                             _program[d][h][f] = HIGH_AUTO;
-                        if ( token == "p" )
+                        else if ( token == "p" )
                             _program[d][h][f] = HIGH_PELLET;
                         else if ( token == "m" )
                             _program[d][h][f] = LOW_PELLET;
