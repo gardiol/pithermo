@@ -34,7 +34,8 @@ public:
         MAX_TEMP_UPDATE     = 0x0000000000200000,// 2048k
         PROGRAM_UPDATE      = 0x0000000000400000,// 4096k
         ACTIVATED           = 0x0000000000800000,// 8192k
-        DEACTIVATED         = 0x0000000001000000 // 16384k
+        DEACTIVATED         = 0x0000000001000000,// 16384k
+        HYST_UPDATE         = 0x0000000002000000 // 32768k
     };
 
     static uint32_t getSize();

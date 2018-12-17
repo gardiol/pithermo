@@ -153,10 +153,10 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     if ( result )
                         hst.setData(result);
                     if ( !historyUseRange.checked )
-                        hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
+                        hst.timer = window.setTimeout( function(){ hst.update(); }, 60*1000*10 );
                 },
                 function(err){
-                    hst.timer = window.setTimeout( function(){ hst.update(); }, 60 * 1000 );
+                    hst.timer = window.setTimeout( function(){ hst.update(); }, 60*1000*10 );
                 });                    
         },
         showTip:function(r,t,p){

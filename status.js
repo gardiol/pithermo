@@ -49,6 +49,20 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
         saveTemp: function(m,v){	
             postRequest("cgi-bin/set_"+m+"_temp",v,function(result){},function(err){alert("Command error: " + err );});
         },
+        hystEnable: function(){
+            var e = hyst_enable.checked;
+            hyst.set("disabled", !e );
+            if ( e )
+                dclass.remove(hyst_save.domNode, "hidden" );
+            else
+                dclass.add(hyst_save.domNode, "hidden" );
+        },
+        saveHyst: function(){
+            postRequest("cgi-bin/set_hyst",hyst.get("value"),function(result){},function(err){alert("Command error: " + err );});
+            hyst.set("disabled", true );
+            dclass.toggle(hyst_save.domNode, "hidden" );
+            hyst_enable.set("checked", false );
+        },
         
         disableAll:function(){
             dclass.add("pellet-flameout-led", "celated");
@@ -70,6 +84,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
 			max_temp_p.set("disabled", true);
             min_temp.set("label", "XX.X°C" );
 			max_temp.set("label", "XX.X°C" );
+            hyst.set("value", "X.X");
         },
 
         update: function(){
@@ -93,6 +108,8 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             max_temp_p.set("disabled", false);
                             min_temp.set("label", sts.status.temp.min + "°C" );
                             max_temp.set("label", sts.status.temp.max + "°C" );
+                            if ( ! hyst_enable.checked )
+                                hyst.set("value", sts.status.temp.hys );
 
                             if ( sts.status.mode == "manual" ){
                                 status_manual.set("disabled", true );
@@ -150,19 +167,19 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                         prg.update(sts.status.program);
                         html.set("update-time", utils.printDate(new Date()) + " (ok)" );
                     } // result is valid
-                    sts.timer = window.setTimeout( function(){ sts.update(); }, 1000 );
+                    sts.timer = window.setTimeout( function(){ sts.update(); }, 10*1000 );
                 }, 
                 function(err){
                     sts.status = null;
                     sts.disableAll();
                     html.set("temp-label", "--" );
-                    html.set("humi-label", "--" );                
+                    html.set("humi-label", "--" );          
                     attr.set("pellet-feedback-led", "src", "images/min-temp.png?1");
                     attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png?1");
                     attr.set("pellet-status-led", "src", "images/pellet-off.png?1");
                     attr.set("gas-status-led", "src", "images/gas-off.png?1");
                     html.set("update-time", utils.printDate(new Date()) + " (ko)" );
-                    sts.timer = window.setTimeout( function(){ sts.update(); }, 5000 );
+                    sts.timer = window.setTimeout( function(){ sts.update(); }, 30*1000 );
                 });
             }
         };

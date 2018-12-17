@@ -64,6 +64,7 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _status_json_template.push_back("\"},\"gas\":{\"command\":\"");
     _status_json_template.push_back("\",\"status\":\"off\"},\"temp\":{\"min\":");
     _status_json_template.push_back(",\"max\":");
+    _status_json_template.push_back(",\"hys\":");
     _status_json_template.push_back(",\"int\":");
     _status_json_template.push_back(",\"ext\":");
     _status_json_template.push_back(",\"hum\":");
@@ -290,6 +291,21 @@ bool RunnerThread::_checkCommands()
                 _logger->logDebug("Changed min temp to " + cmd->getParam() );
                 _logger->logEvent( LogItem::MIN_TEMP_UPDATE );
                 _min_temp = tmp_temp;
+                update_status = true;
+                save_config = true;
+            }
+        }
+            break;
+
+        case Command::SET_HISTERESYS:
+        {
+            _logger->logDebug("New HYSTERESIS received: " + cmd->getParam());
+            float tmp_hyst = FrameworkUtils::string_tof( cmd->getParam() );
+            if ( tmp_hyst >= 0.1f )
+            {
+                _logger->logDebug("Changed hysteresis to " + cmd->getParam() );
+                _logger->logEvent( LogItem::HYST_UPDATE );
+                _hysteresis = tmp_hyst;
                 update_status = true;
                 save_config = true;
             }
@@ -626,6 +642,7 @@ void RunnerThread::_updateStatus()
     std::string str_humidity = FrameworkUtils::ftostring( _temp_sensor->getHumidity() );
     std::string str_min_t = FrameworkUtils::ftostring( _min_temp );
     std::string str_max_t = FrameworkUtils::ftostring( _max_temp );
+    std::string str_hyst = FrameworkUtils::ftostring( _hysteresis );
     std::string str_day = FrameworkUtils::tostring( _day );
     std::string str_h = FrameworkUtils::tostring( _hour );
     std::string str_f = FrameworkUtils::tostring( _half_hour );
@@ -705,27 +722,30 @@ void RunnerThread::_updateStatus()
                 fwrite( str_max_t.c_str(), str_max_t.length(), 1, status_file);
                 break;
             case 11:
-                fwrite( str_temp.c_str(), str_temp.length(), 1, status_file);
+                fwrite( str_hyst.c_str(), str_hyst.length(), 1, status_file);
                 break;
             case 12:
-                fwrite( str_ext_temp.c_str(), str_ext_temp.length(), 1, status_file);
+                fwrite( str_temp.c_str(), str_temp.length(), 1, status_file);
                 break;
             case 13:
-                fwrite( str_humidity.c_str(), str_humidity.length(), 1, status_file);
+                fwrite( str_ext_temp.c_str(), str_ext_temp.length(), 1, status_file);
                 break;
             case 14:
-                fwrite( str_ext_humidity.c_str(), str_ext_humidity.length(), 1, status_file);
+                fwrite( str_humidity.c_str(), str_humidity.length(), 1, status_file);
                 break;
             case 15:
-                fwrite( str_day.c_str(), str_day.length(), 1, status_file);
+                fwrite( str_ext_humidity.c_str(), str_ext_humidity.length(), 1, status_file);
                 break;
             case 16:
-                fwrite( str_h.c_str(), str_h.length(), 1, status_file);
+                fwrite( str_day.c_str(), str_day.length(), 1, status_file);
                 break;
             case 17:
-                fwrite( str_f.c_str(), str_f.length(), 1, status_file);
+                fwrite( str_h.c_str(), str_h.length(), 1, status_file);
                 break;
             case 18:
+                fwrite( str_f.c_str(), str_f.length(), 1, status_file);
+                break;
+            case 19:
                 break;
             }
         }

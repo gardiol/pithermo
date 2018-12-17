@@ -39,6 +39,7 @@ function( dom, dclass, on, dc)    // Dojo
 			4194304: "Programma modificato",
 			8388608: "Sistema attivato",
 			16777216: "Sistema disattivato",
+            33554432: "Isteresi modificata",
 		},	
         toggleRange: function(){
             dclass.toggle(dom.byId("events-range"), "hidden");
@@ -90,12 +91,12 @@ function( dom, dclass, on, dc)    // Dojo
 				function(events){
                     evt.setData(events);
                     if ( !eventsUseRange.checked )
-                        evt.timer = window.setTimeout( function(){ evt.update(); }, 5 * 1000 );
+                        evt.timer = window.setTimeout( function(){ evt.update(); }, 10*1000 );
 				},
 				function(err){
 					dc.empty("messages-queue");
 					dc.place("<li>Impossibile leggere la lista degli eventi!</li>", "messages-queue","first");
-                    evt.timer = window.setTimeout( function(){ evt.update(); }, 5 * 1000 );
+                    evt.timer = window.setTimeout( function(){ evt.update(); }, 30*1000 );
 				});
 		}
 	};

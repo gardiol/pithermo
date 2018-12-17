@@ -4,7 +4,7 @@
 	<title>ThermoController</title>
 	<meta charset="UTF-8"/>
 	<link rel="stylesheet" href="js/dijit/themes/claro/claro.css"/>
-	<link rel="stylesheet" href="index.css?ver=20181206"/>
+	<link rel="stylesheet" href="index.css?ver=20181217"/>
 	<script>dojoConfig = {parseOnLoad: true}</script>
 	<script src="js/dojo/dojo.js" data-dojo-config="async: true"></script>
 </head>
@@ -108,6 +108,16 @@ loading..
                 </button>
                 <button data-dojo-id="max_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.status.temp.max+0.1)}">
                     +
+                </button>
+            </div>
+            <div>
+                <img alt="hyst" class="temp-img" src="images/hyst.png?1"/>
+                <input data-dojo-id="hyst_enable" data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.hystEnable()"/>
+                <span data-dojo-id="hyst" data-dojo-type="dijit/form/NumberTextBox" style="width:2em" disabled type="submit" data-dojo-props="constraints:{min:0,max:5,places:1}">
+                    X.X                
+                </span>°C
+                <button data-dojo-id="hyst_save" data-dojo-type="dijit/form/Button" class="hidden" type="submit" data-dojo-props="onClick:function(){sts.saveHyst()}">
+                    Salva
                 </button>
             </div>
         </div><!-- temp pane-->
@@ -348,18 +358,19 @@ loading..
 </div>
 
 
-<script src="utils.js?20181229_"></script>
-<script src="production.js?20181129_"></script>
-<script src="status.js?20181210"></script>
-<script src="events.js?20181206"></script>
-<script src="program.js?20181229_"></script>
-<script src="history.js?20181210"></script>
-<script src="stats.js?20181206"></script>
+<script src="utils.js?20181129"></script>
+<script src="production.js?20181129"></script>
+<script src="status.js?20181217"></script>
+<script src="events.js?20181217"></script>
+<script src="program.js?20181217"></script>
+<script src="history.js?20181217"></script>
+<script src="stats.js?20181217"></script>
 <script language="javascript">
 require([
     "dojo/ready",
     "dojo/dom-class",
     "dojo/dom-style",
+    "dijit/form/NumberTextBox",
     "dojo/parser"], 
 function(ready,dclass, style)
 {

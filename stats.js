@@ -146,10 +146,10 @@ function( dom, attr, dclass, style, html, on,// Dojo
                     if ( result )
                         sta.setData(result);
                     if ( !statsUseRange.checked )
-                        sta.timer = window.setTimeout( function(){ sta.update(); }, 60 * 1000 * 15);
+                        sta.timer = window.setTimeout( function(){ sta.update(); }, 60 * 1000 * 30 );
                 },
                 function(err){
-                    sta.timer = window.setTimeout( function(){ sta.update(); }, 60 * 1000 * 15);
+                    sta.timer = window.setTimeout( function(){ sta.update(); }, 60 * 1000 * 30 );
                 });                    
         },
         showTip:function(r,t,p){
