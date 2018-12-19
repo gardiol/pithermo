@@ -47,7 +47,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             eTemp.show();		  
         },        
         saveTemp: function(m,v){	
-            postRequest("cgi-bin/set_"+m+"_temp",v,function(result){},function(err){alert("Command error: " + err );});
+            postRequest("cgi-bin/set_"+m+"_temp",v,function(result){sts.update()},function(err){alert("Command error: " + err );});
         },
         hystEnable: function(){
             var e = hyst_enable.checked;
@@ -58,7 +58,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                 dclass.add(hyst_save.domNode, "hidden" );
         },
         saveHyst: function(){
-            postRequest("cgi-bin/set_hyst",hyst.get("value"),function(result){},function(err){alert("Command error: " + err );});
+            postRequest("cgi-bin/set_hyst",hyst.get("value"),function(result){sts.update()},function(err){alert("Command error: " + err );});
             hyst.set("disabled", true );
             dclass.toggle(hyst_save.domNode, "hidden" );
             hyst_enable.set("checked", false );

@@ -46,7 +46,7 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
       selPel:    dom.byId("select-pellet"),
       selPelMin: dom.byId("select-pellet-minimum"),
       pChange: dom.byId("program-change"),
-      daySel: new Select({onChange: function(v){
+    selDay: function(v){
       	for ( var d = 0; d < 7; d++ ){
       		if ( d == v ){      			
 	      		dclass.remove(prg.programT[d]["table"], "hidden");
@@ -54,8 +54,21 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 	      		dclass.add(prg.programT[d]["table"], "hidden");
 	      	}
       	}
-		}},"program-day-select"), 
-		selectedType: 'o',
+        },
+    daySel: new Select({onChange: function(v){prg.selDay(v)} },"program-day-select"), 
+    selectedType: 'o',
+    prevDay: function(){
+        var d = parseInt(prg.daySel.value)-1;
+        if ( d < 0 )
+            d = 6;
+        prg.daySel.set("value", d );
+    },
+    nextDay: function(){
+        var d = parseInt(prg.daySel.value)+1;
+        if ( d > 6 )
+            d = 0;
+        prg.daySel.set("value", d );
+    },
       selectType: function(t){
 			prg.selectedType = t;
 			[prg.selOff, prg.selGas, prg.selAuto, prg.selPel, prg.selPelMin].forEach(function(o){
