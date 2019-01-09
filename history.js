@@ -31,7 +31,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
         ttipRect: null,
         hStart: null,
         hEnd: null,
-        timer: null,
         data: {},
         mins: null,
         maxs: null,
@@ -126,10 +125,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
         },
         
         update: function(){
-            if ( hst.timer ){
-                window.clearTimeout( hst.timer );
-                hst.timer = null;
-            }
             if ( !historyUseRange.checked ){
                 hst.hStart = new Date();
                 hst.hEnd = new Date();
@@ -152,11 +147,8 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 function(result){
                     if ( result )
                         hst.setData(result);
-                    if ( !historyUseRange.checked )
-                        hst.timer = window.setTimeout( function(){ hst.update(); }, 60*1000*10 );
                 },
                 function(err){
-                    hst.timer = window.setTimeout( function(){ hst.update(); }, 60*1000*10 );
                 });                    
         },
         showTip:function(r,t,p){

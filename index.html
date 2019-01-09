@@ -261,13 +261,13 @@ loading..
         <div>
             <input data-dojo-id="historyUseRange" data-dojo-type="dijit/form/CheckBox" onChange="hst.toggleRange();"/>
             Scegli periodo
+			<button data-dojo-id="historyRangeUpdate" data-dojo-type="dijit/form/Button" onClick="hst.update()" type="button">Aggiorna!</button>
         </div>
 		<div id="history-range" class="hidden">
 			Dal:
 			<input data-dojo-id="historyStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
 			al:
 			<input data-dojo-id="historyEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
-			<button data-dojo-id="historyRangeUpdate" data-dojo-type="dijit/form/Button" onClick="hst.update()" type="button">Aggiorna!</button>
 		</div>
         <div>
             <input id="show-temp" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="hst.drawGraph()"/>Temperatura
@@ -311,13 +311,13 @@ loading..
         <div>
             <input data-dojo-id="statsUseRange" data-dojo-type="dijit/form/CheckBox" onChange="sta.toggleRange();"/>
             Scegli periodo
+			<button data-dojo-id="statsRangeUpdate" data-dojo-type="dijit/form/Button" onClick="sta.update()" type="button">Aggiorna!</button>
         </div>
 		<div id="stats-range" class="hidden">
 			Dal:
 			<input data-dojo-id="statsStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
 			al:
 			<input data-dojo-id="statsEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
-			<button data-dojo-id="statsRangeUpdate" data-dojo-type="dijit/form/Button" onClick="sta.update()" type="button">Aggiorna!</button>
 		</div>
 		<div>
             <div>
