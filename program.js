@@ -28,6 +28,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
         program: null,
         selectedType: 'o',
         copyDFrom: null,
+        templates: {},
 
         selOff:    dom.byId("select-off"),
         selGas:    dom.byId("select-gas"),
