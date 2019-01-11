@@ -80,6 +80,16 @@ loading..
             <div>
                 <span id="update-time">--</span>
             </div>
+            <div>
+                <img alt="hyst" class="temp-img" src="images/hyst.png?1"/>
+                <input data-dojo-id="hyst_enable" data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.hystEnable()"/>
+                <span data-dojo-id="hyst" data-dojo-type="dijit/form/NumberTextBox" style="width:2em" disabled type="submit" data-dojo-props="constraints:{min:0,max:5,places:1}">
+                    X.X                
+                </span>°C
+                <button data-dojo-id="hyst_save" data-dojo-type="dijit/form/Button" class="hidden" type="submit" data-dojo-props="onClick:function(){sts.saveHyst()}">
+                    Salva
+                </button>
+            </div>
         </div><!-- temp pane-->
 
         <div id="temp-pane" class="status-boxes">
@@ -111,14 +121,9 @@ loading..
                 </button>
             </div>
             <div>
-                <img alt="hyst" class="temp-img" src="images/hyst.png?1"/>
-                <input data-dojo-id="hyst_enable" data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.hystEnable()"/>
-                <span data-dojo-id="hyst" data-dojo-type="dijit/form/NumberTextBox" style="width:2em" disabled type="submit" data-dojo-props="constraints:{min:0,max:5,places:1}">
-                    X.X                
-                </span>°C
-                <button data-dojo-id="hyst_save" data-dojo-type="dijit/form/Button" class="hidden" type="submit" data-dojo-props="onClick:function(){sts.saveHyst()}">
-                    Salva
-                </button>
+                <input data-dojo-id="max_temp_smart" data-dojo-type="dijit/form/CheckBox" onChange=""/>
+                Smart
+                (Attuale:<span id="smart_temp">off</span>°C)
             </div>
         </div><!-- temp pane-->
 
@@ -208,51 +213,331 @@ loading..
 </div><!-- status area-->
     
 <div id="program-area">
-  <div id="program-header">
-    <div id="today-table-div">
+    <div id="program-header">
+        <div id="today-table-div">
+            <table class="program-table">
+                <col class="halfCol">
+                <col class="hourCol">
+                <col class="halfCol">
+                <col class="hourCol">
+                <col class="halfCol">
+                <col class="hourCol">
+                <col class="halfCol">
+                <col class="hourCol">
+                <col class="halfCol">
+                <col class="hourCol">
+                <col class="halfCol">
+                <col class="hourCol">
+                <col class="halfCol">
+                <col class="hourCol">
+                <col class="halfCol">
+                <col class="hourCol">
+                <col class="halfCol">
+                <col class="hourCol">
+                <col class="halfCol">
+                <col class="hourCol">
+                <tr>
+                    <th colspan="20" id="today-d">
+                    </th>
+                </tr>
+                <tr class="header-row">
+                    <td id="today-h-0-0">
+                    </td>
+                    <td id="today-h-0-1">
+                    </td>
+                    <td id="today-h-1-0">
+                    </td>
+                    <td id="today-h-1-1">
+                    </td>
+                    <td id="today-h-2-0">
+                    </td>
+                    <td id="today-h-2-1">
+                    </td>
+                    <td id="today-h-3-0">
+                    </td>
+                    <td id="today-h-3-1">
+                    </td>
+                    <td id="today-h-4-0">
+                    </td>
+                    <td id="today-h-4-1">
+                    </td>
+                    <td id="today-h-5-0">
+                    </td>
+                    <td id="today-h-5-1">
+                    </td>
+                    <td id="today-h-6-0">
+                    </td>
+                    <td id="today-h-6-1">
+                    </td>
+                    <td id="today-h-7-0">
+                    </td>
+                    <td id="today-h-7-1">
+                    </td>
+                    <td id="today-h-8-0">
+                    </td>
+                    <td id="today-h-8-1">
+                    </td>
+                    <td id="today-h-9-0">
+                    </td>
+                    <td id="today-h-9-1">
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <img class="today-table-img" id="today-p-0-0" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-0-1" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-1-0" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-1-1" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-2-0" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-2-1" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-3-0" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-3-1" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-4-0" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-4-1" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-5-0" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-5-1" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-6-0" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-6-1" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-7-0" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-7-1" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-8-0" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-8-1" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-9-0" src="" />
+                    </td>
+                    <td>
+                        <img class="today-table-img" id="today-p-9-1" src="" />
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div>
+            <button data-dojo-id="programEdit" data-dojo-type="dijit/form/Button" onClick="prg.toggleEdit()">Modifica programma</button>
+        </div>
     </div>
-    <div><button id="program-size">Programma</button></div>
-  </div>
-  <div id="program-editor" class="hidden">
-    <div id="program-selector">
-      <div id="select-pelletgas" class="hot-prg" >
-        <img alt="x" id="select-pelletgas-img" src="images/pellet-gas-1.png?1"/>
-        <span>Gas+Pellet</span>
-      </div>
-      <div id="select-gas" class="hot-prg">
-        <img alt="g" id="select-gas-img" src="images/gas.png?1"/>
-        <span>Gas</span>
-      </div>
-      <div id="select-pellet" class="hot-prg">
-        <img alt="p" id="select-pellets-img" src="images/pellet.png?1"/>
-        <span>Pellet</span>
-      </div>
-  	  <div id="select-off" class="cold-prg">
-  		 <img alt="o" id="select-off-img" src="images/off-select-1.png?1"/>
-         <span>Gas</span>
-      </div>
-      <div id="select-pellet-minimum" class="cold-prg">
-        <img alt="m" id="select-pellet-minimum-img" src="images/pellet-min-1.png?1"/>
-        <span>Pellet</span>
-      </div>
+    <div id="program-editor" class="hidden">
+        <div id="program-selector">
+            <div id="select-pelletgas" class="hot-prg" >
+                <img alt="x" id="select-pelletgas-img" src="images/pellet-gas-1.png?1"/>
+                <span>Gas+Pellet</span>
+            </div>
+            <div id="select-gas" class="hot-prg">
+                <img alt="g" id="select-gas-img" src="images/gas.png?1"/>
+                <span>Gas</span>
+            </div>
+            <div id="select-pellet" class="hot-prg">
+                <img alt="p" id="select-pellets-img" src="images/pellet.png?1"/>
+                <span>Pellet</span>
+            </div>
+            <div id="select-off" class="cold-prg">
+                <img alt="o" id="select-off-img" src="images/off-select-1.png?1"/>
+                <span>Gas</span>
+            </div>
+            <div id="select-pellet-minimum" class="cold-prg">
+                <img alt="m" id="select-pellet-minimum-img" src="images/pellet-min-1.png?1"/>
+                <span>Pellet</span>
+            </div>
+        </div>
+        <div id="program-change" class="celated">
+            <img id="program-apply" class="button-img" src="images/apply.png?1"/>
+            <span id="program-changed">Salvare il programma modificato?</span>
+            <img id="program-restore" class="button-img" src="images/restore.png?1"/>
+        </div>
+        <div id="program-content">
+            <div id="program-table">
+                <table class="program-table">
+                    <col class="hourCol">
+                    <col class="halfCol">
+                    <col class="hourCol">
+                    <col class="hourCol">
+                    <col class="hourCol">
+                    <col class="halfCol">
+                    <col class="hourCol">
+                    <col class="hourCol">
+                    <col class="hourCol">
+                    <col class="halfCol">
+                    <col class="hourCol">
+                    <tr class="header-row">
+                        <th><img id="program_copy" class="copy" src="images/copy.png" /></th>
+                        <th colspan="1">
+                            <button data-dojo-id="program_prev_day" data-dojo-type="dijit/form/Button" onClick="prg.prevDay()" type="button">
+                                &lt;
+                            </button>
+                        </th>
+                        <th id="program-d" colspan="7"></th>
+                        <th colspan="1">
+                            <button data-dojo-id="progra_next_day" data-dojo-type="dijit/form/Button" onClick="prg.nextDay()" type="button">
+                                &gt;
+                            </button>
+                        </th>
+                        <th><img id="program_clear" class="copy" src="images/restore.png" /></th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th>00</th>
+                        <th>30</th>
+                        <th colspan=2></th>
+                        <th>00</th>
+                        <th>30</th>
+                        <th colspan=2></th>
+                        <th>00</th>
+                        <th>30</th>
+                    </tr>
+                    <tr>
+                        <th>00</th>
+                        <td id="programc-0-0"><img id="program-0-0" src="" /></td>
+                        <td><img id="program-0-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>08</th>
+                        <td><img id="program-8-0" src="" /></td>
+                        <td><img id="program-8-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>16</th>
+                        <td><img id="program-16-0" src="" /></td>
+                        <td><img id="program-16-1" src="" /></td>
+                        <td class="Spacer"></td>
+                    </tr>
+                    <tr>
+                        <th>01</th>
+                        <td><img id="program-1-0" src="" /></td>
+                        <td><img id="program-1-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>09</th>
+                        <td><img id="program-9-0" src="" /></td>
+                        <td><img id="program-9-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>17</th>
+                        <td><img id="program-17-0" src="" /></td>
+                        <td><img id="program-17-1" src="" /></td>
+                        <td class="Spacer"></td>
+                    </tr>
+                    <tr>
+                        <th>02</th>
+                        <td><img id="program-2-0" src="" /></td>
+                        <td><img id="program-2-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>10</th>
+                        <td><img id="program-10-0" src="" /></td>
+                        <td><img id="program-10-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>18</th>
+                        <td><img id="program-18-0" src="" /></td>
+                        <td><img id="program-18-1" src="" /></td>
+                        <td class="Spacer"></td>
+                    </tr>
+                    <tr>
+                        <th>03</th>
+                        <td><img id="program-3-0" src="" /></td>
+                        <td><img id="program-3-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>11</th>
+                        <td><img id="program-11-0" src="" /></td>
+                        <td><img id="program-11-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>19</th>
+                        <td><img id="program-19-0" src="" /></td>
+                        <td><img id="program-19-1" src="" /></td>
+                        <td class="Spacer"></td>
+                    </tr>
+                    <tr>
+                        <th>04</th>
+                        <td><img id="program-4-0" src="" /></td>
+                        <td><img id="program-4-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>12</th>
+                        <td><img id="program-12-0" src="" /></td>
+                        <td><img id="program-12-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>20</th>
+                        <td><img id="program-20-0" src="" /></td>
+                        <td><img id="program-20-1" src="" /></td>
+                        <td class="Spacer"></td>
+                    </tr>
+                    <tr>
+                        <th>05</th>
+                        <td><img id="program-5-0" src="" /></td>
+                        <td><img id="program-5-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>13</th>
+                        <td><img id="program-13-0" src="" /></td>
+                        <td><img id="program-13-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>21</th>
+                        <td><img id="program-21-0" src="" /></td>
+                        <td><img id="program-21-1" src="" /></td>
+                        <td class="Spacer"></td>
+                    </tr>
+                    <tr>
+                        <th>06</th>
+                        <td><img id="program-6-0" src="" /></td>
+                        <td><img id="program-6-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>14</th>
+                        <td><img id="program-14-0" src="" /></td>
+                        <td><img id="program-14-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>22</th>
+                        <td><img id="program-22-0" src="" /></td>
+                        <td><img id="program-22-1" src="" /></td>
+                        <td class="Spacer"></td>
+                    </tr>
+                    <tr>
+                        <th>07</th>
+                        <td><img id="program-7-0" src="" /></td>
+                        <td><img id="program-7-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>15</th>
+                        <td><img id="program-15-0" src="" /></td>
+                        <td><img id="program-15-1" src="" /></td>
+                        <td class="Spacer"></td>
+                        <th>23</th>
+                        <td><img id="program-23-0" src="" /></td>
+                        <td><img id="program-23-1" src="" /></td>
+                        <td class="Spacer"></td>
+                    </tr>
+                </table>
+            </div>
+            <div>
+                <select data-dojo-type="dijit/form/Select" data-dojo-id="program_template_select">
+                </select>
+            </div>
+        </div>
     </div>
-  	<div id="program-change" class="celated">
-      <img id="program-apply" class="button-img" src="images/apply.png?1"/>
-      <span id="program-changed">Salvare il programma modificato?</span>
-      <img id="program-restore" class="button-img" src="images/restore.png?1"/>
-    </div>
-    <div id="program-content">
-      <div>
-        <span>Modifica giornata di</span>
-        <button data-dojo-id="program_prev_day" data-dojo-type="dijit/form/Button" onClick="prg.prevDay()" type="button">&lt;&lt;</button>
-        <select id="program-day-select">
-        </select>
-        <button data-dojo-id="progra_next_day" data-dojo-type="dijit/form/Button" onClick="prg.nextDay()" type="button">&gt;&gt;</button>
-      </div>
-      <div id="program-table">
-      </div>
-    </div>
-  </div>
 </div><!-- program area-->
 
 <div id="history-area">
@@ -359,7 +644,6 @@ loading..
 
 </div>
 
-
 <script src="utils.js?20181129"></script>
 <script src="production.js?20181129"></script>
 <script src="status.js?20181219"></script>
@@ -373,6 +657,7 @@ require([
     "dojo/dom-class",
     "dojo/dom-style",
     "dijit/form/NumberTextBox",
+    "dijit/form/Select",
     "dojo/parser"], 
 function(ready,dclass, style)
 {

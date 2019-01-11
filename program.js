@@ -9,81 +9,155 @@ require([
     "dojo/html",
     "dojo/json",
     "dojo/on",
+    "dojo/query", 
     "dijit/ConfirmDialog",
     "dijit/form/ToggleButton", 
     "dijit/form/Select",
+    "dojo/NodeList-traverse",
     "dojo/domReady!"], 
-function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
+function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
           ConfirmDialog, ToggleButton, Select) // Dijit
 {
-	
     prg = {
-		wDay: ["lunedi","martedi","mercoledi","giovedi","venerdi", "sabato", "domenica"],
-		restore: dom.byId("program-restore"),
-		apply:   dom.byId("program-apply"),
-      edited: false,
-      setEdited: function(e){
-      		prg.edited = e;
-				if ( !prg.edited ){
-            	dclass.add(dom.byId("program-change"), "celated");
-					dclass.add(prg.restore, "hidden");
-					dclass.add(prg.apply, "hidden");
-        		}else{
-            	dclass.remove(dom.byId("program-change"), "celated");
-					dclass.remove(prg.restore, "hidden");
-					dclass.remove(prg.apply, "hidden");
-        		}
-      },
-      program: null,
-      copyDFrom: null,
-      todayBase: 0,
-      todayH: 8,
-      todayT: {},
-      programT: {},
-      selOff:    dom.byId("select-off"),
-      selGas:    dom.byId("select-gas"),
-      selAuto:   dom.byId("select-pelletgas"),
-      selPel:    dom.byId("select-pellet"),
-      selPelMin: dom.byId("select-pellet-minimum"),
-      pChange: dom.byId("program-change"),
-    selDay: function(v){
-      	for ( var d = 0; d < 7; d++ ){
-      		if ( d == v ){      			
-	      		dclass.remove(prg.programT[d]["table"], "hidden");
-	      	} else {
-	      		dclass.add(prg.programT[d]["table"], "hidden");
-	      	}
-      	}
+        wDay: ["lunedi","martedi","mercoledi","giovedi","venerdi", "sabato", "domenica"],
+        daySel: 0,
+        wDayFixed: [],
+        todayBase: 0,
+        todayH: 10,
+        edited: false,
+        program: null,
+        selectedType: 'o',
+        copyDFrom: null,
+
+        selOff:    dom.byId("select-off"),
+        selGas:    dom.byId("select-gas"),
+        selAuto:   dom.byId("select-pelletgas"),
+        selPel:    dom.byId("select-pellet"),
+        selPelMin: dom.byId("select-pellet-minimum"),
+        restore: dom.byId("program-restore"),
+        apply:   dom.byId("program-apply"),
+        pChange: dom.byId("program-change"),
+        
+        selectType: function(t){
+            prg.selectedType = t;
+            [prg.selOff, prg.selGas, prg.selAuto, prg.selPel, prg.selPelMin].forEach(function(o){
+                dclass.remove(o,"program-selected");
+            });
+            if ( t == 'o' ){
+                dclass.add(prg.selOff, "program-selected");
+            }else if ( t == 'g' ){
+                dclass.add(prg.selGas, "program-selected");
+            }else if ( t == 'x' ){
+                dclass.add(prg.selAuto, "program-selected");
+            }else if ( t == 'p' ){
+                dclass.add(prg.selPel, "program-selected");
+            }else if ( t == 'm' ){
+                dclass.add(prg.selPelMin, "program-selected");
+            }
         },
-    daySel: new Select({onChange: function(v){prg.selDay(v)} },"program-day-select"), 
-    selectedType: 'o',
-    prevDay: function(){
-        var d = parseInt(prg.daySel.value)-1;
-        if ( d < 0 )
-            d = 6;
-        prg.daySel.set("value", d );
-    },
-    nextDay: function(){
-        var d = parseInt(prg.daySel.value)+1;
-        if ( d > 6 )
-            d = 0;
-        prg.daySel.set("value", d );
-    },
-      selectType: function(t){
-			prg.selectedType = t;
-			[prg.selOff, prg.selGas, prg.selAuto, prg.selPel, prg.selPelMin].forEach(function(o){
-				dclass.remove(o,"program-selected");
-			});
-			if ( t == 'o' ){
-				dclass.add(prg.selOff, "program-selected");
-			}else if ( t == 'g' ){
-				dclass.add(prg.selGas, "program-selected");
-			}else if ( t == 'x' ){
-				dclass.add(prg.selAuto, "program-selected");
-			}else if ( t == 'p' ){
-				dclass.add(prg.selPel, "program-selected");
-			}else if ( t == 'm' ){
-				dclass.add(prg.selPelMin, "program-selected");
+        src: function(d,h,f){
+            if ( prg.program ){					
+                var c = prg.program[d][h*2+f];
+                var src = "images/";
+                if ( c == 'p' ){
+                    src += "pellet.png";
+                } else if ( c == 'g' ){
+                    src += "gas.png";
+                } else if ( c == 'x' ){
+                    src += "pellet-gas-1.png";
+                } else if ( c == 'm' ){
+                    src += "pellet-min-1.png";
+                } else {
+                    src += "off-1.png";
+                }
+                return src;
+            }
+            return "";
+        },
+        setEdited: function(e){
+            prg.edited = e;
+            if ( !prg.edited ){
+                dclass.add(dom.byId("program-change"), "celated");
+                dclass.add(prg.restore, "hidden");
+                dclass.add(prg.apply, "hidden");
+            }else{
+                dclass.remove(dom.byId("program-change"), "celated");
+                dclass.remove(prg.restore, "hidden");
+                dclass.remove(prg.apply, "hidden");
+            }
+        },
+        toggleEdit: function(){
+           dclass.toggle(dom.byId("program-editor"), "hidden");
+        },
+        prevDay: function(){
+            prg.daySel -= 1;
+            if ( prg.daySel < 0 ) prg.daySel = 6;
+            prg.refresh();
+        },
+        nextDay: function(){
+            prg.daySel += 1;
+            if ( prg.daySel > 6 ) prg.daySel = 0;
+            prg.refresh();
+        },
+		fillDays: function(w){
+            prg.wDayFixed = [];
+            for ( var d = 0; d < 7; d++ ){
+                var v = prg.wDay[d];
+                if ( d == w ){
+                    v += " (oggi)";
+                } else if ( d == (w+1)%7 ){
+                    v += " (domani)";
+                } else if ( d == (w+2)%7 ){
+                    v += " (dopodomani)";
+                } else if ( d == (w-1)%7 ){
+                    v += " (ieri)";
+                } else if ( d == (w-2)%7 ){
+                    v += " (l'altroieri)";
+                }
+                prg.wDayFixed[d] = v;
+            }
+        },
+        refresh: function(){
+            if ( sts.status && prg.program ){
+                var n = sts.status.now;
+				prg.fillDays(n.d);
+                
+				for ( var x = 0; x < prg.todayH; x++ ){
+					var h = x + prg.todayBase;
+					for ( var f = 0; f < 2; f++ ){
+                        var he = dom.byId("today-h-"+x+"-"+f);
+                        var ce = dom.byId("today-p-"+x+"-"+f);
+                        dclass.remove( he, "now_col" );
+                        dclass.remove( ce, "now_col" );
+						html.set( he,(h<10?"0"+h:h)+":"+(f*30<10?"0"+(f*30):f*30));
+						attr.set( ce, "src", prg.src(n.d,h,f) );                           
+                        if ( h == n.h && f == n.f ){
+                            dclass.add( he, "now_col" );
+                            dclass.add( ce, "now_col" );
+                        }
+					}
+					var t = x*2+n.f;
+				}
+				html.set( dom.byId("today-d"), prg.wDay[ sts.status.now.d ] );
+				
+				html.set( dom.byId("program-d"), prg.wDayFixed[ prg.daySel ] );
+                
+                for ( var h = 0; h < 24; h++ ){
+                    for ( var f = 0; f < 2; f++ ){
+                        var pi = dom.byId("program-"+h+"-"+f);
+                        attr.set( pi, "src", prg.src(prg.daySel,h,f) );   
+                        dclass.remove( pi, "now_col" );
+                        if ( prg.daySel == n.d ){
+                            if ( h == n.h ){		
+                                if ( f == n.f ){
+                                    dclass.add( pi, "now_col" );
+                                }	
+                            }
+                        }
+                    }
+                }
+			} else {
+				html.set( dom.byId("today-d"), "---" );
 			}
 		},
 		update: function(p) {
@@ -97,107 +171,15 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 				prg.setEdited(false);
 			}
 			if ( sts.status ){
-				prg.todayBase = Math.max(Math.min( sts.status.now.h-prg.todayH/2, 24-prg.todayH ),0);
+				prg.todayBase = Math.max(Math.min( sts.status.now.h-2, 24-prg.todayH ),0);
 				prg.refresh();
 			}
 		},
-		srcCalc: function(d,h,f){
-			if ( prg.program ){					
-				var c = prg.program[d][h*2+f];
-				var src = "images/";
-				if ( c == 'p' ){
-				    src += "pellet.png?1";
-				} else if ( c == 'g' ){
-				    src += "gas.png?1";
-				} else if ( c == 'x' ){
-				    src += "pellet-gas-1.png?1";
-				} else if ( c == 'm' ){
-				    src += "pellet-min-1.png?1";
-				} else {
-				    src += "off-1.png?1";
-				}
-				return src;
-			}
-			return "";
-		},
-		fillDaysFirst: true,
-		fillDays: function(w){
-			var old_d = prg.daySel.get("value");
-			prg.daySel.removeOption( prg.daySel.getOptions() );
-			for ( var d = 0; d < 7; d++ ){
-				var v = prg.wDay[d];
-				var x = "";
-				if ( d == w ){
-					v += " (oggi)";	
-				} else if ( d == (w+1)%7 ){
-					v += " (domani)";
-				} else if ( d == (w+2)%7 ){
-					v += " (dopodomani)";
-				} else if ( d == (w-1)%7 ){
-					v += " (ieri)";
-				} else if ( d == (w-2)%7 ){
-					v += " (l'altroieri)";
-				}
-				prg.daySel.addOption( { value:""+d, label:""+v+x, selected: (d==w) } );
-				html.set(prg.programT[d]["day"], v );
-			}
-			prg.daySel.setValue( prg.fillDaysFirst ? w : old_d );
-			prg.fillDaysFirst = false;
-		},
-		refresh: function(){
-			if ( sts.status ){
-				var n = sts.status.now;
-				prg.fillDays(n.d);
-				for ( var x = 0; x < prg.todayH; x++ ){
-					var h = x + prg.todayBase;		
-					for ( var f = 0; f < 2; f++ ){
-						html.set(prg.todayT[x*2+f]["_h"],(h<10?"0"+h:h)+":"+(f*30<10?"0"+(f*30):f*30));
-						attr.set(prg.todayT[ x*2+f ]["_img"], "src", prg.srcCalc(n.d,h,f) );   
-					}
-					var t = x*2+n.f;
-					dclass.remove(prg.todayT[t]["_c"], "now_col" );
-					dclass.remove(prg.todayT[t]["_h"], "now_col" );
-					if ( n.f == 1 ){
-						dclass.remove(prg.todayT[t-1]["_c"], "now_col" );
-						dclass.remove(prg.todayT[t-1]["_h"], "now_col" );
-					}
-					if ( h == n.h ){
-						dclass.add(prg.todayT[t]["_c"], "now_col" );
-						dclass.add(prg.todayT[t]["_h"], "now_col" );									
-					}
-				}
-					
-				if ( prg.program ){
-					for ( var d = 0; d < 7; d++ ){
-						for ( var h = 0; h < 24; h++ ){
-							for ( var f = 0; f < 2; f++ ){
-								attr.set(prg.programT[d][h][f]["_img"], "src", prg.srcCalc(d,h,f) );   
-								dclass.remove( prg.programT[d][h][f], "now_col" );
-								if ( d == n.d ){
-									if ( h == n.h ){		
-										if ( f == n.f ){
-											dclass.add( prg.programT[d][h][f], "now_col" );
-										}	
-									}
-								}
-							}
-						}
-					}
-				}
-				html.set(prg.todayT["day"], prg.wDay[ sts.status.now.d ] );
-			} else {
-				html.set(prg.todayT["day"], "---" );			
-			}
-		},
+        
+        
+        
 	};
 
-   new ToggleButton({ checked: false, onChange: function(v) {
-       if ( v ){
-           dclass.remove(dom.byId("program-editor"), "hidden");
-       } else {
-           dclass.add(dom.byId("program-editor"), "hidden");
-       }
-   }}, "program-size");		
 
 	on(prg.selOff, "click", function(){prg.selectType('o');});
 	on(prg.selGas, "click", function(){prg.selectType('g');});
@@ -207,23 +189,19 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 	prg.selectType('o');
         
 	on( prg.restore,"click", function(){
-		var dialog = new ConfirmDialog({
-				title: "ATTENZIONE!",
-				content: "Annullare le modifiche?"});
+		var dialog = new ConfirmDialog({title: "ATTENZIONE!", content: "Annullare le modifiche?"});
 		dialog.set("buttonOk", "Si, annulla");
 		dialog.set("buttonCancel", "No, continua");
 		dialog.on("execute", function() {
 			if ( sts.status ) {
-					prg.setEdited(false);
+                prg.setEdited(false);
 				prg.update(sts.status.program);
 			}
 		});
 		dialog.show();
 	});
 	on( prg.apply,"click", function(){
-		var dialog = new ConfirmDialog({
-			title: "ATTENZIONE!",
-			content: "Salvare le modifiche?"});
+		var dialog = new ConfirmDialog({title:"ATTENZIONE!",content: "Salvare le modifiche?"});
 		dialog.set("buttonOk", "Salva");
 		dialog.set("buttonCancel", "Continua a modificare");
 		dialog.on("execute", function() {
@@ -237,130 +215,74 @@ function( dom, attr, dclass, style, dc, html, json, on,     // Dojo
 		dialog.show();
 	});
 
-	for ( var d = 0; d < 7; d++ ){
-		prg.programT[d] = [];
-		prg.programT[d]["table"] = dc.create("table", {class:"program-table hidden"}, dom.byId("program-table"));
-		for ( var x = 0; x < 3; x++ ){			
-	      dc.create("col", {class:"hourCol"}, prg.programT[d]["table"] );                 
-	      dc.create("col", {class:"halfCol"}, prg.programT[d]["table"] );                 
-	      dc.create("col", {class:"hourCol" }, prg.programT[d]["table"] );                 
-	      if ( x != 2 )
-		      dc.create("col", {class:"hourCol"}, prg.programT[d]["table"] );
-		}		      
-		var dr = dc.create("tr", {class: "header-row"}, prg.programT[d]["table"] );
-		prg.programT[d]["copy"] = dc.create("th", null, dr );
-		prg.programT[d]["copy"]["_d"] = d;
-		prg.programT[d]["copy"]["_img"] = dc.create("img", { class:"copy", src: "images/copy.png?1" }, prg.programT[d]["copy"] );
-		on(prg.programT[d]["copy"], "click", function(evt){
-			if ( prg.program ){
-			    var d = evt.currentTarget._d;
-			    if ( prg.copyDFrom === null ){
-			        prg.copyDFrom = d;
-			        for ( var x = 0; x < 7; x++ )
-			            attr.set(prg.programT[x]["copy"]["_img"], "src", (x==d) ? "images/cancel_copy.png?1" : "images/paste.png?1");
-			    } else {
-			        for ( var x = 0; x < 7; x++ )
-			            attr.set(prg.programT[x]["copy"]["_img"], "src", "images/copy.png?1" );
-			        for ( var n = 0; n < prg.program[d].length; n++ )
-			            prg.program[d][n] = prg.program[prg.copyDFrom][n]; 	
-			        prg.copyDFrom = null;
-						prg.setEdited(true);
-			    }	
-			    prg.refresh();
-			}
-		});	
-		prg.programT[d]["day"] = dc.create("th", { colspan: 9 }, dr );
-		prg.programT[d]["day"]["_d"] = d;
-		on(prg.programT[d]["day"], "click", function(evt){
-          if ( prg.program ){
-              var d = evt.currentTarget._d;
-              var dialog = new ConfirmDialog({title: "Imposta giornata",
-                                              content: "Imposto l'intero giorno?"});
-              dialog.set("buttonOk", "Si");
-              dialog.set("buttonCancel", "Annulla");
-              dialog.on("execute",function() {
-                  for ( var h = 0; h < 24; h++ ){
-                      for ( var f = 0; f < 2; f++ ){
-                          prg.program[d][h*2+f] = prg.selectedType;
-                      }
-                  }
-						prg.setEdited(true);
-                  prg.refresh();
-              });
-              dialog.show();
-          }
-      });
-		prg.programT[d]["extr"] = dc.create("th", null, dr );
-		prg.programT[d]["extr"]["_d"] = d;
-		prg.programT[d]["extr"]["_img"] = dc.create("img", { class:"copy", src: "images/restore.png?1" }, prg.programT[d]["extr"] );
-		on(prg.programT[d]["extr"], "click", function(evt){
-          if ( prg.program ){
-              var d = evt.currentTarget._d;
-              var dialog = new ConfirmDialog({title: "Resetto giornata",
-                                              content: "Resetto l'intero giorno?"});
-              dialog.set("buttonOk", "Si");
-              dialog.set("buttonCancel", "Annulla");
-              dialog.on("execute",function() {
-                  for ( var h = 0; h < 24; h++ ){
-                      for ( var f = 0; f < 2; f++ ){
-                          prg.program[d][h*2+f] = 'o';
-                      }
-                  }
-						prg.setEdited(true);
-                  prg.refresh();
-              });
-              dialog.show();
-          }
-      });
-		var tr = dc.create("tr", null, prg.programT[d]["table"] );
-		dc.create("th", null, tr );
-		for ( var x = 0; x < 3; x++ ){
-			dc.create("th", { innerHTML: "00" }, tr );
-			dc.create("th", { innerHTML: "30" }, tr );
-			if ( x != 2 )
-				dc.create("th", { colspan: 2 }, tr );
-		}
-		for ( var h1 = 0; h1 < 8; h1++ ){
-			var hr = dc.create("tr", null, prg.programT[d]["table"] );
-			for ( var h2 = 0; h2 < 3; h2++ ){
-				var h = h1+h2*8;	
-				prg.programT[d][h] = [];
-				prg.programT[d][h]["h"] = dc.create("th", { innerHTML: h < 10 ? "0"+h:h}, hr );
-				for ( var f = 0; f < 2; f++ ){
-					prg.programT[d][h][f] = dc.create("td", null, hr );            
-					prg.programT[d][h][f]["_img"] = dc.create("img", { src: "images/off-1.png?1" }, prg.programT[d][h][f] );  
-					prg.programT[d][h][f]["_img"]["_d"] = d;        
-					prg.programT[d][h][f]["_img"]["_h"] = h;        
-					prg.programT[d][h][f]["_img"]["_f"] = f;
-					on(prg.programT[d][h][f]["_img"], "click", function(evt){
-                  if ( prg.program ){
-							var i = evt.currentTarget;
-							var x = i._h*2+i._f;
-							prg.setEdited(true);
-							prg.program[i._d][x] = prg.program[i._d][x] == prg.selectedType ? 'o' : prg.selectedType;
-							prg.refresh();
-						}
-					});          							
-				}
-				if ( h2 != 2 )
-					dc.create("td", { class: "spacer" }, hr );            					
-			}
-		}
-  	}
- 
-	prg.todayT["table"] = dc.create("table", {class:"program-table"}, dom.byId("today-table-div"));
-     for ( var h = 0; h < prg.todayH*2; h++ ){
-         dc.create("col", {class: h%2 == 0? "halfCol" : "hourCol"}, prg.todayT["table"] );                 
-	}
-	var top_row = dc.create("tr", null, prg.todayT["table"] );
-	prg.todayT["day"] = dc.create("th", { colspan: 24, innerHTML: "..." }, top_row );
-	var h_row = dc.create( "tr", { class: "header-row" }, prg.todayT["table"] );
-	var c_row = dc.create( "tr", {}, prg.todayT["table"] );
-	for ( var h = 0; h < prg.todayH*2; h++ ){
-		prg.todayT[h] = [];
-		prg.todayT[h]["_h"] = dc.create("td", { innerHTML: ""}, h_row );                 
-		prg.todayT[h]["_c"] = dc.create("td", { innerHTML: ""}, c_row );                 
-		prg.todayT[h]["_img"] = dc.create("img", { class: "today-table-img", src: "images/off-1.png?1" }, prg.todayT[h]["_c"] );            
-	}
+    on( query("#program_copy").parent()[0], "click", function(evt){
+        if ( prg.program ){
+            if ( prg.copyDFrom === null ){
+                prg.copyDFrom = prg.daySel;
+                attr.set(dom.byId("program_copy"),  "src", "images/paste.png");
+            } else {
+                attr.set(dom.byId("program_copy"),  "src", "images/copy.png");
+                if ( prg.daySel != prg.copyDFrom ){
+                    for ( var n = 0; n < prg.program[prg.daySel].length; n++ )
+                        prg.program[prg.daySel][n] = prg.program[prg.copyDFrom][n]; 	
+                    prg.copyDFrom = null;
+                    prg.setEdited(true);
+                }
+            }	
+            prg.refresh();
+        }
+    });	
 
+    on( query("#program-d")[0], "click", function(evt){
+        if ( prg.program ){
+            var dialog = new ConfirmDialog({title: "Imposta giornata",
+                                            content: "Imposto l'intero giorno?"});
+            dialog.set("buttonOk", "Si");
+            dialog.set("buttonCancel", "Annulla");
+            dialog.on("execute",function() {
+                for ( var h = 0; h < 24; h++ ){
+                    for ( var f = 0; f < 2; f++ ){
+                        prg.program[prg.daySel][h*2+f] = prg.selectedType;
+                    }
+                }
+                prg.setEdited(true);
+                prg.refresh();
+            });
+            dialog.show();
+        }
+    });
+
+    on( query("#program_clear").parent()[0], "click", function(evt){
+        if ( prg.program ){
+            var dialog = new ConfirmDialog({title: "Resetto giornata",
+                                              content: "Resetto l'intero giorno?"});
+            dialog.set("buttonOk", "Si");
+            dialog.set("buttonCancel", "Annulla");
+            dialog.on("execute",function() {
+                for ( var h = 0; h < 24; h++ ){
+                    for ( var f = 0; f < 2; f++ ){
+                        prg.program[prg.daySel][h*2+f] = 'o';
+                    }
+                }
+                prg.setEdited(true);
+                prg.refresh();
+              });
+              dialog.show();
+          }
+    });
+
+    for ( var h = 0; h < 24; h++ ){
+        for ( var f = 0; f < 2; f++ ){
+            let h2 = h;
+            let f2 = f;
+            on( query("#program-"+h+"-"+f).parent()[0], "click", function(evt){
+                if ( prg.program ){
+                    var x = h2*2+f2;
+                    prg.setEdited(true);
+                    prg.program[prg.daySel][x] = prg.program[prg.daySel][x] == prg.selectedType ? 'o' : prg.selectedType;
+                    prg.refresh();
+                }
+            });
+        }
+    }
 });
