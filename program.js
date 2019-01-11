@@ -20,7 +20,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
 {
     prg = {
         wDay: ["lunedi","martedi","mercoledi","giovedi","venerdi", "sabato", "domenica"],
-        daySel: 0,
+        daySel: null,
         wDayFixed: [],
         todayBase: 0,
         todayH: 10,
@@ -163,7 +163,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
 		},
 		update: function(p) {
 			if ( !prg.edited ){
-				if ( sts.status )
+				if ( sts.status && prg.daySel == null )
 				   prg.daySel = sts.status.now.d;
 				prg.program = [];
 				for ( var d = 0; d < p.length; d++ ){
@@ -178,7 +178,10 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
 				prg.refresh();
 			}
 		},
-        
+        editTemplate: function(){
+            
+            
+        },
         
         
 	};
