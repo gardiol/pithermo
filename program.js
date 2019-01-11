@@ -163,6 +163,8 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
 		},
 		update: function(p) {
 			if ( !prg.edited ){
+				if ( sts.status )
+				   prg.daySel = sts.status.now.d;
 				prg.program = [];
 				for ( var d = 0; d < p.length; d++ ){
 					prg.program[d] = [];
