@@ -648,7 +648,31 @@ bool RunnerThread::_updateCurrentTime( uint64_t new_time )
 
 void RunnerThread::_updateSmartTemp()
 {
-    _smart_temp = _max_temp;
+    float delta = -1.0f;
+    if ( _hour <= 8)
+        delta = -1.0f;
+    else if ( _hour == 9 )
+        delta = -1.0f;
+    else if ( _hour == 10 )
+        delta = -1.0f;
+    else if ( _hour == 11 )
+        delta = -0.9f;
+    else if ( _hour == 12 )
+        delta = -0.9f;
+    else if ( _hour == 13 )
+        delta = -0.8f;
+    else if ( _hour == 14 )
+        delta = -0.7f;
+    else if ( _hour == 15 )
+        delta = -0.4f;
+    else if ( _hour == 16 )
+        delta = -0.2f;
+    else if ( _hour == 17 )
+        delta = -0.1f;
+    else if ( _hour >= 18 )
+        delta = -0.0f;
+
+    _smart_temp = _max_temp + delta;
 }
 
 void RunnerThread::_saveConfig()
