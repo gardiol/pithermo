@@ -127,8 +127,8 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             max_temp_m.set("disabled", false);
                             min_temp_p.set("disabled", false);
                             max_temp_p.set("disabled", false);
-                            min_temp.set("label", sts.min_temp + "°C" );
-                            max_temp.set("label", sts.max_temp + "°C" );
+                            min_temp.set("label", sts.min_temp.toFixed(1) + "°C" );
+                            max_temp.set("label", sts.max_temp.toFixed(1) + "°C" );
                             sts.smart_temp = s[16]=="1";//smart temp on
                             smart_temp_on.set("checked", sts.smart_temp);
                             if ( sts.smart_temp ){

@@ -40,6 +40,7 @@ private:
                                  bool &prev_over_temp,
                                  bool &prev_under_temp);
     bool _updateCurrentTime(uint64_t new_time);
+    void _updateSmartTemp();
     void _updateStatus();
     void _saveConfig();
 
@@ -58,7 +59,7 @@ private:
 
     ModeType _current_mode;
     bool _heating_activated;
-    bool _smart_temp;
+    bool _smart_temp_on;
 
     // Special conditions:
     bool _anti_ice_active;
@@ -69,6 +70,7 @@ private:
     bool _prev_pellet_hot;
     float _min_temp;
     float _max_temp;
+    float _smart_temp;
     float _temp_correction;
 
     uint64_t _sensor_success_reads;

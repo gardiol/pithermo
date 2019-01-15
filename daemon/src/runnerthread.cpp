@@ -35,7 +35,7 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _commands_mutex("CommandsMutex"),
     _current_mode(MANUAL_MODE),
     _heating_activated(false),
-    _smart_temp(false),
+    _smart_temp_on(false),
     _anti_ice_active(false),
     _over_temp(false),
     _under_temp(false),
@@ -43,6 +43,7 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _prev_pellet_hot(false),
     _min_temp(16.0),
     _max_temp(17.0),
+    _smart_temp(17.0),
     _temp_correction(1.0),
     _sensor_success_reads(0),
     _last_time(0),
@@ -69,7 +70,7 @@ RunnerThread::RunnerThread(ConfigFile *config,
         _min_temp = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "min_temp" ) ) );
         _max_temp = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "max_temp" ) ) );
         _heating_activated = _config->getValueBool( "activated" );
-        _smart_temp = _config->getValueBool( "smart_temp" );
+        _smart_temp_on = _config->getValueBool( "smart_temp" );
         if ( _config->hasValue( "pellet_startup_delay" ) )
             _pellet_startup_delay = static_cast<uint64_t>(FrameworkUtils::string_toi( _config->getValue( "pellet_startup_delay" ) ) );
         _temp_correction = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "temp_correction" ) ) );
@@ -173,22 +174,22 @@ bool RunnerThread::_checkCommands()
 
         case Command::SMART_TEMP_ON:
             _logger->logDebug("Smart temp on command received");
-            if ( !_smart_temp )
+            if ( !_smart_temp_on )
             {
                 _logger->logEvent( LogItem::SMART_TEMP_ON );
                 save_config = true;
-                _smart_temp = true;
+                _smart_temp_on = true;
                 update_status = true;
             }
             break;
 
         case Command::SMART_TEMP_OFF:
             _logger->logDebug("Smart temp off command received");
-            if ( _smart_temp )
+            if ( _smart_temp_on )
             {
                 _logger->logEvent( LogItem::SMART_TEMP_OFF );
                 save_config = true;
-                _smart_temp = false;
+                _smart_temp_on = false;
                 update_status = true;
             }
             break;
@@ -374,6 +375,7 @@ bool RunnerThread::_checkCommands()
     return update_status;
 }
 
+
 bool RunnerThread::scheduledRun(uint64_t, uint64_t)
 {
     bool update_status = _checkCommands();
@@ -388,7 +390,7 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
     if ( _heating_activated )
     {   // Don't do anything until we have a valid temperature read
         if (_sensor_success_reads > 0)
-        {
+        {            
             // First of all, check anti-ice:
             if ( _checkAntiIce() )
                 update_status = true;
@@ -403,11 +405,13 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
 
             if ( !_anti_ice_active )
             {
+                _updateSmartTemp();
+
                 // select the current target temperature:
                 if ( _current_mode == AUTO_MODE )
                 {
                     // Target temp is "MAX" or "MIN" depending on program:
-                    float target_temperature = ( _program.useHigh() ? _max_temp : _min_temp );
+                    float target_temperature = _program.useHigh() ? (_smart_temp_on ? _smart_temp : _max_temp) : _min_temp;
 
                     // If pellet should be on, we will turn it on no matter what:
                     // (this is to prevent the pellet to turn off)
@@ -642,10 +646,15 @@ bool RunnerThread::_updateCurrentTime( uint64_t new_time )
     return ret;
 }
 
+void RunnerThread::_updateSmartTemp()
+{
+    _smart_temp = _max_temp;
+}
+
 void RunnerThread::_saveConfig()
 {
     _config->setValueBool("activated", _heating_activated );
-    _config->setValueBool("smart_temp", _smart_temp );
+    _config->setValueBool("smart_temp", _smart_temp_on );
     _config->setValue( "mode", _current_mode == MANUAL_MODE ? "manual" : "auto" );
     _config->setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
     _config->setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
@@ -673,8 +682,8 @@ void RunnerThread::_updateStatus()
     status.pellet_hot = _pellet->isHot();
     status.pellet_flameout = _pellet_flameout;
     status.gas_on = _gas->isOn();
-    status.smart_temp_on = _smart_temp;
-    status.smart_temp = _max_temp;
+    status.smart_temp_on = _smart_temp_on;
+    status.smart_temp = _smart_temp;
     status.max_temp = _max_temp;
     status.min_temp = _min_temp;
     status.hysteresis = _hysteresis;
