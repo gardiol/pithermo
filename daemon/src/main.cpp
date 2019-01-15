@@ -151,7 +151,6 @@ int main(int argc, char** argv)
         std::string config_file = cmd.consumeParameter( "config" ).getOption();
         std::string log_path = cmd.consumeParameter( "logs" ).getOption();
 
-        std::string exchange_path = "";
         std::string remote_host = "";
         std::string ext_id = "";
 
@@ -159,11 +158,7 @@ int main(int argc, char** argv)
         {
             if ( operating_mode == "main" )
             {
-                exchange_path = cmd.consumeParameter( "xchange" ).getOption();
-                if ( FrameworkUtils::fileExist( exchange_path, true ) )
-                    allowed_to_start = true;
-                else
-                    debugPrintError() << "ERROR: invalid exchange path (" << exchange_path << ")\n";
+                allowed_to_start = true;
             }
             else if ( operating_mode == "ext" )
             {
@@ -215,7 +210,7 @@ int main(int argc, char** argv)
                         UdpSocket command_server("CommandServer","", "",0,5555);
                         if ( command_server.activateInterface() )
                         {
-                            RunnerThread runner( &config, exchange_path, log_path + "/history", &logger);
+                            RunnerThread runner( &config, log_path + "/history", &logger);
                             if ( runner.isRunning() )
                             {
                                 while ( runner.isRunning() &&

@@ -29,8 +29,8 @@ bool Program::useHigh() const
 {
     ProgramType p = _program[_d][_h][_f];
     return p == Program::HIGH_AUTO ||
-           p == Program::HIGH_GAS ||
-           p == Program::HIGH_PELLET ;
+            p == Program::HIGH_GAS ||
+            p == Program::HIGH_PELLET ;
 }
 
 bool Program::usePellet() const
@@ -45,8 +45,8 @@ bool Program::useGas() const
 {
     ProgramType p = _program[_d][_h][_f];
     return p == Program::HIGH_GAS ||
-           p == Program::HIGH_AUTO ||
-           p == Program::LOW_GAS;
+            p == Program::HIGH_AUTO ||
+            p == Program::LOW_GAS;
 }
 
 void Program::setTime(int d, int h, int f)
@@ -61,49 +61,40 @@ void Program::setTime(int d, int h, int f)
     }
 }
 
-bool Program::change(const std::string &p)
+bool Program::change(const std::string &new_program)
 {
     bool modified = false;
-    std::vector<std::string> days = FrameworkUtils::string_split( p, "]" );
-    if ( days.size() >= 7 )
+    unsigned int pos = 0;
+    for ( std::size_t d = 0; d < 7; d++ )
     {
-        for ( std::size_t d = 0; d < 7; d++ )
+        for ( std::size_t h = 0; h < 24; h++ )
         {
-            std::string day_str = FrameworkUtils::string_replace(FrameworkUtils::string_replace(FrameworkUtils::string_replace(days[d], "[", "" ), "\"", ""), ",", "");
-            FrameworkUtils::string_tolower( day_str );
-            for ( std::size_t h = 0; h < 24; h++ )
+            for ( std::size_t f = 0; f < 2; f++ )
             {
-                for ( std::size_t f = 0; f < 2; f++ )
-                {
-                    if ( day_str.length() > 0 )
-                    {
-                        char p = day_str[0];
-                        day_str = day_str.substr( 1 );
-                        ProgramType t = ERROR;
-                        if ( p == 'x' )
-                            t = HIGH_AUTO;
-                        else if ( p == 'g' )
-                            t = HIGH_GAS;
-                        else if ( p == 'p' )
-                            t = HIGH_PELLET;
-                        else if ( p == 'm' )
-                            t = LOW_PELLET;
-                        else if ( p == 'o' )
-                            t = LOW_GAS;
+                char p = new_program.at( pos++ );
+                ProgramType t = ERROR;
+                if ( p == 'x' )
+                    t = HIGH_AUTO;
+                else if ( p == 'g' )
+                    t = HIGH_GAS;
+                else if ( p == 'p' )
+                    t = HIGH_PELLET;
+                else if ( p == 'm' )
+                    t = LOW_PELLET;
+                else if ( p == 'o' )
+                    t = LOW_GAS;
 
-                        if ( t != ERROR )
-                        {
-                            if ( _program[d][h][f] != t )
-                            {
-                                modified = true;
-                                _program[d][h][f] = t;
-                            }
-                        }
+                if ( t != ERROR )
+                {
+                    if ( _program[d][h][f] != t )
+                    {
+                        modified = true;
+                        _program[d][h][f] = t;
                     }
-                } // f
-            } //h
-        } //d
-    }
+                }
+            } // f
+        } // h
+    } //d
     return modified;
 }
 
@@ -178,42 +169,37 @@ void Program::saveConfig(ConfigData *c) const
     }
 }
 
-void Program::writeJSON(FILE *file) const
+void Program::writeRaw(char *buffer) const
 {
-    char s[5] = "\"_\",";
-    fwrite("[", 1, 1, file );
+    int pos = 0;
     for ( std::size_t d = 0; d < 7; d++ )
     {
-        fwrite("[", 1, 1, file );
         for ( std::size_t h = 0; h < 24; h++ )
         {
             for ( std::size_t f = 0; f < 2; f++ )
             {
+                char c = 'o';
                 switch ( _program[d][h][f] )
                 {
                 case HIGH_AUTO:
-                    s[1] = 'x';
+                    c = 'x';
                     break;
                 case HIGH_GAS:
-                    s[1] = 'g';
+                    c = 'g';
                     break;
                 case HIGH_PELLET:
-                    s[1] = 'p';
+                    c = 'p';
                     break;
                 case LOW_PELLET:
-                    s[1] = 'm';
+                    c = 'm';
                     break;
                 case LOW_GAS:
                 case ERROR:
-                    s[1] = 'o';
+                    c = 'o';
                     break;
                 }
-                // disegna , solo alla fine della giornata:
-                fwrite(s, ((h != 23) || (f != 1)) ? 4 : 3,1, file );
+                buffer[pos++] = c;
             }
         }
-        // disegna , solo alla fine della lista:
-        fwrite("],", (d != 6) ? 2 : 1, 1, file );
     }
-    fwrite("]", 1, 1, file );
 }

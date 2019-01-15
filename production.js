@@ -17,6 +17,6 @@ function( request, json )// Dojo
 		request.put(req, {data:data}).then(ok_func,ko_func);
 	};
 	getRequest = function( req, ok_func, ko_func ){
-		request(req,{handleAs :"json"}).then(ok_func,ko_func);
+		request.get(req, {}).then(ok_func,ko_func);
 	};
 });

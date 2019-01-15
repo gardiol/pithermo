@@ -1,7 +1,0 @@
-#!/bin/bash
-if [ $(ps -Af | grep pithermo_daemon | wc -l) -ge 2 ]
-then
-	echo "Content-type: application/json"
-	echo ""
-	cat _status
-fi

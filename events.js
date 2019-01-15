@@ -40,6 +40,8 @@ function( dom, dclass, on, dc)    // Dojo
 			8388608: "Sistema attivato",
 			16777216: "Sistema disattivato",
             33554432: "Isteresi modificata",
+            67108864: "SmartTemp ON",
+            124217728: "SmartTemp OFF",
 		},	
         toggleRange: function(){
             dclass.toggle(dom.byId("events-range"), "hidden");

@@ -35,7 +35,9 @@ public:
         PROGRAM_UPDATE      = 0x0000000000400000,// 4096k
         ACTIVATED           = 0x0000000000800000,// 8192k
         DEACTIVATED         = 0x0000000001000000,// 16384k
-        HYST_UPDATE         = 0x0000000002000000 // 32768k
+        HYST_UPDATE         = 0x0000000002000000,// 32768k
+        SMART_TEMP_ON       = 0x0000000004000000,// 65536k
+        SMART_TEMP_OFF      = 0x0000000008000000 // 128m
     };
 
     static uint32_t getSize();

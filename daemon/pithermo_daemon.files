@@ -1,3 +1,7 @@
+CGI/command_cgi.cpp
+CGI/program_cgi.cpp
+CGI/status_cgi.cpp
+src/sharedstatus.h
 test/test_temp.cpp
 CGI/events_cgi.cpp
 CGI/history_cgi.cpp

@@ -5,6 +5,7 @@
 
 #include "basemutex.h"
 #include "scheduledthread.h"
+#include "sharedmemory.h"
 
 #include "program.h"
 #include "history.h"
@@ -22,8 +23,7 @@ public:
     enum ModeType { MANUAL_MODE,
                     AUTO_MODE };
 
-    RunnerThread( ConfigFile* config,
-                  const std::string& exchange_path,
+    RunnerThread(ConfigFile* config,
                   const std::string& hst,
                   Logger* l);
     virtual ~RunnerThread();
@@ -43,7 +43,7 @@ private:
     void _updateStatus();
     void _saveConfig();
 
-
+    SharedMemory _shared_status;
     Logger* _logger;
     Generator* _gas;
     Generator* _pellet;
@@ -51,15 +51,14 @@ private:
     Program _program;
     History _history;
 
-    std::vector<std::string> _status_json_template;
     ConfigFile* _config;
-    std::string _exchange_path;
 
     std::list<Command*> _commands_list;
     BaseMutex _commands_mutex;
 
     ModeType _current_mode;
     bool _heating_activated;
+    bool _smart_temp;
 
     // Special conditions:
     bool _anti_ice_active;

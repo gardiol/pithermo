@@ -8,11 +8,11 @@ DEMO_OBJ=obj/demowiringpi.o
 DEMO_TGT=test_temp
 endif
 
-FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./framework/basethread.cpp ./framework/cmdlineparser.cpp ./framework/configdata.cpp ./framework/configfile.cpp ./framework/debugprint.cpp ./framework/udpsocket.cpp ./framework/frameworksighandler.cpp ./framework/frameworktimer.cpp ./framework/frameworkutils.cpp ./framework/genericcommdevice.cpp ./framework/memorychecker.cpp ./framework/profiler.cpp ./framework/profilerinternal.cpp ./framework/scheduledthread.cpp ./framework/socketcommdevice.cpp ./framework/tcpclient.cpp ./framework/tcpserver.cpp ./framework/transmissionstats.cpp
+FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./framework/basethread.cpp ./framework/cmdlineparser.cpp ./framework/configdata.cpp ./framework/configfile.cpp ./framework/debugprint.cpp ./framework/udpsocket.cpp ./framework/frameworksighandler.cpp ./framework/frameworktimer.cpp ./framework/frameworkutils.cpp ./framework/genericcommdevice.cpp ./framework/memorychecker.cpp ./framework/profiler.cpp ./framework/profilerinternal.cpp ./framework/scheduledthread.cpp ./framework/socketcommdevice.cpp ./framework/tcpclient.cpp ./framework/tcpserver.cpp ./framework/transmissionstats.cpp ./framework/sharedmemory.cpp
 FRAMEWORK_OBJS := $(foreach src,$(FRAMEWORK_SRCS),obj/$(basename $(notdir $(src))).o)
 $(foreach o,$(FRAMEWORK_OBJS),$(eval FRAMEWORK_MAPS_$(basename $(notdir $(o))) := framework/$(basename $(notdir $(o))).cpp))
 
-all: obj pithermo_daemon ../cgi-bin/history ../cgi-bin/events ../cgi-bin/stats $(DEMO_TGT)
+all: obj pithermo_daemon ../cgi-bin/history ../cgi-bin/events ../cgi-bin/stats ../cgi-bin/status ../cgi-bin/command ../cgi-bin/program $(DEMO_TGT)
 
 obj:
 	mkdir obj
@@ -23,7 +23,7 @@ $(FRAMEWORK_OBJS): ${FRAMEWORK_SRCS}
 obj/main.o: src/main.cpp src/runnerthread.h src/command.h src/logitem.h src/logger.h src/demowiringpi.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -I/usr/local/include -Isrc
 
-obj/runnerthread.o: src/runnerthread.cpp src/command.h src/program.h src/runnerthread.h src/logitem.h src/tempsensor.h src/gpiodevice.h src/logger.h src/generator.h
+obj/runnerthread.o: src/runnerthread.cpp src/command.h src/program.h src/runnerthread.h src/logitem.h src/tempsensor.h src/gpiodevice.h src/logger.h src/generator.h src/sharedstatus.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework 
 
 obj/command.o: src/command.cpp src/command.h
@@ -65,6 +65,15 @@ obj/events_cgi.o: CGI/events_cgi.cpp
 obj/stats_cgi.o: CGI/stats_cgi.cpp
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 
+obj/status_cgi.o: CGI/status_cgi.cpp src/sharedstatus.h
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
+
+obj/command_cgi.o: CGI/command_cgi.cpp
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
+
+obj/program_cgi.o: CGI/program_cgi.cpp src/sharedstatus.h
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
+
 obj/test_temp.o: test/test_temp.cpp src/logitem.h src/tempsensor.cpp src/tempsensor.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 
@@ -78,6 +87,15 @@ pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o 
 	g++ -o $@ $^ -lpthread -lrt -lm
 
 ../cgi-bin/stats: obj/frameworktimer.o obj/frameworkutils.o obj/stats_cgi.o obj/logitem.o obj/logger.o obj/debugprint.o obj/historyitem.o obj/history.o
+	g++ -o $@ $^ -lpthread -lrt -lm
+
+../cgi-bin/status: obj/frameworktimer.o obj/frameworkutils.o obj/status_cgi.o obj/debugprint.o obj/sharedmemory.o
+	g++ -o $@ $^ -lpthread -lrt -lm
+
+../cgi-bin/program: obj/frameworktimer.o obj/frameworkutils.o obj/program_cgi.o obj/debugprint.o obj/udpsocket.o obj/basecomminterface.o obj/socketcommdevice.o obj/genericcommdevice.o obj/memorychecker.o obj/basemutex.o obj/transmissionstats.o obj/sharedmemory.o
+	g++ -o $@ $^ -lpthread -lrt -lm
+
+../cgi-bin/command: obj/frameworktimer.o obj/frameworkutils.o obj/command_cgi.o obj/debugprint.o obj/udpsocket.o obj/basecomminterface.o obj/socketcommdevice.o obj/genericcommdevice.o obj/memorychecker.o obj/basemutex.o obj/transmissionstats.o
 	g++ -o $@ $^ -lpthread -lrt -lm
 
 test_temp: obj/frameworktimer.o obj/frameworkutils.o obj/test_temp.o obj/tempsensor.o obj/gpiodevice.o obj/demowiringpi.o obj/debugprint.o obj/logger.o obj/logitem.o

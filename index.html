@@ -54,7 +54,7 @@ loading..
                     </button>
                 </div>
                 <div>
-                    <button data-dojo-id="status_auto" data-dojo-type="dijit/form/Button" data-dojo-props="onClick:function(){sts.confirm('Passare in AUTOMATICO?'+ (sts.status.warnings.modeswitch!=''?'<p>ATTENZIONE: '+sts.status.warnings.modeswitch+'</p>':''),'Automatico!','auto')}">
+                    <button data-dojo-id="status_auto" data-dojo-type="dijit/form/Button" data-dojo-props="onClick:function(){sts.confirm('Passare in AUTOMATICO?','Automatico!','auto')}">
                         Automatico
                     </button>
                 </div>
@@ -98,30 +98,30 @@ loading..
             </div>
             <div>
                 <img alt="minTemp" class="temp-img" src="images/min-temp.png?1"/>
-                <button data-dojo-id="min_temp_m" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.status.temp.min-0.1)}">
+                <button data-dojo-id="min_temp_m" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.min_temp-0.1)}">
                     -
                 </button>
-                <button data-dojo-id="min_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.status.temp.min,'min','Cambia temperatura minima')}">
+                <button data-dojo-id="min_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.min_temp,'min','Cambia temperatura minima')}">
                     XX.X°C                
                 </button>
-                <button data-dojo-id="min_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.status.temp.min+0.1)}">
+                <button data-dojo-id="min_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.min_temp+0.1)}">
                     +
                 </button>  
             </div>
             <div>
                 <img alt="maxTemp" class="temp-img" src="images/max-temp.png?1"/>
-                <button data-dojo-id="max_temp_m" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.status.temp.max-0.1)}">
+                <button data-dojo-id="max_temp_m" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.max_temp-0.1)}">
                     -
                 </button>                
-                <button data-dojo-id="max_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.status.temp.max,'max','Cambia temperatura massima')}">
+                <button data-dojo-id="max_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.max_temp,'max','Cambia temperatura massima')}">
                     XX.X°C                
                 </button>
-                <button data-dojo-id="max_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.status.temp.max+0.1)}">
+                <button data-dojo-id="max_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.max_temp+0.1)}">
                     +
                 </button>
             </div>
             <div>
-                <input data-dojo-id="max_temp_smart" data-dojo-type="dijit/form/CheckBox" onChange=""/>
+                <input data-dojo-id="smart_temp_on" data-dojo-type="dijit/form/CheckBox" onChange="sts.toggleSmart()"/>
                 Smart
                 (Attuale:<span id="smart_temp">off</span>°C)
             </div>
@@ -670,6 +670,7 @@ function(ready,dclass, style)
         style.set("content", "visibility", "visible");
         sts.update();
         evt.update();
+        prg.update();
         window.setTimeout( function(){ 
             hst.startup();
             sta.startup();

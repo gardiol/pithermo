@@ -26,6 +26,8 @@ public:
                    SET_HISTERESYS,
                    PROGRAM,
                    EXT_TEMP,
+                   SMART_TEMP_ON,
+                   SMART_TEMP_OFF,
                    AUTO};
 
     Command( const char* buffer, uint32_t size );

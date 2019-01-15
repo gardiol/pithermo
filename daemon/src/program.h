@@ -19,11 +19,11 @@ public:
 
     void setTime( int d, int h, int f );
 
-    bool change( const std::string& p );
+    bool change(const std::string& new_program );
     void loadConfig( const ConfigData* c );
     void saveConfig( ConfigData* c ) const;
 
-    void writeJSON( FILE* file ) const;
+    void writeRaw( char* buffer ) const;
 
 private:
     enum ProgramType { LOW_GAS,

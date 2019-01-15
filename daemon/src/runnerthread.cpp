@@ -13,6 +13,7 @@
 
 #include "command.h"
 #include "program.h"
+#include "sharedstatus.h"
 
 // GPIO
 // 5 = minimo
@@ -22,19 +23,19 @@
 // 2 = quarto relé libero
 // 7 = pellet feedback
 RunnerThread::RunnerThread(ConfigFile *config,
-                           const std::string &exchange_path,
                            const std::string &hst, Logger *l):
     ScheduledThread("Runner", 1000 * 1000 ),
+    _shared_status("SharedStatus", SharedStatusKey, sizeof( SharedStatus ), SharedMemory::read_write_create_shm ),
     _logger(l),
     _gas(nullptr),
     _pellet(nullptr),
     _temp_sensor(nullptr),
     _history( hst ),
     _config( config ),
-    _exchange_path( exchange_path ),
     _commands_mutex("CommandsMutex"),
     _current_mode(MANUAL_MODE),
     _heating_activated(false),
+    _smart_temp(false),
     _anti_ice_active(false),
     _over_temp(false),
     _under_temp(false),
@@ -53,26 +54,12 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _pellet_startup_delay(60*45),
     _hysteresis(0.1f)
 {
-    _status_json_template.push_back("{\"mode\":\"");
-    _status_json_template.push_back("\",\"active\":\"");
-    _status_json_template.push_back("\",\"antiice\":\"");
-    _status_json_template.push_back("\",\"warnings\":{\"modeswitch\":\"");
-    _status_json_template.push_back("\"},\"pellet\":{\"command\":\"");
-    _status_json_template.push_back("\",\"status\":\"");
-    _status_json_template.push_back("\",\"minimum\":\"");
-    _status_json_template.push_back("\",\"flameout\":\"");
-    _status_json_template.push_back("\"},\"gas\":{\"command\":\"");
-    _status_json_template.push_back("\",\"status\":\"off\"},\"temp\":{\"min\":");
-    _status_json_template.push_back(",\"max\":");
-    _status_json_template.push_back(",\"hys\":");
-    _status_json_template.push_back(",\"int\":");
-    _status_json_template.push_back(",\"ext\":");
-    _status_json_template.push_back(",\"hum\":");
-    _status_json_template.push_back(",\"ext_hum\":");
-    _status_json_template.push_back("},\"now\":{\"d\":");
-    _status_json_template.push_back(",\"h\":");
-    _status_json_template.push_back(",\"f\":");
-    _status_json_template.push_back("},\"program\":");
+    if ( _shared_status.isReady() )
+    {
+        memset( _shared_status.getWritePtr(), 0, _shared_status.getSharedSize() );
+    }
+    else
+        _logger->logDebug("Unable to open shared memory for status!");
 
     // Load config file
     std::string content;
@@ -82,6 +69,7 @@ RunnerThread::RunnerThread(ConfigFile *config,
         _min_temp = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "min_temp" ) ) );
         _max_temp = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "max_temp" ) ) );
         _heating_activated = _config->getValueBool( "activated" );
+        _smart_temp = _config->getValueBool( "smart_temp" );
         if ( _config->hasValue( "pellet_startup_delay" ) )
             _pellet_startup_delay = static_cast<uint64_t>(FrameworkUtils::string_toi( _config->getValue( "pellet_startup_delay" ) ) );
         _temp_correction = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "temp_correction" ) ) );
@@ -112,10 +100,13 @@ RunnerThread::RunnerThread(ConfigFile *config,
     // Ensure we DO NOT print at next check
     _prev_pellet_hot = _pellet->isHot();
 
-    _updateStatus();
-    startThread();
-    while ( !isRunning() )
-        FrameworkTimer::msleep_s( 100 );
+    if ( _shared_status.isReady() )
+    {
+        _updateStatus();
+        startThread();
+        while ( !isRunning() )
+            FrameworkTimer::msleep_s( 100 );
+    }
 }
 
 RunnerThread::~RunnerThread()
@@ -176,6 +167,28 @@ bool RunnerThread::_checkCommands()
                 _logger->logEvent( LogItem::ACTIVATED );
                 save_config = true;
                 _heating_activated = true;
+                update_status = true;
+            }
+            break;
+
+        case Command::SMART_TEMP_ON:
+            _logger->logDebug("Smart temp on command received");
+            if ( !_smart_temp )
+            {
+                _logger->logEvent( LogItem::SMART_TEMP_ON );
+                save_config = true;
+                _smart_temp = true;
+                update_status = true;
+            }
+            break;
+
+        case Command::SMART_TEMP_OFF:
+            _logger->logDebug("Smart temp off command received");
+            if ( _smart_temp )
+            {
+                _logger->logEvent( LogItem::SMART_TEMP_OFF );
+                save_config = true;
+                _smart_temp = false;
                 update_status = true;
             }
             break;
@@ -620,6 +633,7 @@ bool RunnerThread::_updateCurrentTime( uint64_t new_time )
 void RunnerThread::_saveConfig()
 {
     _config->setValueBool("activated", _heating_activated );
+    _config->setValueBool("smart_temp", _smart_temp );
     _config->setValue( "mode", _current_mode == MANUAL_MODE ? "manual" : "auto" );
     _config->setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
     _config->setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
@@ -636,123 +650,30 @@ void RunnerThread::_saveConfig()
 
 void RunnerThread::_updateStatus()
 {
-    std::string str_ext_temp = FrameworkUtils::ftostring( _current_ext_temp );
-    std::string str_ext_humidity = FrameworkUtils::ftostring( _current_ext_humidity );
-    std::string str_temp = FrameworkUtils::ftostring( _temp_sensor->getTemp() );
-    std::string str_humidity = FrameworkUtils::ftostring( _temp_sensor->getHumidity() );
-    std::string str_min_t = FrameworkUtils::ftostring( _min_temp );
-    std::string str_max_t = FrameworkUtils::ftostring( _max_temp );
-    std::string str_hyst = FrameworkUtils::ftostring( _hysteresis );
-    std::string str_day = FrameworkUtils::tostring( _day );
-    std::string str_h = FrameworkUtils::tostring( _hour );
-    std::string str_f = FrameworkUtils::tostring( _half_hour );
-    std::string str_pellet_off_warning("La stufa a pellet sarà spenta!");
-    std::string str_pellet_on_warning("La stufa a pellet sarà accesa!");
-
-    FILE* status_file = fopen( (_exchange_path+"/_status").c_str(), "w" );
-    if ( status_file )
-    {
-        for ( unsigned int i = 0; i < _status_json_template.size(); ++i )
-        {
-            fwrite( _status_json_template[i].c_str(),
-                    _status_json_template[i].length(), 1, status_file);
-            switch (i)
-            {
-            case 0:
-                if ( _heating_activated )
-                {
-                    if ( _current_mode == MANUAL_MODE )
-                        fwrite( "manual", 6, 1, status_file);
-                    else
-                        fwrite( "auto", 4, 1, status_file);
-                }
-                break;
-            case 1:
-                if ( _heating_activated )
-                    fwrite( "on", 2, 1, status_file);
-                else
-                    fwrite( "off", 3, 1, status_file);
-                break;
-            case 2:
-                if ( _anti_ice_active )
-                    fwrite( "on", 2, 1, status_file);
-                else
-                    fwrite( "off", 3, 1, status_file);
-                break;
-            case 3:
-/*                if ( _pellet->isOn() && !_program.getPellet() )
-                    fwrite( str_pellet_off_warning.c_str(), str_pellet_off_warning.size(), 1, status_file);
-                else if ( !_pellet->isOn() && _program.getPellet() )
-                    fwrite( str_pellet_on_warning.c_str(), str_pellet_on_warning.size(), 1, status_file);
-     */           break;
-            case 4:
-                if ( _pellet->isOn() )
-                    fwrite( "on", 2, 1, status_file);
-                else
-                    fwrite( "off", 3, 1, status_file);
-                break;
-            case 5:
-                if ( _pellet->isHot() )
-                    fwrite( "on", 2, 1, status_file);
-                else
-                    fwrite( "off", 3, 1, status_file);
-                break;
-            case 6:
-                if ( _pellet->isLow() )
-                    fwrite( "on", 2, 1, status_file);
-                else
-                    fwrite( "off", 3, 1, status_file);
-                break;
-            case 7:
-                if ( _pellet_flameout )
-                    fwrite( "on", 2, 1, status_file);
-                else
-                    fwrite( "off", 3, 1, status_file);
-                break;
-            case 8:
-                if ( _gas->isOn() )
-                    fwrite( "on", 2, 1, status_file);
-                else
-                    fwrite( "off", 3, 1, status_file);
-                break;
-            case 9:
-                fwrite( str_min_t.c_str(), str_min_t.length(), 1, status_file);
-                break;
-            case 10:
-                fwrite( str_max_t.c_str(), str_max_t.length(), 1, status_file);
-                break;
-            case 11:
-                fwrite( str_hyst.c_str(), str_hyst.length(), 1, status_file);
-                break;
-            case 12:
-                fwrite( str_temp.c_str(), str_temp.length(), 1, status_file);
-                break;
-            case 13:
-                fwrite( str_ext_temp.c_str(), str_ext_temp.length(), 1, status_file);
-                break;
-            case 14:
-                fwrite( str_humidity.c_str(), str_humidity.length(), 1, status_file);
-                break;
-            case 15:
-                fwrite( str_ext_humidity.c_str(), str_ext_humidity.length(), 1, status_file);
-                break;
-            case 16:
-                fwrite( str_day.c_str(), str_day.length(), 1, status_file);
-                break;
-            case 17:
-                fwrite( str_h.c_str(), str_h.length(), 1, status_file);
-                break;
-            case 18:
-                fwrite( str_f.c_str(), str_f.length(), 1, status_file);
-                break;
-            case 19:
-                break;
-            }
-        }
-        _program.writeJSON( status_file );
-
-        fwrite( "}", 1, 1, status_file );
-        fclose( status_file );
-    }
+    SharedStatus status;
+    status.marker = SharedStatusMarker;
+    status.last_update_stamp = FrameworkTimer::getCurrentTime();
+    status.active = _heating_activated;
+    status.anti_ice_active = _anti_ice_active;
+    status.manual_mode = _current_mode == MANUAL_MODE;
+    status.pellet_on = _pellet->isOn();
+    status.pellet_minimum = _pellet->isLow();
+    status.pellet_hot = _pellet->isHot();
+    status.pellet_flameout = _pellet_flameout;
+    status.gas_on = _gas->isOn();
+    status.smart_temp_on = _smart_temp;
+    status.smart_temp = _max_temp;
+    status.max_temp = _max_temp;
+    status.min_temp = _min_temp;
+    status.hysteresis = _hysteresis;
+    status.temp_int = _temp_sensor->getTemp();
+    status.humidity_int = _temp_sensor->getHumidity();
+    status.temp_ext = _current_ext_temp;
+    status.humidity_ext = _current_ext_humidity;
+    status.day = _day;
+    status.hour = _hour;
+    status.half = _half_hour;
+    _program.writeRaw( status.program );
+    memcpy( _shared_status.getWritePtr(), &status, _shared_status.getSharedSize() );
 }
 

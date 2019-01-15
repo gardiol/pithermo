@@ -19,13 +19,17 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
           ConfirmDialog, ToggleButton, Select) // Dijit
 {
     prg = {
+        timer: null,
         wDay: ["lunedi","martedi","mercoledi","giovedi","venerdi", "sabato", "domenica"],
         daySel: null,
+        day: 0,
+        hour: 0,
+        half: 0,
         wDayFixed: [],
-        todayBase: 0,
         todayH: 10,
         edited: false,
         program: null,
+        programUnmod: null,
         selectedType: 'o',
         copyDFrom: null,
         templates: {},
@@ -56,24 +60,21 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                 dclass.add(prg.selPelMin, "program-selected");
             }
         },
-        src: function(d,h,f){
-            if ( prg.program ){					
-                var c = prg.program[d][h*2+f];
-                var src = "images/";
-                if ( c == 'p' ){
-                    src += "pellet.png";
-                } else if ( c == 'g' ){
-                    src += "gas.png";
-                } else if ( c == 'x' ){
-                    src += "pellet-gas-1.png";
-                } else if ( c == 'm' ){
-                    src += "pellet-min-1.png";
-                } else {
-                    src += "off-1.png";
-                }
-                return src;
+        src: function(p,d,h,f){
+            var c = p[d][h*2+f];
+            var src = "images/";
+            if ( c == 'p' ){
+                src += "pellet.png";
+            } else if ( c == 'g' ){
+                src += "gas.png";
+            } else if ( c == 'x' ){
+                src += "pellet-gas-1.png";
+            } else if ( c == 'm' ){
+                src += "pellet-min-1.png";
+            } else {
+                src += "off-1.png";
             }
-            return "";
+            return src;
         },
         setEdited: function(e){
             prg.edited = e;
@@ -93,97 +94,128 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
         prevDay: function(){
             prg.daySel -= 1;
             if ( prg.daySel < 0 ) prg.daySel = 6;
-            prg.refresh();
+            prg.refreshProgram();
         },
         nextDay: function(){
             prg.daySel += 1;
             if ( prg.daySel > 6 ) prg.daySel = 0;
-            prg.refresh();
+            prg.refreshProgram();
         },
-		fillDays: function(w){
+		fillDays: function(){
             prg.wDayFixed = [];
             for ( var d = 0; d < 7; d++ ){
                 var v = prg.wDay[d];
-                if ( d == w ){
+                if ( d == prg.day ){
                     v += " (oggi)";
-                } else if ( d == (w+1)%7 ){
+                } else if ( d == (prg.day+1)%7 ){
                     v += " (domani)";
-                } else if ( d == (w+2)%7 ){
+                } else if ( d == (prg.day+2)%7 ){
                     v += " (dopodomani)";
-                } else if ( d == (w-1)%7 ){
+                } else if ( d == (prg.day-1)%7 ){
                     v += " (ieri)";
-                } else if ( d == (w-2)%7 ){
+                } else if ( d == (prg.day-2)%7 ){
                     v += " (l'altroieri)";
                 }
                 prg.wDayFixed[d] = v;
             }
         },
-        refresh: function(){
-            if ( sts.status && prg.program ){
-                var n = sts.status.now;
-				prg.fillDays(n.d);
-                
+        refreshToday: function(){
+            prg.fillDays();  
+            if ( prg.programUnmod ){
+                var tb = Math.max(Math.min( prg.hour-2, 24-prg.todayH ),0);
+
 				for ( var x = 0; x < prg.todayH; x++ ){
-					var h = x + prg.todayBase;
+					var h = x + tb;
 					for ( var f = 0; f < 2; f++ ){
                         var he = dom.byId("today-h-"+x+"-"+f);
                         var ce = dom.byId("today-p-"+x+"-"+f);
+                        var cc = query("#today-p-"+x+"-"+f).parent()[0];
                         dclass.remove( he, "now_col" );
-                        dclass.remove( ce, "now_col" );
+                        dclass.remove( cc, "now_col" );
 						html.set( he,(h<10?"0"+h:h)+":"+(f*30<10?"0"+(f*30):f*30));
-						attr.set( ce, "src", prg.src(n.d,h,f) );                           
-                        if ( h == n.h && f == n.f ){
+						attr.set( ce, "src", prg.src(prg.programUnmod, prg.day,h,f) );                           
+                        if ( h == prg.hour && f == prg.half ){
                             dclass.add( he, "now_col" );
-                            dclass.add( ce, "now_col" );
+                            dclass.add( cc, "now_col" );
                         }
 					}
-					var t = x*2+n.f;
+					var t = x*2+prg.half;
 				}
-				html.set( dom.byId("today-d"), prg.wDay[ sts.status.now.d ] );
-				
-				html.set( dom.byId("program-d"), prg.wDayFixed[ prg.daySel ] );
-                
+				html.set( dom.byId("today-d"), prg.wDay[ prg.day ] );				
+			} else {
+				html.set( dom.byId("today-d"), "---" );
+			}
+		},
+        refreshProgram: function(){
+            if ( prg.program ){
+				html.set( dom.byId("program-d"), prg.wDayFixed[ prg.daySel ] );                
                 for ( var h = 0; h < 24; h++ ){
                     for ( var f = 0; f < 2; f++ ){
                         var pi = dom.byId("program-"+h+"-"+f);
-                        attr.set( pi, "src", prg.src(prg.daySel,h,f) );   
+                        attr.set( pi, "src", prg.src(prg.program, prg.daySel,h,f) );   
                         dclass.remove( pi, "now_col" );
-                        if ( prg.daySel == n.d ){
-                            if ( h == n.h ){		
-                                if ( f == n.f ){
+                        if ( prg.daySel == prg.day ){
+                            if ( h == prg.hour ){		
+                                if ( f == prg.half ){
                                     dclass.add( pi, "now_col" );
                                 }	
                             }
                         }
                     }
                 }
-			} else {
-				html.set( dom.byId("today-d"), "---" );
 			}
 		},
+        copyProgram: function(){
+            prg.program = [];
+            for ( var d = 0; d < 7; d++ ){
+                prg.program[d] = [];
+                for ( var x = 0; x < prg.programUnmod[d].length; x++ ){
+                    prg.program[d][x] = prg.programUnmod[d][x];
+                }
+            }
+        },
+        parseProgram: function(result){
+            var s = result.split(" ");
+            if ( s.length == 4 ){
+                prg.day=parseInt(s[0]);
+                prg.hour=parseInt(s[1]);
+                prg.half=parseInt(s[2]);
+                if ( !prg.daySel ){
+                    prg.daySel = prg.day;
+                }
+                prg.programUnmod = [];
+                var x = 0;
+                for ( var d = 0; d < 7; d++ ){
+                    prg.programUnmod[d] = [];
+                    for ( var h = 0; h < 24; h++ ){
+                        for ( var f = 0; f < 2; f++ ){
+                            prg.programUnmod[d][h*2+f] = s[3][x++];
+                        }
+                    }
+                }
+                prg.refreshToday();
+                if ( !prg.edited ){
+                    prg.copyProgram();
+                    prg.refreshProgram();
+                }
+            }
+        },
 		update: function(p) {
-			if ( !prg.edited ){
-				if ( sts.status && prg.daySel == null )
-				   prg.daySel = sts.status.now.d;
-				prg.program = [];
-				for ( var d = 0; d < p.length; d++ ){
-					prg.program[d] = [];
-					for ( var h = 0; h < p[d].length; h++ )                                
-						prg.program[d][h] = p[d][h];
-				}
-				prg.setEdited(false);
-			}
-			if ( sts.status ){
-				prg.todayBase = Math.max(Math.min( sts.status.now.h-2, 24-prg.todayH ),0);
-				prg.refresh();
-			}
+            if ( prg.timer ){
+                window.clearTimeout( prg.timer );
+                prg.timer = null;
+            }            
+            getRequest("cgi-bin/program",                
+                function(result){
+                    prg.parseProgram(result);
+                    prg.timer = window.setTimeout( function(){ prg.update(); }, 60*1000 );
+                },
+                function(err){
+                    prg.timer = window.setTimeout( function(){ prg.update(); }, 60*1000 );
+                });
 		},
         editTemplate: function(){
-            
-            
         },
-        
-        
 	};
 
 
@@ -199,10 +231,9 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
 		dialog.set("buttonOk", "Si, annulla");
 		dialog.set("buttonCancel", "No, continua");
 		dialog.on("execute", function() {
-			if ( sts.status ) {
-                prg.setEdited(false);
-				prg.update(sts.status.program);
-			}
+            prg.copyProgram();
+            prg.setEdited(false);
+            prg.refreshProgram();
 		});
 		dialog.show();
 	});
@@ -211,9 +242,15 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
 		dialog.set("buttonOk", "Salva");
 		dialog.set("buttonCancel", "Continua a modificare");
 		dialog.on("execute", function() {
-			var ps = json.stringify(prg.program);
-			postRequest("cgi-bin/program",{json: prg.program},
+            var p = "";
+            for ( var d = 0; d < 7; d++ ){
+                for ( var x = 0; x < prg.program[d].length; x++ ){
+                    p += prg.program[d][x];
+                }
+            }
+			postRequest("cgi-bin/program",{data: p},
 				function(result){
+                    prg.parseProgram(result);
 					prg.setEdited(false);
 				},
 				function(err){alert("Command error: " + err );});
@@ -235,7 +272,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                     prg.setEdited(true);
                 }
             }	
-            prg.refresh();
+            prg.refreshProgram();
         }
     });	
 
@@ -252,7 +289,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                     }
                 }
                 prg.setEdited(true);
-                prg.refresh();
+                prg.refreshProgram();
             });
             dialog.show();
         }
@@ -271,7 +308,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                     }
                 }
                 prg.setEdited(true);
-                prg.refresh();
+                prg.refreshProgram();
               });
               dialog.show();
           }
@@ -286,7 +323,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                     var x = h2*2+f2;
                     prg.setEdited(true);
                     prg.program[prg.daySel][x] = prg.program[prg.daySel][x] == prg.selectedType ? 'o' : prg.selectedType;
-                    prg.refresh();
+                    prg.refreshProgram();
                 }
             });
         }
