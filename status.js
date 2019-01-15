@@ -20,6 +20,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
         timer: null,
         min_temp: null,
         max_temp: null,
+        smart_temp: false,
 	
         confirm: function(msg,ok,cmd){
             var dialog = new ConfirmDialog({title: "Conferma comando...",content: msg});
@@ -65,11 +66,18 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             dclass.toggle(hyst_save.domNode, "hidden" );
             hyst_enable.set("checked", false );
         },
-        toggleSmart: function(){
-            var c = smart_temp_on.get("checked");
-            putRequest("cgi-bin/command", c ? "smart-temp-on" : "smart-temp-off", 
-                function(result){sts.update();},
-                function(err){alert("Command error: " + err );});
+        toggleSmart: function(){ 
+            smart_temp_on.set("checked", sts.smart_temp);
+            var dialog = new ConfirmDialog({title: "Smart Temp",
+                content: !sts.smart_temp ? "Abilito la smart temp?" : "Disabilito la smart temp?"});
+            dialog.set("buttonOk", "Si");
+            dialog.set("buttonCancel", "Annulla");
+            dialog.on("execute", function(){
+                putRequest("cgi-bin/command", sts.smart_temp ? "smart-temp-off" : "smart-temp-on", 
+                    function(result){sts.update();},
+                    function(err){alert("Command error: " + err );});
+            });
+            dialog.show();
         },
         
         disableAll:function(){
@@ -121,11 +129,11 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             max_temp_p.set("disabled", false);
                             min_temp.set("label", sts.min_temp + "°C" );
                             max_temp.set("label", sts.max_temp + "°C" );
-                            if ( s[16]=="1" ){//smart temp on
-                                smart_temp_on.set("checked", true);
+                            sts.smart_temp = s[16]=="1";//smart temp on
+                            smart_temp_on.set("checked", sts.smart_temp);
+                            if ( sts.smart_temp ){
                                 html.set("smart_temp", parseFloat(s[17]).toFixed(1));
                             }else{
-                                smart_temp_on.set("checked", false);
                                 html.set("smart_temp", "off");
                             }
                             if ( ! hyst_enable.checked )

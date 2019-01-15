@@ -193,6 +193,18 @@ bool RunnerThread::_checkCommands()
             }
             break;
 
+        case Command::TEMPLATE_SET:
+        {
+            std::vector<std::string> tokens = FrameworkUtils::string_split( cmd->getParam(), ":" );
+            if ( tokens.size() == 3 )
+            {
+                uint32_t template_no = static_cast<uint32_t>(FrameworkUtils::string_toi( tokens[0] ));
+                _program.changeTemplate( template_no, tokens[1], tokens[2] );
+                save_config = true;
+                update_status = true;
+            }
+            break;
+        }
         case Command::DEACTIVATE:
             _logger->logDebug("Deactivate command received");
             if ( _heating_activated )
@@ -673,7 +685,7 @@ void RunnerThread::_updateStatus()
     status.day = _day;
     status.hour = _hour;
     status.half = _half_hour;
-    _program.writeRaw( status.program );
+    _program.writeRaw( &status );
     memcpy( _shared_status.getWritePtr(), &status, _shared_status.getSharedSize() );
 }
 

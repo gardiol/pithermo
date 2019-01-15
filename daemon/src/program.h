@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "sharedstatus.h"
+
 #include "configfile.h"
 
 using namespace FrameworkLibrary;
@@ -20,10 +22,11 @@ public:
     void setTime( int d, int h, int f );
 
     bool change(const std::string& new_program );
+    void changeTemplate(unsigned int num, const std::string& name, const std::string& new_template );
     void loadConfig( const ConfigData* c );
     void saveConfig( ConfigData* c ) const;
 
-    void writeRaw( char* buffer ) const;
+    void writeRaw( SharedStatus* ss ) const;
 
 private:
     enum ProgramType { LOW_GAS,
@@ -37,6 +40,9 @@ private:
     std::size_t _h;
     std::size_t _f;
     std::vector<std::vector<std::vector<ProgramType> > > _program;
+
+    std::vector<std::string> _template_names;
+    std::vector<std::vector<std::vector<ProgramType> > > _templates;
 };
 
 #endif // PROGRAM_H

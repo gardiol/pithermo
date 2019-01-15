@@ -121,8 +121,9 @@ loading..
                 </button>
             </div>
             <div>
-                <input data-dojo-id="smart_temp_on" data-dojo-type="dijit/form/CheckBox" onChange="sts.toggleSmart()"/>
-                Smart
+                <button data-dojo-id="smart_temp_on" data-dojo-type="dijit/form/ToggleButton" data-dojo-props="iconClass:'dijitCheckBoxIcon'" onClick="sts.toggleSmart()">
+                    Smart
+                </button>
                 (Attuale:<span id="smart_temp">off</span>°C)
             </div>
         </div><!-- temp pane-->
@@ -535,7 +536,6 @@ loading..
             <div>
                 Seleziona un template:
                 <select data-dojo-type="dijit/form/Select" data-dojo-id="program_template_select">
-                    <option value="" selected>Nuovo template...</option>
                 </select>
                 <button data-dojo-id="program-template-set" disabled="disabled" data-dojo-type="dijit/form/Button" onClick="prg.applyTemplate()" type="button">Applica!</button>
                 <button data-dojo-id="program-template-edit" data-dojo-type="dijit/form/Button" onClick="prg.editTemplate()" type="button">Modifica...</button>

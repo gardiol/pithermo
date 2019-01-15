@@ -21,7 +21,6 @@ int main( int , char** )
     if ( input.length() > 0 )
     {
         UdpSocket sender("CommandSend","127.0.0.1","",5555,0);
-        input = "program:"+input;
         if ( sender.activateInterface() )
         {
             if ( sender.writeData( input.c_str(), static_cast<int>(input.length()) ) == static_cast<int>(input.length()) )
@@ -41,6 +40,14 @@ int main( int , char** )
             printf("%u %d %u ", status.day, status.hour, status.half );
             for ( int s = 0; s < 24*2*7; s++ )
                 putc( status.program[s], stdout );
+            putc(' ', stdout);
+            for ( unsigned int t = 0; t < SharedStatusNumTemplates; t++ )
+            {
+                printf("%d %s ", t, strlen(status.templates_names[t]) == 0 ? "-" : status.templates_names[t]);
+                for ( int s = 0; s < 24*2; s++ )
+                    putc( status.templates[t][s], stdout );
+                putc(' ', stdout);
+            }
             ret = 0;
         }
     }

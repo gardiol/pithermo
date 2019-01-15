@@ -28,6 +28,7 @@ public:
                    EXT_TEMP,
                    SMART_TEMP_ON,
                    SMART_TEMP_OFF,
+                   TEMPLATE_SET,
                    AUTO};
 
     Command( const char* buffer, uint32_t size );

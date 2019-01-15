@@ -32,7 +32,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
         programUnmod: null,
         selectedType: 'o',
         copyDFrom: null,
-        templates: {},
+        templates: {},        
 
         selOff:    dom.byId("select-off"),
         selGas:    dom.byId("select-gas"),
@@ -120,7 +120,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
             }
         },
         refreshToday: function(){
-            prg.fillDays();  
+            prg.fillDays();
             if ( prg.programUnmod ){
                 var tb = Math.max(Math.min( prg.hour-2, 24-prg.todayH ),0);
 
@@ -165,6 +165,14 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                 }
 			}
 		},
+        refreshTemplates: function(){
+            var opts = [];
+            program_template_select.removeOption( program_template_select.getOptions() );
+            for ( var t in prg.templates ){
+                opts.push( {label: prg.templates[t]["name"], value: t } );
+            }
+            program_template_select.addOption( opts );
+        },
         copyProgram: function(){
             prg.program = [];
             for ( var d = 0; d < 7; d++ ){
@@ -176,7 +184,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
         },
         parseProgram: function(result){
             var s = result.split(" ");
-            if ( s.length == 4 ){
+            if ( s.length >= 4 ){
                 prg.day=parseInt(s[0]);
                 prg.hour=parseInt(s[1]);
                 prg.half=parseInt(s[2]);
@@ -193,10 +201,17 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                         }
                     }
                 }
+                for ( var t = 4; t < s.length-2; t+= 3){
+                    var tn = parseInt(s[t]);
+                    prg.templates[tn] = {};
+                    prg.templates[tn]["name"] = s[t+1];
+                    prg.templates[tn]["value"] = s[t+2];
+                }
                 prg.refreshToday();
                 if ( !prg.edited ){
                     prg.copyProgram();
                     prg.refreshProgram();
+                    prg.refreshTemplates();
                 }
             }
         },
@@ -242,16 +257,16 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
 		dialog.set("buttonOk", "Salva");
 		dialog.set("buttonCancel", "Continua a modificare");
 		dialog.on("execute", function() {
-            var p = "";
+            var p = "program";
             for ( var d = 0; d < 7; d++ ){
                 for ( var x = 0; x < prg.program[d].length; x++ ){
                     p += prg.program[d][x];
                 }
             }
-			postRequest("cgi-bin/program",{data: p},
+			postRequest("cgi-bin/program",p,
 				function(result){
-                    prg.parseProgram(result);
 					prg.setEdited(false);
+                    prg.parseProgram(result);
 				},
 				function(err){alert("Command error: " + err );});
 		});

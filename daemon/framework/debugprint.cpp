@@ -129,11 +129,8 @@ class __DebugPrintPrivate
         {
             _file_output_enable = true;
             _file_output = FrameworkUtils::read_env( "FRAMEWORK_DEBUG_FILE" );
-            LOCAL_PRINTF(" Output to file enabled: FRAMEWORK_DEBUG_FILE = %s\n", _file_output.c_str() );
             FrameworkUtils::reset_env("FRAMEWORK_DEBUG_FILE");
         }
-        else
-            LOCAL_PRINTF(" Output to file disabled: FRAMEWORK_DEBUG_FILE not set.\n");
 
         // Fix WARNING and NOTICE levels first, they are active by default:
         if ( FrameworkUtils::read_env( "FRAMEWORK_DEBUG_WARNING" ) == "0" )
@@ -266,7 +263,6 @@ public:
     inline void appendSigned( int64_t data )
     {
         if ( (uint64_t)data == 0x8000000000000000ULL )
-//        if ( (uint8_t)data == 0x8000000000000000ULL ) error Expression '(uint8_t) data == 0x8000000000000000ULL' is always false. The value range of unsigned char type: [0, 255]
         {
             char buf[21] = "-9223372036854775808";
             append( buf, 20 );

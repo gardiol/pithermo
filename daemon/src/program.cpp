@@ -1,6 +1,7 @@
 #include "program.h"
 
 #include <stdio.h>
+#include <string.h>
 
 Program::Program():
     _d(0),
@@ -16,6 +17,20 @@ Program::Program():
             _program[d][h].resize(2);
             for ( std::size_t f = 0; f < 2; f++ )
                 _program[d][h][f] = LOW_GAS;
+        }
+    }
+
+    _template_names.resize( SharedStatusNumTemplates );
+    _templates.resize( SharedStatusNumTemplates );
+    for ( std::size_t t = 0; t < SharedStatusNumTemplates; t++ )
+    {
+        _template_names[t] = "";
+        _templates[t].resize( 24 );
+        for ( std::size_t h = 0; h < 24; h++ )
+        {
+            _templates[t][h].resize(2);
+            for ( std::size_t f = 0; f < 2; f++ )
+                _templates[t][h][f] = LOW_GAS;
         }
     }
 }
@@ -98,6 +113,38 @@ bool Program::change(const std::string &new_program)
     return modified;
 }
 
+void Program::changeTemplate(unsigned int num, const std::string &name, const std::string &new_template)
+{
+    if ( num < SharedStatusNumTemplates )
+    {
+        unsigned int pos = 0;
+        _template_names[num] = name;
+        for ( std::size_t h = 0; h < 24; h++ )
+        {
+            for ( std::size_t f = 0; f < 2; f++ )
+            {
+                char p = new_template.at( pos++ );
+                ProgramType t = ERROR;
+                if ( p == 'x' )
+                    t = HIGH_AUTO;
+                else if ( p == 'g' )
+                    t = HIGH_GAS;
+                else if ( p == 'p' )
+                    t = HIGH_PELLET;
+                else if ( p == 'm' )
+                    t = LOW_PELLET;
+                else if ( p == 'o' )
+                    t = LOW_GAS;
+
+                if ( t != ERROR )
+                {
+                    _templates[num][h][f] = t;
+                }
+            } // f
+        } // h
+    }
+}
+
 void Program::loadConfig(const ConfigData *c)
 {
     if ( c != nullptr )
@@ -130,6 +177,38 @@ void Program::loadConfig(const ConfigData *c)
                 }
             }
         }
+
+        for ( std::size_t t = 0; t < SharedStatusNumTemplates; t++ )
+        {
+            std::string templatenamesx = "template"+FrameworkUtils::utostring(t)+"_name";
+            std::string templatex = "template"+FrameworkUtils::utostring(t);
+            std::string t_string = c->getValue( templatex );
+            std::vector<std::string> tokens = FrameworkUtils::string_split( t_string, ",");
+            if ( tokens.size() >= 48 )
+            {
+                _template_names[t] = c->getValue( templatenamesx );
+                std::size_t t = 0;
+                for ( std::size_t h = 0; h < 24; h++ )
+                {
+                    for ( std::size_t f = 0; f < 2; f++ )
+                    {
+                        std::string token = tokens[t++];
+                        FrameworkUtils::string_tolower( token );
+                        if ( token == "g" )
+                            _templates[t][h][f] = HIGH_GAS;
+                        else if ( token == "x" )
+                            _templates[t][h][f] = HIGH_AUTO;
+                        else if ( token == "p" )
+                            _templates[t][h][f] = HIGH_PELLET;
+                        else if ( token == "m" )
+                            _templates[t][h][f] = LOW_PELLET;
+                        else
+                            _templates[t][h][f] = LOW_GAS;
+                    }
+                }
+            }
+        }
+
     }
 }
 
@@ -167,9 +246,44 @@ void Program::saveConfig(ConfigData *c) const
         }
         c->setValue( day_str, value );
     }
+
+    for ( std::size_t t = 0; t < SharedStatusNumTemplates; t++ )
+    {
+        std::string template_name_str = "template"+FrameworkUtils::utostring(t)+"_name";
+        std::string template_str = "template"+FrameworkUtils::utostring(t);
+        std::string value = "";
+        for ( std::size_t h = 0; h < 24; h++ )
+        {
+            for ( std::size_t f = 0; f < 2; f++ )
+            {
+                switch ( _templates[t][h][f] )
+                {
+                case HIGH_AUTO:
+                    value += "x";
+                    break;
+                case HIGH_GAS:
+                    value += "g";
+                    break;
+                case HIGH_PELLET:
+                    value += "p";
+                    break;
+                case LOW_PELLET:
+                    value += "m";
+                    break;
+                case LOW_GAS:
+                case ERROR:
+                    value += "o";
+                    break;
+                }
+                value += ",";
+            }
+        }
+        c->setValue( template_str, value );
+        c->setValue( template_name_str, _template_names[t] );
+    }
 }
 
-void Program::writeRaw(char *buffer) const
+void Program::writeRaw(SharedStatus *ss) const
 {
     int pos = 0;
     for ( std::size_t d = 0; d < 7; d++ )
@@ -198,7 +312,43 @@ void Program::writeRaw(char *buffer) const
                     c = 'o';
                     break;
                 }
-                buffer[pos++] = c;
+                ss->program[pos++] = c;
+            }
+        }
+    }
+
+    for ( std::size_t t = 0; t < SharedStatusNumTemplates; t++ )
+    {
+        std::string tmp = _template_names[t];
+        if ( tmp.length() > SharedStatusTemplatesNameSize -1 )
+            tmp = tmp.substr(0, SharedStatusTemplatesNameSize-2 );
+        memcpy(ss->templates_names[t], tmp.c_str(), tmp.length()+1 );
+        int pos = 0;
+        for ( std::size_t h = 0; h < 24; h++ )
+        {
+            for ( std::size_t f = 0; f < 2; f++ )
+            {
+                char c = 'o';
+                switch ( _templates[t][h][f] )
+                {
+                case HIGH_AUTO:
+                    c = 'x';
+                    break;
+                case HIGH_GAS:
+                    c = 'g';
+                    break;
+                case HIGH_PELLET:
+                    c = 'p';
+                    break;
+                case LOW_PELLET:
+                    c = 'm';
+                    break;
+                case LOW_GAS:
+                case ERROR:
+                    c = 'o';
+                    break;
+                }
+                ss->templates[t][pos++] = c;
             }
         }
     }

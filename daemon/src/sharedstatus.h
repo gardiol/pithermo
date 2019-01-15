@@ -6,8 +6,10 @@
 
 using namespace FrameworkLibrary;
 
-static const SharedMemoryKey SharedStatusKey = 0xA071BCFC;
+static const SharedMemoryKey SharedStatusKey = 0xA071BCFB;
 static const uint32_t SharedStatusMarker = 0xFABAC0F0;
+static const uint32_t SharedStatusNumTemplates = 5;
+static const uint32_t SharedStatusTemplatesNameSize = 128;
 
 struct SharedStatus
 {
@@ -34,6 +36,8 @@ struct SharedStatus
     int32_t hour;
     int32_t half;
     char program[ 24*2*7 ];
+    char templates[ SharedStatusNumTemplates ][ 24*2 ];
+    char templates_names[ SharedStatusNumTemplates ][ SharedStatusTemplatesNameSize ];
 };
 
 #endif // SHAREDSTATUS_H
