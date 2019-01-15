@@ -29,20 +29,13 @@ public:
     void writeRaw( SharedStatus* ss ) const;
 
 private:
-    enum ProgramType { LOW_GAS,
-                       LOW_PELLET,
-                       HIGH_GAS,
-                       HIGH_PELLET,
-                       HIGH_AUTO,
-                       ERROR};
-
     std::size_t _d;
     std::size_t _h;
     std::size_t _f;
-    std::vector<std::vector<std::vector<ProgramType> > > _program;
+    std::vector<std::string> _program;
 
     std::vector<std::string> _template_names;
-    std::vector<std::vector<std::vector<ProgramType> > > _templates;
+    std::vector<std::string> _templates;
 };
 
 #endif // PROGRAM_H
