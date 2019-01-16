@@ -252,11 +252,11 @@ public:
         __SharedMemoryPrivate( name, size, key ),
         _area_shm_id(-1)
     {
-        int open_mode = S_IRUSR;
+        int open_mode = 0666;
         if ( mode != SharedMemory::read_only_shm )
         {
             _canWrite = 1;
-            open_mode |= S_IWRITE;
+//            open_mode |= S_IWRITE;
             if ( mode == SharedMemory::read_write_create_shm )
                 open_mode |= IPC_CREAT;
         }

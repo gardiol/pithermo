@@ -34,11 +34,12 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             dialog.show();
         },
         updTempBts: function(v){
-            var s=Math.floor(v)-2;
+            var s=Math.floor(v)-1;
             for ( var r = 0; r < 5; r++ ){
                 for ( var c = 0; c < 5; c++ ){                
                     var btn = sts.tempBts[r][c];
-                    btn.set("label", (s+r)+"."+(c*2));
+                    btn.set("label", s.toFixed(1) );
+                    s+=0.1;
                 }
             }    
         },
@@ -92,12 +93,14 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             status_master_off.set("disabled", true );
             status_manual.set("disabled", true );
             status_auto.set("disabled", true );
+            smart_temp_on.set("disabled", true);
             min_temp.set("disabled", true);
             max_temp.set("disabled", true);
             min_temp_m.set("disabled", true);
 			max_temp_m.set("disabled", true);
 			min_temp_p.set("disabled", true);
 			max_temp_p.set("disabled", true);
+            html.set("smart_temp", "off");
             min_temp.set("label", "XX.X°C" );
 			max_temp.set("label", "XX.X°C" );
             hyst.set("value", "X.X");
@@ -127,6 +130,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             max_temp_m.set("disabled", false);
                             min_temp_p.set("disabled", false);
                             max_temp_p.set("disabled", false);
+                            smart_temp_on.set("disabled", false);
                             min_temp.set("label", sts.min_temp.toFixed(1) + "°C" );
                             max_temp.set("label", sts.max_temp.toFixed(1) + "°C" );
                             sts.smart_temp = s[16]=="1";//smart temp on
