@@ -232,8 +232,8 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                 });
 		},
         editTemplate: function(){
-            if ( prg.daySel >= 0 ){
-                if ( !prg.edited ){
+            if ( !prg.edited ){
+                if ( prg.daySel >= 0 ){
                     dclass.add(dom.byId("program-table"), "edit-template");
                     program_template_name.set("disabled", true);
                     program_template_set.set("disabled", true);
@@ -246,10 +246,10 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                     var v = program_template_select.get("value");
                     prg.daySel = -(v+1);                
                     prg.refreshProgram();                
-                }else
-                    alert("Prima salvare le modifiche");
-            } else
-                prg.uneditTemplate();
+                } else
+                    prg.uneditTemplate();
+            }else
+                alert("Prima salvare o annullare le modifiche");
         },
         uneditTemplate: function(){
             dclass.remove(dom.byId("program-table"), "edit-template");
