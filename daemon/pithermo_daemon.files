@@ -1,6 +1,8 @@
 CGI/command_cgi.cpp
 CGI/program_cgi.cpp
 CGI/status_cgi.cpp
+framework/sharedmemory.cpp
+framework/sharedmemory.h
 src/sharedstatus.h
 test/test_temp.cpp
 CGI/events_cgi.cpp

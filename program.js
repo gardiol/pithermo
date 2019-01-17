@@ -28,11 +28,12 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
         wDayFixed: [],
         todayH: 10,
         edited: false,
-        program: null,
+        program: {},
         programUnmod: null,
         selectedType: 'o',
         copyDFrom: null,
-        templates: {},        
+        templates: {},    
+        num_templates: 0,
 
         selOff:    dom.byId("select-off"),
         selGas:    dom.byId("select-gas"),
@@ -60,8 +61,8 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                 dclass.add(prg.selPelMin, "program-selected");
             }
         },
-        src: function(p,d,h,f){
-            var c = p[d][h*2+f];
+        src: function(p,h,f){
+            var c = p[h*2+f];
             var src = "images/";
             if ( c == 'p' ){
                 src += "pellet.png";
@@ -78,6 +79,10 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
         },
         setEdited: function(e){
             prg.edited = e;
+            if ( prg.daySel >= 0 )
+                html.set(dom.byId("program-changed"), "Salvare il programma modificato?");
+            else
+                html.set(dom.byId("program-changed"), "Salvare il template modificato?");
             if ( !prg.edited ){
                 dclass.add(dom.byId("program-change"), "celated");
                 dclass.add(prg.restore, "hidden");
@@ -88,18 +93,25 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                 dclass.remove(prg.apply, "hidden");
             }
         },
+        setEditTemplate: function(e){
+            
+        },
         toggleEdit: function(){
            dclass.toggle(dom.byId("program-editor"), "hidden");
         },
         prevDay: function(){
-            prg.daySel -= 1;
-            if ( prg.daySel < 0 ) prg.daySel = 6;
-            prg.refreshProgram();
+            if ( prg.daySel >= 0){
+                prg.daySel -= 1;
+                if ( prg.daySel < 0 ) prg.daySel = 6;
+                prg.refreshProgram();
+            }
         },
         nextDay: function(){
-            prg.daySel += 1;
-            if ( prg.daySel > 6 ) prg.daySel = 0;
-            prg.refreshProgram();
+            if ( prg.daySel >= 0){
+                prg.daySel += 1;
+                if ( prg.daySel > 6 ) prg.daySel = 0;
+                prg.refreshProgram();
+            }
         },
 		fillDays: function(){
             prg.wDayFixed = [];
@@ -133,7 +145,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                         dclass.remove( he, "now_col" );
                         dclass.remove( cc, "now_col" );
 						html.set( he,(h<10?"0"+h:h)+":"+(f*30<10?"0"+(f*30):f*30));
-						attr.set( ce, "src", prg.src(prg.programUnmod, prg.day,h,f) );                           
+						attr.set( ce, "src", prg.src(prg.programUnmod[prg.day],h,f) );                           
                         if ( h == prg.hour && f == prg.half ){
                             dclass.add( he, "now_col" );
                             dclass.add( cc, "now_col" );
@@ -147,39 +159,33 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
 			}
 		},
         refreshProgram: function(){
-            if ( prg.program ){
-				html.set( dom.byId("program-d"), prg.wDayFixed[ prg.daySel ] );                
-                for ( var h = 0; h < 24; h++ ){
-                    for ( var f = 0; f < 2; f++ ){
-                        var pi = dom.byId("program-"+h+"-"+f);
-                        attr.set( pi, "src", prg.src(prg.program, prg.daySel,h,f) );   
-                        dclass.remove( pi, "now_col" );
-                        if ( prg.daySel == prg.day ){
-                            if ( h == prg.hour ){		
-                                if ( f == prg.half ){
-                                    dclass.add( pi, "now_col" );
-                                }	
-                            }
+            html.set( dom.byId("program-d"), prg.daySel >= 0 ? prg.wDayFixed[ prg.daySel ] : prg.templates[-(prg.daySel+1)] );
+            for ( var h = 0; h < 24; h++ ){
+                for ( var f = 0; f < 2; f++ ){
+                    var pi = dom.byId("program-"+h+"-"+f);
+                    attr.set( pi, "src", prg.src( prg.program[prg.daySel],h,f) );   
+                    dclass.remove( pi, "now_col" );
+                    if ( Math.abs(prg.daySel) == prg.day ){
+                        if ( h == prg.hour ){		
+                            if ( f == prg.half ){
+                                dclass.add( pi, "now_col" );
+                            }	
                         }
                     }
                 }
-			}
+            }
 		},
         refreshTemplates: function(){
             var opts = [];
             program_template_select.removeOption( program_template_select.getOptions() );
             for ( var t in prg.templates ){
-                opts.push( {label: prg.templates[t]["name"], value: t } );
+                opts.push( {label: prg.templates[t], value: t } );
             }
             program_template_select.addOption( opts );
         },
         copyProgram: function(){
-            prg.program = [];
-            for ( var d = 0; d < 7; d++ ){
-                prg.program[d] = [];
-                for ( var x = 0; x < prg.programUnmod[d].length; x++ ){
-                    prg.program[d][x] = prg.programUnmod[d][x];
-                }
+            for ( var d = -(prg.num_templates+1); d < 7; d++ ){
+                prg.program[d] = prg.programUnmod[d];
             }
         },
         parseProgram: function(result){
@@ -194,18 +200,14 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                 prg.programUnmod = [];
                 var x = 0;
                 for ( var d = 0; d < 7; d++ ){
-                    prg.programUnmod[d] = [];
-                    for ( var h = 0; h < 24; h++ ){
-                        for ( var f = 0; f < 2; f++ ){
-                            prg.programUnmod[d][h*2+f] = s[3][x++];
-                        }
-                    }
+                    prg.programUnmod[d] = s[3].substr( d*48, 48 );
                 }
                 for ( var t = 4; t < s.length-2; t+= 3){
                     var tn = parseInt(s[t]);
-                    prg.templates[tn] = {};
-                    prg.templates[tn]["name"] = s[t+1];
-                    prg.templates[tn]["value"] = s[t+2];
+                    prg.templates[tn] = s[t+1];
+                    prg.programUnmod[-(tn+1)] = s[t+2];
+                    if ( prg.num_templates < tn )
+                        prg.num_templates = tn;
                 }
                 prg.refreshToday();
                 if ( !prg.edited ){
@@ -230,6 +232,68 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                 });
 		},
         editTemplate: function(){
+            if ( prg.daySel >= 0 ){
+                if ( !prg.edited ){
+                    dclass.add(dom.byId("program-table"), "edit-template");
+                    program_template_name.set("disabled", true);
+                    program_template_set.set("disabled", true);
+                    program_template_edit.set("label", "Chiudi");
+                    program_template_select.set("disabled", true );
+                    dclass.add(program_prev_day.domNode, "hidden");
+                    dclass.add(program_next_day.domNode, "hidden");
+                    dclass.add( dom.byId("program_copy"), "hidden");
+                    dclass.add( dom.byId("program_clear"), "hidden");
+                    var v = program_template_select.get("value");
+                    prg.daySel = -(v+1);                
+                    prg.refreshProgram();                
+                }else
+                    alert("Prima salvare le modifiche");
+            } else
+                prg.uneditTemplate();
+        },
+        uneditTemplate: function(){
+            dclass.remove(dom.byId("program-table"), "edit-template");
+            program_template_name.set("disabled", false);
+            program_template_set.set("disabled", false);
+            program_template_edit.set("label", "Modifica...");
+            program_template_select.set("disabled", false );
+            dclass.remove(program_prev_day.domNode, "hidden");
+            dclass.remove(program_next_day.domNode, "hidden");
+            dclass.remove( dom.byId("program_copy"), "hidden");
+            dclass.remove( dom.byId("program_clear"), "hidden");
+            prg.daySel = prg.day;
+            prg.setEdited(false);
+            prg.refreshProgram();   
+        },
+        applyTemplate: function(){
+            if ( prg.daySel >= 0 ){
+                var dialog = new ConfirmDialog({title: "ATTENZIONE!", content: "Applico il template?"});
+                dialog.set("buttonOk", "Si, applica");
+                dialog.set("buttonCancel", "Annulla");
+                dialog.on("execute", function() {
+                    var v = program_template_select.get("value");
+                    prg.program[prg.daySel] = prg.program[-(v+1)];
+                    prg.refreshProgram();
+                    prg.setEdited(true);
+                });
+                dialog.show();
+            } else
+                alert("Stai già modificando un template");
+        },
+        saveName: function(n){
+            var v = program_template_select.get("value");
+            var p = "template-set"+v+":"+n+":"+prg.program[-(v+1)];
+			postRequest("cgi-bin/program",p,
+				function(result){
+					prg.setEdited(false);
+                    prg.parseProgram(result);
+				},
+				function(err){alert("Command error: " + err );});            
+        },
+        nameTemplate: function(){
+            var v = program_template_select.get("value");
+            ptNewName.set("value", prg.templates[v] );
+            ptName.show();
         },
 	};
 
@@ -257,32 +321,40 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
 		dialog.set("buttonOk", "Salva");
 		dialog.set("buttonCancel", "Continua a modificare");
 		dialog.on("execute", function() {
-            var p = "program";
-            for ( var d = 0; d < 7; d++ ){
-                for ( var x = 0; x < prg.program[d].length; x++ ){
-                    p += prg.program[d][x];
+            if ( prg.daySel >= 0 ){
+                var p = "program";
+                for ( var d = 0; d < 7; d++ ){
+                    p += prg.program[d];
                 }
+                postRequest("cgi-bin/program",p,
+                    function(result){
+                        prg.setEdited(false);
+                        prg.parseProgram(result);
+                    },
+                    function(err){alert("Command error: " + err );});
+            } else {
+                var t = -(prg.daySel+1);
+                var p = "template-set" + t + ":" + prg.templates[t] + ":" + prg.program[prg.daySel];
+                postRequest("cgi-bin/program",p,
+                    function(result){
+                        prg.setEdited(false);
+                        prg.parseProgram(result);
+                    },
+                    function(err){alert("Command error: " + err );});
             }
-			postRequest("cgi-bin/program",p,
-				function(result){
-					prg.setEdited(false);
-                    prg.parseProgram(result);
-				},
-				function(err){alert("Command error: " + err );});
 		});
 		dialog.show();
 	});
 
     on( query("#program_copy").parent()[0], "click", function(evt){
-        if ( prg.program ){
+        if ( prg.daySel > 0 ){
             if ( prg.copyDFrom === null ){
                 prg.copyDFrom = prg.daySel;
                 attr.set(dom.byId("program_copy"),  "src", "images/paste.png");
             } else {
                 attr.set(dom.byId("program_copy"),  "src", "images/copy.png");
                 if ( prg.daySel != prg.copyDFrom ){
-                    for ( var n = 0; n < prg.program[prg.daySel].length; n++ )
-                        prg.program[prg.daySel][n] = prg.program[prg.copyDFrom][n]; 	
+                    prg.program[prg.daySel] = prg.program[prg.copyDFrom]; 	
                     prg.copyDFrom = null;
                     prg.setEdited(true);
                 }
@@ -293,15 +365,15 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
 
     on( query("#program-d")[0], "click", function(evt){
         if ( prg.program ){
-            var dialog = new ConfirmDialog({title: "Imposta giornata",
-                                            content: "Imposto l'intero giorno?"});
+            var t = prg.daySel >= 0 ? "gioranata" : "template";
+            var dialog = new ConfirmDialog({title: "Imposta "+t,
+                                            content: "Imposto l'intera "+t+"?"});
             dialog.set("buttonOk", "Si");
             dialog.set("buttonCancel", "Annulla");
             dialog.on("execute",function() {
-                for ( var h = 0; h < 24; h++ ){
-                    for ( var f = 0; f < 2; f++ ){
-                        prg.program[prg.daySel][h*2+f] = prg.selectedType;
-                    }
+                prg.program[prg.daySel] = "";
+                for ( var x = 0; x < 48; x++ ){
+                    prg.program[prg.daySel] += prg.selectedType;
                 }
                 prg.setEdited(true);
                 prg.refreshProgram();
@@ -312,15 +384,15 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
 
     on( query("#program_clear").parent()[0], "click", function(evt){
         if ( prg.program ){
-            var dialog = new ConfirmDialog({title: "Resetto giornata",
-                                              content: "Resetto l'intero giorno?"});
+            var t = prg.daySel >= 0 ? "gioranata" : "template";
+            var dialog = new ConfirmDialog({title: "Resetto "+t,
+                                              content: "Resetto l'intera "+t+"?"});
             dialog.set("buttonOk", "Si");
             dialog.set("buttonCancel", "Annulla");
             dialog.on("execute",function() {
-                for ( var h = 0; h < 24; h++ ){
-                    for ( var f = 0; f < 2; f++ ){
-                        prg.program[prg.daySel][h*2+f] = 'o';
-                    }
+                prg.program[prg.daySel] = "";
+                for ( var x = 0; x < 48; x++ ){
+                    prg.program[prg.daySel] += 'o';
                 }
                 prg.setEdited(true);
                 prg.refreshProgram();
@@ -337,7 +409,8 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                 if ( prg.program ){
                     var x = h2*2+f2;
                     prg.setEdited(true);
-                    prg.program[prg.daySel][x] = prg.program[prg.daySel][x] == prg.selectedType ? 'o' : prg.selectedType;
+                    var c = prg.program[prg.daySel].charAt(x) == prg.selectedType ? 'o' : prg.selectedType;
+                    prg.program[prg.daySel] = prg.program[prg.daySel].slice(0,x)+c+prg.program[prg.daySel].slice(x+1);
                     prg.refreshProgram();
                 }
             });

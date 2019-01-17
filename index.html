@@ -28,6 +28,17 @@ loading..
     </div>
 </div>
 
+<div data-dojo-type="dijit/Dialog" data-dojo-id="ptName" title="Rinomina template">
+	<p class="dijitDialogPaneContentArea">
+		Nome template:
+		<input data-dojo-type="dijit/form/TextBox" data-dojo-id="ptNewName" style="width:6em;"/>
+	</p>
+    <div class="dijitDialogPaneActionBar">
+        <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){prg.saveName(ptNewName.get('value'))}">Rinomina</button>
+        <button data-dojo-type="dijit/form/Button" type="button" data-dojo-props="onClick:function(){ptName.hide();}">Annulla</button>
+    </div>
+</div>
+
 <div id="status-area">
 
     <div id="status-info">
@@ -402,7 +413,7 @@ loading..
                         </th>
                         <th id="program-d" colspan="7"></th>
                         <th colspan="1">
-                            <button data-dojo-id="progra_next_day" data-dojo-type="dijit/form/Button" onClick="prg.nextDay()" type="button">
+                            <button data-dojo-id="program_next_day" data-dojo-type="dijit/form/Button" onClick="prg.nextDay()" type="button">
                                 &gt;
                             </button>
                         </th>
@@ -537,8 +548,9 @@ loading..
                 Seleziona un template:
                 <select data-dojo-type="dijit/form/Select" data-dojo-id="program_template_select">
                 </select>
-                <button data-dojo-id="program-template-set" disabled="disabled" data-dojo-type="dijit/form/Button" onClick="prg.applyTemplate()" type="button">Applica!</button>
-                <button data-dojo-id="program-template-edit" data-dojo-type="dijit/form/Button" onClick="prg.editTemplate()" type="button">Modifica...</button>
+                <button data-dojo-id="program_template_set" data-dojo-type="dijit/form/Button" onClick="prg.applyTemplate()" type="button">Applica!</button>
+                <button data-dojo-id="program_template_name" data-dojo-type="dijit/form/Button" onClick="prg.nameTemplate()" type="button">Rinomina...</button>
+                <button data-dojo-id="program_template_edit" data-dojo-type="dijit/form/Button" onClick="prg.editTemplate()" type="button">Modifica...</button>
             </div>
         </div>
     </div>
