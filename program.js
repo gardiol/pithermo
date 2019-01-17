@@ -282,6 +282,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
         },
         saveName: function(n){
             var v = program_template_select.get("value");
+            n = n.replace(/\s+/g, '');
             var p = "template-set"+v+":"+n+":"+prg.program[-(v+1)];
 			postRequest("cgi-bin/program",p,
 				function(result){
