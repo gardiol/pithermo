@@ -183,7 +183,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                                 gas_on.set("disabled", true );
                             }
                             attr.set("pellet-status-led", "src",s[4]=="1" ? "images/pellet-on.png" : "images/pellet-off.png" );
-                            attr.set("pellet-minimum-status-led", "src",s[5]=="1" ? "images/pellet-minimo.png" : "images/pellet-modulazione.ong");
+                            attr.set("pellet-minimum-status-led", "src",s[5]=="1" ? "images/pellet-minimo.png" : "images/pellet-modulazione.png");
                             attr.set("gas-status-led", "src",s[8]=="1" ? "images/gas-on.png" : "images/gas-off.png");    
                             attr.set("pellet-feedback-led", "src", s[6] == "1" ? "images/max-temp.png":"images/min-temp.png");//Pellet HOT
                             if ( s[7]=="1" )// Flameout
