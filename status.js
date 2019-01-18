@@ -178,6 +178,9 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                                     gas_on.set("disabled", false );
                                 }
                             } else { // Mode non manual
+                                attr.set("pellet-status-led", "src",s[4]=="1" ? "images/pellet-on.png" : "images/pellet-off.png" );
+                                attr.set("pellet-minimum-status-led", "src",s[5]=="1" ? "images/pellet-minimo.png" : "images/pellet-modulazione.ong");
+                                attr.set("gas-status-led", "src",s[8]=="1" ? "images/gas-on.png" : "images/gas-off.png");    
                                 attr.set("mode-led", "src","images/auto.png");                
                                 status_manual.set("disabled", false );
                                 status_auto.set("disabled", true );
@@ -211,10 +214,10 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                     sts.disableAll();
                     html.set("temp-label", "--" );
                     html.set("humi-label", "--" );          
-                    attr.set("pellet-feedback-led", "src", "images/min-temp.png?1");
-                    attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png?1");
-                    attr.set("pellet-status-led", "src", "images/pellet-off.png?1");
-                    attr.set("gas-status-led", "src", "images/gas-off.png?1");
+                    attr.set("pellet-feedback-led", "src", "images/min-temp.png");
+                    attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
+                    attr.set("pellet-status-led", "src", "images/pellet-off.png");
+                    attr.set("gas-status-led", "src", "images/gas-off.png");
                     html.set("update-time", utils.printDate(new Date()) + " (ko)" );
                     sts.timer = window.setTimeout( function(){ sts.update(); }, 1000 );
                 });
