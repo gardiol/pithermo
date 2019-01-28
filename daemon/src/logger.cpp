@@ -205,6 +205,7 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                             uint32_t &gas_on_time)
 {
     bool ret = false;
+    bool pellet_was_hot_at_flameout = false;
     std::list<LogItem> items;
     uint64_t gas_on_since = 0;
     uint64_t pellet_on_since = 0;
@@ -216,9 +217,11 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
         ret = fetchInterval( from, to, items );
 
     if ( pellet_on )
+    {
         pellet_on_since = from;
-    if ( pellet_minimum_on )
-        pellet_low_on_since = from;
+        if ( pellet_minimum_on )
+            pellet_low_on_since = from;
+    }
     if ( gas_on )
         gas_on_since = from;
 
@@ -259,6 +262,17 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                 }
                 break;
 
+            case LogItem::PELLET_FLAMEOUT_OFF:
+                pellet_flameout = false;
+                if ( pellet_was_hot_at_flameout )
+                {
+                    pellet_on_since = event_time;
+                    // Pellet at minimum? Calculate the time for it too...
+                    if ( pellet_minimum_on )
+                        pellet_low_on_since = event_time;
+                }
+                break;
+
             case  LogItem::PELLET_ON:
                 if ( !pellet_flameout )
                 {
@@ -274,16 +288,10 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                 break;
 
             case LogItem::PELLET_FLAMEOUT_ON:
+                pellet_was_hot_at_flameout = pellet_hot;
                 pellet_flameout = true;
-                pellet_on_since = 0;
-                pellet_low_on_since = 0;
-                pellet_on = false;
-                break;
-
-            case LogItem::PELLET_FLAMEOUT_OFF:
-                pellet_flameout = false;
-                break;
-
+                // Stop calculating pellet stats now. There will be some discrepancy,
+                // but we don't know exactly WHEN the flameout occurred.
             case LogItem::PELLET_OFF:
                 if ( pellet_on_since > 0 )
                 {
@@ -299,10 +307,18 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                 break;
 
             case LogItem::PELLET_HOT:
-                // PELLET HOT might indicate that GAS is off by hardware
+                // If we where in flameout, this means pellet is back on now:
+                if ( pellet_flameout )
+                {
+                    pellet_on_since = event_time;
+                    // Pellet at minimum? Calculate the time for it too...
+                    if ( pellet_minimum_on )
+                        pellet_low_on_since = event_time;
+                    pellet_on = true;
+                    pellet_flameout = false;
+                }
                 pellet_hot = true;
-                pellet_flameout = false;
-            [[fallthrough]];
+                // PELLET HOT might indicate that GAS is off by hardware
             case LogItem::GAS_OFF:
                 if ( gas_on_since > 0 )
                 {
