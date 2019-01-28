@@ -6,7 +6,7 @@
 
 using namespace FrameworkLibrary;
 
-static const SharedMemoryKey SharedStatusKey = 0xA071BCFB;
+static const SharedMemoryKey SharedStatusKey = 0xA071BCFA;
 static const uint32_t SharedStatusMarker = 0xFABAC0F0;
 static const uint32_t SharedStatusNumTemplates = 5;
 static const uint32_t SharedStatusTemplatesNameSize = 128;
@@ -26,7 +26,8 @@ struct SharedStatus
     bool smart_temp_on;
     float max_temp;
     float min_temp;
-    float hysteresis;
+    float hysteresis_max;
+    float hysteresis_min;
     float temp_int;
     float humidity_int;
     float temp_ext;

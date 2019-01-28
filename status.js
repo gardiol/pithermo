@@ -53,19 +53,35 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
         saveTemp: function(m,v){	
             postRequest("cgi-bin/set_"+m+"_temp",v,function(result){sts.update()},function(err){alert("Command error: " + err );});
         },
-        hystEnable: function(){
-            var e = hyst_enable.checked;
-            hyst.set("disabled", !e );
-            if ( e )
-                dclass.remove(hyst_save.domNode, "hidden" );
-            else
-                dclass.add(hyst_save.domNode, "hidden" );
+        hystEnable: function(w){
+            if ( w ){
+                var e = hyst_max_enable.checked;
+                hyst_max.set("disabled", !e );
+                if ( e )
+                    dclass.remove(hyst_max_save.domNode, "hidden" );
+                else
+                    dclass.add(hyst_max_save.domNode, "hidden" );
+            }else{
+                var e = hyst_min_enable.checked;
+                hyst_min.set("disabled", !e );
+                if ( e )
+                    dclass.remove(hyst_min_save.domNode, "hidden" );
+                else
+                    dclass.add(hyst_min_save.domNode, "hidden" );
+            }
         },
-        saveHyst: function(){
-            postRequest("cgi-bin/set_hyst",hyst.get("value"),function(result){sts.update()},function(err){alert("Command error: " + err );});
-            hyst.set("disabled", true );
-            dclass.toggle(hyst_save.domNode, "hidden" );
-            hyst_enable.set("checked", false );
+        saveHyst: function(w){
+            if ( w ){
+                putRequest("cgi-bin/command","set-hyst-max"+hyst_max.get("value"),function(result){sts.update()},function(err){alert("Command error: " + err );});
+                hyst_max.set("disabled", true );
+                dclass.toggle(hyst_max_save.domNode, "hidden" );
+                hyst_max_enable.set("checked", false );
+            }else{
+                putRequest("cgi-bin/command","set-hyst-min"+hyst_min.get("value"),function(result){sts.update()},function(err){alert("Command error: " + err );});
+                hyst_min.set("disabled", true );
+                dclass.toggle(hyst_min_save.domNode, "hidden" );
+                hyst_min_enable.set("checked", false );
+            }
         },
         toggleSmart: function(){ 
             smart_temp_on.set("checked", sts.smart_temp);
@@ -103,7 +119,8 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             html.set("smart_temp", "off");
             min_temp.set("label", "XX.X°C" );
 			max_temp.set("label", "XX.X°C" );
-            hyst.set("value", "X.X");
+            hyst_max.set("value", "X.X");
+            hyst_min.set("value", "X.X");
         },
 
         update: function(){
@@ -115,7 +132,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                 function(result){
                     var program = null;
                     var s = result.split(" ");
-                    if ( s.length == 18 ){
+                    if ( s.length == 19 ){
                         sts.min_temp = parseFloat(s[10]);
                         sts.max_temp = parseFloat(s[9]);
                         
@@ -133,16 +150,17 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             smart_temp_on.set("disabled", false);
                             min_temp.set("label", sts.min_temp.toFixed(1) + "°C" );
                             max_temp.set("label", sts.max_temp.toFixed(1) + "°C" );
-                            sts.smart_temp = s[16]=="1";//smart temp on
+                            sts.smart_temp = s[17]=="1";//smart temp on
                             smart_temp_on.set("checked", sts.smart_temp);
                             if ( sts.smart_temp ){
-                                html.set("smart_temp", parseFloat(s[17]).toFixed(1));
+                                html.set("smart_temp", parseFloat(s[18]).toFixed(1));
                             }else{
                                 html.set("smart_temp", "off");
                             }
-                            if ( ! hyst_enable.checked )
-                                hyst.set("value", parseFloat(s[11]) ); //Hysteresis
-
+                            if ( ! hyst_max_enable.checked )                               
+                                hyst_max.set("value", parseFloat(s[11]) ); //Hysteresis
+                            if ( ! hyst_min_enable.checked )                               
+                                hyst_min.set("value", parseFloat(s[12]) ); //Hysteresis
                             if ( s[3]=="1" ){//Manual mode
                                 attr.set("mode-led", "src", "images/manual.png");                
                                 status_manual.set("disabled", true );
@@ -195,8 +213,8 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             sts.disableAll();
                             status_master_on.set("disabled", false );
                         }
-                        html.set("temp-label",parseFloat(s[12]).toFixed(1) + "C (" + parseFloat(s[14]).toFixed(1) + "C)" ); // t.int/ext
-                        html.set("humi-label", parseFloat(s[13]).toFixed(1) + "% (" + parseFloat(s[15]).toFixed(1) + "%)" );// h.int/ext                        
+                        html.set("temp-label",parseFloat(s[13]).toFixed(1) + "C (" + parseFloat(s[15]).toFixed(1) + "C)" ); // t.int/ext
+                        html.set("humi-label", parseFloat(s[14]).toFixed(1) + "% (" + parseFloat(s[16]).toFixed(1) + "%)" );// h.int/ext                        
                         
                         html.set("update-time", utils.printDate(new Date()) + " (ok)" );
                     } else {// result is valid

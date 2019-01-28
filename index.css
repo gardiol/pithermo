@@ -249,6 +249,11 @@ img.today-table-img {
    vertical-align: middle;
 }
 
+.hyst-img {
+   height: 1em;
+   vertical-align: middle;
+}
+
 #temp-pane {
     height: 9em;
 }

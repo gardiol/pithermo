@@ -37,6 +37,7 @@ private:
     bool _checkFlameout();
     bool _checkTargetTemperature(float sensor_temp,
                                  float target_temperature,
+                                 float hysteresis,
                                  bool &prev_over_temp,
                                  bool &prev_under_temp);
     bool _updateCurrentTime(uint64_t new_time);
@@ -84,7 +85,8 @@ private:
     float _current_ext_humidity;
 
     uint64_t _pellet_startup_delay;
-    float _hysteresis;
+    float _hysteresis_max;
+    float _hysteresis_min;
 };
 
 #endif // RUNNERTHREAD_H

@@ -194,7 +194,7 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                 prg.day=parseInt(s[0]);
                 prg.hour=parseInt(s[1]);
                 prg.half=parseInt(s[2]);
-                if ( !prg.daySel ){
+                if ( prg.daySel === null ){
                     prg.daySel = prg.day;
                 }
                 prg.programUnmod = [];

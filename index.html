@@ -91,16 +91,6 @@ loading..
             <div>
                 <span id="update-time">--</span>
             </div>
-            <div>
-                <img alt="hyst" class="temp-img" src="images/hyst.png?1"/>
-                <input data-dojo-id="hyst_enable" data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.hystEnable()"/>
-                <span data-dojo-id="hyst" data-dojo-type="dijit/form/NumberTextBox" style="width:2em" disabled type="submit" data-dojo-props="constraints:{min:0,max:5,places:1}">
-                    X.X                
-                </span>°C
-                <button data-dojo-id="hyst_save" data-dojo-type="dijit/form/Button" class="hidden" type="submit" data-dojo-props="onClick:function(){sts.saveHyst()}">
-                    Salva
-                </button>
-            </div>
         </div><!-- temp pane-->
 
         <div id="temp-pane" class="status-boxes">
@@ -118,6 +108,14 @@ loading..
                 <button data-dojo-id="min_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.min_temp+0.1)}">
                     +
                 </button>  
+                <span data-dojo-id="hyst_max" data-dojo-type="dijit/form/NumberTextBox" style="width:2em" disabled data-dojo-props="constraints:{min:0,max:5,places:1}">
+                    X.X                
+                </span>°C
+                <input data-dojo-id="hyst_max_enable" data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.hystEnable(true)"/>
+                <button data-dojo-id="hyst_max_save" data-dojo-type="dijit/form/Button" class="hidden" type="submit" data-dojo-props="onClick:function(){sts.saveHyst(true)}">
+                    ok
+                </button>
+                <img alt="hyst-max" class="hyst-img" src="images/hyst_max.png?1"/>
             </div>
             <div>
                 <img alt="maxTemp" class="temp-img" src="images/max-temp.png?1"/>
@@ -130,6 +128,14 @@ loading..
                 <button data-dojo-id="max_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.max_temp+0.1)}">
                     +
                 </button>
+                <span data-dojo-id="hyst_min" data-dojo-type="dijit/form/NumberTextBox" style="width:2em" disabled data-dojo-props="constraints:{min:0,max:5,places:1}">
+                    X.X                
+                </span>°C
+                <input data-dojo-id="hyst_min_enable" data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.hystEnable(false)"/>
+                <button data-dojo-id="hyst_min_save" data-dojo-type="dijit/form/Button" class="hidden" type="submit" data-dojo-props="onClick:function(){sts.saveHyst(false)}">
+                    ok
+                </button>
+                <img alt="hyst-min" class="hyst-img" src="images/hyst_min.png"/>
             </div>
             <div>
                 <button data-dojo-id="smart_temp_on" data-dojo-type="dijit/form/ToggleButton" data-dojo-props="iconClass:'dijitCheckBoxIcon'" onClick="sts.toggleSmart()">

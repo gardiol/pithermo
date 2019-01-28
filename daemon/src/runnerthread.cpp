@@ -53,7 +53,8 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _current_ext_temp(0.0),
     _current_ext_humidity(0.0),
     _pellet_startup_delay(60*45),
-    _hysteresis(0.1f)
+    _hysteresis_max(0.1f),
+    _hysteresis_min(0.1f)
 {
     if ( _shared_status.isReady() )
     {
@@ -75,8 +76,10 @@ RunnerThread::RunnerThread(ConfigFile *config,
             _pellet_startup_delay = static_cast<uint64_t>(FrameworkUtils::string_toi( _config->getValue( "pellet_startup_delay" ) ) );
         _temp_correction = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "temp_correction" ) ) );
         _program.loadConfig( _config->getSection( "program" ) );
-        if ( _config->hasValue( "hysteresis" ) )
-            _hysteresis = FrameworkUtils::string_tof( _config->getValue( "hysteresis" ) );
+        if ( _config->hasValue( "hysteresis_max" )  )
+            _hysteresis_max = FrameworkUtils::string_tof( _config->getValue( "hysteresis_max" ) );
+        if ( _config->hasValue( "hysteresis_min" )  )
+            _hysteresis_min = FrameworkUtils::string_tof( _config->getValue( "hysteresis_min" ) );
     }
     else
         _saveConfig();
@@ -323,15 +326,30 @@ bool RunnerThread::_checkCommands()
         }
             break;
 
-        case Command::SET_HISTERESYS:
+        case Command::SET_HISTERESYS_MAX:
         {
-            _logger->logDebug("New HYSTERESIS received: " + cmd->getParam());
+            _logger->logDebug("New HYSTERESIS_MAX received: " + cmd->getParam());
             float tmp_hyst = FrameworkUtils::string_tof( cmd->getParam() );
             if ( tmp_hyst >= 0.1f )
             {
-                _logger->logDebug("Changed hysteresis to " + cmd->getParam() );
+                _logger->logDebug("Changed hysteresis max to " + cmd->getParam() );
                 _logger->logEvent( LogItem::HYST_UPDATE );
-                _hysteresis = tmp_hyst;
+                _hysteresis_max = tmp_hyst;
+                update_status = true;
+                save_config = true;
+            }
+        }
+            break;
+
+        case Command::SET_HISTERESYS_MIN:
+        {
+            _logger->logDebug("New HYSTERESIS_MIN received: " + cmd->getParam());
+            float tmp_hyst = FrameworkUtils::string_tof( cmd->getParam() );
+            if ( tmp_hyst >= 0.1f )
+            {
+                _logger->logDebug("Changed hysteresis min to " + cmd->getParam() );
+                _logger->logEvent( LogItem::HYST_UPDATE );
+                _hysteresis_min = tmp_hyst;
                 update_status = true;
                 save_config = true;
             }
@@ -411,7 +429,13 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                 if ( _current_mode == AUTO_MODE )
                 {
                     // Target temp is "MAX" or "MIN" depending on program:
-                    float target_temperature = _program.useHigh() ? (_smart_temp_on ? _smart_temp : _max_temp) : _min_temp;
+                    float target_temperature =_min_temp;
+                    float hysteresis = _hysteresis_min;
+                    if ( _program.useHigh() )
+                    {
+                        target_temperature = (_smart_temp_on ? _smart_temp : _max_temp);
+                        hysteresis = _hysteresis_max;
+                    }
 
                     // If pellet should be on, we will turn it on no matter what:
                     // (this is to prevent the pellet to turn off)
@@ -419,6 +443,7 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
 
                     if ( _checkTargetTemperature( _temp_sensor->getTemp(),
                                                   target_temperature,
+                                                  hysteresis,
                                                   _over_temp,
                                                   _under_temp) )
                         update_status = true;
@@ -572,12 +597,13 @@ bool RunnerThread::_checkFlameout()
 
 bool RunnerThread::_checkTargetTemperature(float sensor_temp,
                                            float target_temperature,
+                                           float hysteresis,
                                            bool& prev_over_temp,
                                            bool& prev_under_temp)
 {
     bool update_status = false;
     if ( prev_under_temp )
-        target_temperature += _hysteresis;
+        target_temperature += hysteresis;
     bool new_over = sensor_temp > target_temperature;
     bool new_under = sensor_temp < target_temperature;
 
@@ -684,7 +710,8 @@ void RunnerThread::_saveConfig()
     _config->setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
     _config->setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
     _config->setValue( "pellet_startup_delay", FrameworkUtils::utostring(_pellet_startup_delay) );
-    _config->setValue( "hysteresis", FrameworkUtils::ftostring( _hysteresis ) );
+    _config->setValue( "hysteresis_max", FrameworkUtils::ftostring( _hysteresis_max ) );
+    _config->setValue( "hysteresis_min", FrameworkUtils::ftostring( _hysteresis_min ) );
 
     ConfigData* prog_section = _config->getSection( "program" );
     if ( prog_section == nullptr )
@@ -710,7 +737,8 @@ void RunnerThread::_updateStatus()
     status.smart_temp = _smart_temp;
     status.max_temp = _max_temp;
     status.min_temp = _min_temp;
-    status.hysteresis = _hysteresis;
+    status.hysteresis_max = _hysteresis_max;
+    status.hysteresis_min = _hysteresis_min;
     status.temp_int = _temp_sensor->getTemp();
     status.humidity_int = _temp_sensor->getHumidity();
     status.temp_ext = _current_ext_temp;
