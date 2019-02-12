@@ -348,7 +348,8 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
 	});
 
     on( query("#program_copy").parent()[0], "click", function(evt){
-        if ( prg.daySel > 0 ){
+        console.log( prg.daySel, prg.copyDFrom );
+        if ( prg.daySel >= 0 ){            
             if ( prg.copyDFrom === null ){
                 prg.copyDFrom = prg.daySel;
                 attr.set(dom.byId("program_copy"),  "src", "images/paste.png");
