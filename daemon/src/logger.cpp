@@ -205,7 +205,7 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                             uint32_t &gas_on_time)
 {
     bool ret = false;
-    bool pellet_was_hot_at_flameout = false;
+    bool pellet_was_on = false;
     std::list<LogItem> items;
     uint64_t gas_on_since = 0;
     uint64_t pellet_on_since = 0;
@@ -264,22 +264,27 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
 
             case LogItem::PELLET_FLAMEOUT_OFF:
                 pellet_flameout = false;
-                if ( pellet_was_hot_at_flameout )
+                if ( pellet_was_on )
                 {
                     pellet_on_since = event_time;
                     // Pellet at minimum? Calculate the time for it too...
                     if ( pellet_minimum_on )
                         pellet_low_on_since = event_time;
+                    pellet_on = true;
                 }
                 break;
 
             case  LogItem::PELLET_ON:
+                // Under flameout conditions ignore start
                 if ( !pellet_flameout )
                 {
+                    // Ignore subsequent pellet_on without an off
+                    // Otherwise, times might be reset and some "on" time lost
                     if (pellet_on_since == 0)
                     {
                         pellet_on_since = event_time;
                         // Pellet at minimum? Calculate the time for it too...
+                        // We ensure that the correct power timing is calculated
                         if ( pellet_minimum_on )
                             pellet_low_on_since = event_time;
                     }
@@ -288,7 +293,7 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                 break;
 
             case LogItem::PELLET_FLAMEOUT_ON:
-                pellet_was_hot_at_flameout = pellet_hot;
+                pellet_was_on = pellet_on;
                 pellet_flameout = true;
                 // Stop calculating pellet stats now. There will be some discrepancy,
                 // but we don't know exactly WHEN the flameout occurred.

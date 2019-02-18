@@ -58,10 +58,15 @@ Generator::~Generator()
 {
 }
 
-bool Generator::switchOn()
+bool Generator::switchOn(bool force_power_high)
 {    // on = LOW/false
     if ( _on_since == 0 )
     {
+        if ( force_power_high )
+            // Always start from a known power level.
+            // Failing to do so can cause a mess when calculating statistics
+            // This is not a problem, anyway,
+            setPower( POWER_HIGH );
         _on_since = FrameworkTimer::getTimeEpoc();
         if ( !_quiet )
         {
@@ -73,7 +78,7 @@ bool Generator::switchOn()
     return true;
 }
 
-bool Generator::switchOff()
+bool Generator::switchOff(bool force_power_high)
 {    // off = HIGH/true
     if ( _on_since > 0 )
     {
@@ -83,6 +88,10 @@ bool Generator::switchOff()
             _logger->logEvent( _off_event );
             _logger->logDebug( _name + " OFF");
         }
+        if ( force_power_high )
+            // Restore power status to known value on shutoff,
+            // Failing to do so can cause a mess when calculating statistics
+            setPower( POWER_HIGH );
     }
     writeGPIObool( _command_gpio, true );
     return true;

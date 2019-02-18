@@ -52,7 +52,7 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _half_hour(0),
     _current_ext_temp(0.0),
     _current_ext_humidity(0.0),
-    _pellet_startup_delay(60*45),
+    _pellet_startup_delay(60*60),
     _hysteresis_max(0.1f),
     _hysteresis_min(0.1f)
 {
@@ -257,7 +257,7 @@ bool RunnerThread::_checkCommands()
             _logger->logDebug("Pellet ON received");
             if ( _current_mode == MANUAL_MODE )
             {
-                _pellet->switchOn();
+                _pellet->switchOn(false);
                 update_status = true;
             }
             break;
@@ -266,7 +266,7 @@ bool RunnerThread::_checkCommands()
             _logger->logDebug("Pellet OFF received");
             if ( _current_mode == MANUAL_MODE )
             {
-                _pellet->switchOff();
+                _pellet->switchOff(false);
                 update_status = true;
             }
             break;
@@ -275,7 +275,7 @@ bool RunnerThread::_checkCommands()
             _logger->logDebug("Gas ON received");
             if ( _current_mode == MANUAL_MODE )
             {
-                _gas->switchOn();
+                _gas->switchOn(false);
                 update_status = true;
             }
             break;
@@ -284,7 +284,7 @@ bool RunnerThread::_checkCommands()
             _logger->logDebug("Gas OFF received");
             if ( _current_mode == MANUAL_MODE )
             {
-                _gas->switchOff();
+                _gas->switchOff(false);
                 update_status = true;
             }
             break;

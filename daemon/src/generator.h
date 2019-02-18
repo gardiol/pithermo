@@ -24,8 +24,8 @@ public:
 
     virtual ~Generator();
 
-    bool switchOn();
-    bool switchOff();
+    bool switchOn(bool force_power_high = true );
+    bool switchOff(bool force_power_high = true );
 
     bool setPower( PowerLevel pl );
 
