@@ -42,6 +42,11 @@ function( dom, dclass, on, dc)    // Dojo
             33554432: "Isteresi modificata",
             67108864: "SmartTemp ON",
             134217728: "SmartTemp OFF",
+            268435456: "Tempo di spegnimento manuale raggiunto",
+            536870912: "Tempo manuale di spegimento modificato",
+            1073741824: "Temperatura eccessiva!",
+            2147483648: "Temperatura eccessiva rientrata",
+            4294967296: "Margine di temperatura eccessiva modificato",
 		},	
         toggleRange: function(){
             dclass.toggle(dom.byId("events-range"), "hidden");

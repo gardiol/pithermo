@@ -21,7 +21,7 @@ int main( int , char** )
         memcpy( &status, shared_status.getReadPtr(), shared_status.getSharedSize() );
         if ( status.marker == SharedStatusMarker )
         {
-            printf("%llu %c %c %c %c %c %c %c %c %f %f %f %f %f %f %f %f %c %f %llu",
+            printf("%llu %c %c %c %c %c %c %c %c %f %f %f %f %f %f %f %f %c %f %llu %f",
                    static_cast<unsigned long long int>(status.last_update_stamp), //0
                    status.active ? '1' : '0',//1
                    status.anti_ice_active ? '1' : '0',//2
@@ -41,7 +41,8 @@ int main( int , char** )
                    static_cast<double>(status.humidity_ext),//16
                    status.smart_temp_on ? '1' : '0',//17
                    static_cast<double>(status.smart_temp),//18
-                   static_cast<unsigned long long int>(status.manual_off_time) ); //19
+                   static_cast<unsigned long long int>(status.manual_off_time), //19
+                   static_cast<double>(status.excess_threshold) ); //20
 
             ret = (FrameworkTimer::getCurrentTime() - status.last_update_stamp) < 1000000;
         }

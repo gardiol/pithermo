@@ -20,6 +20,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
         timer: null,
         min_temp: null,
         max_temp: null,
+        excess_temp: null,
         smart_temp: false,
 	
         confirm: function(msg,ok,cmd){
@@ -119,6 +120,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             html.set("smart_temp", "off");
             min_temp.set("label", "XX.X°C" );
 			max_temp.set("label", "XX.X°C" );
+			excess_temp.set("label", "XX.X°C" );
             hyst_max.set("value", "X.X");
             hyst_min.set("value", "X.X");
         },
@@ -132,9 +134,11 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                 function(result){
                     var program = null;
                     var s = result.split(" ");
-                    if ( s.length == 19 ){
+                    if ( s.length == 21 ){
                         sts.min_temp = parseFloat(s[10]);
                         sts.max_temp = parseFloat(s[9]);
+                        var manual_off_time = parseInt(s[19]);
+                        sts.excess_temp = parseFloat(s[20]);
                         
                         if ( s[1]=="1" ){//Active
                             attr.set("power-led", "src","images/acceso.png");                
@@ -150,6 +154,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             smart_temp_on.set("disabled", false);
                             min_temp.set("label", sts.min_temp.toFixed(1) + "°C" );
                             max_temp.set("label", sts.max_temp.toFixed(1) + "°C" );
+                            excess_temp.set("label", sts.excess_temp.toFixed(1) + "°C" );
                             sts.smart_temp = s[17]=="1";//smart temp on
                             smart_temp_on.set("checked", sts.smart_temp);
                             if ( sts.smart_temp ){

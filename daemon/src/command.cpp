@@ -17,8 +17,8 @@ void Command::init()
     _commands[8].insert( std::pair<std::string, CmdType>("max-temp", SET_MAX_TEMP) );
     _commands[8].insert( std::pair<std::string, CmdType>("min-temp", SET_MIN_TEMP) );
     _commands[8].insert( std::pair<std::string, CmdType>("ext-temp", EXT_TEMP) );
+    _commands[8].insert( std::pair<std::string, CmdType>("exc-temp", SET_EXCESSIVE_OVERTEMP_TS) );
     _commands[8].insert( std::pair<std::string, CmdType>("activate", ACTIVATE) );
-    _commands[8].insert( std::pair<std::string, CmdType>("set-eots", SET_EXCESSIVE_OVERTEMP_TS) );
     _commands[9].insert( std::pair<std::string, CmdType>("pellet-on", PELLET_ON) );
     _commands[10].insert( std::pair<std::string, CmdType>("pellet-off", PELLET_OFF) );
     _commands[10].insert( std::pair<std::string, CmdType>("deactivate", DEACTIVATE) );

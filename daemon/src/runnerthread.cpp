@@ -842,6 +842,7 @@ void RunnerThread::_updateStatus()
     status.hour = _hour;
     status.half = _half_hour;
     status.manual_off_time = _manual_off_time;
+    status.excess_threshold = _excessive_overtemp_threshold;
     _program.writeRaw( &status );
     memcpy( _shared_status.getWritePtr(), &status, _shared_status.getSharedSize() );
 }

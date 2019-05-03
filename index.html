@@ -63,6 +63,7 @@ loading..
                     <button data-dojo-id="status_manual" data-dojo-type="dijit/form/Button" data-dojo-props="onClick:function(){sts.confirm('Passare in MANUALE?','Manuale!','manual')}">
                         Manuale
                     </button>
+                    <input data-dojo-id="manual_off_time" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
                 </div>
                 <div>
                     <button data-dojo-id="status_auto" data-dojo-type="dijit/form/Button" data-dojo-props="onClick:function(){sts.confirm('Passare in AUTOMATICO?','Automatico!','auto')}">
@@ -136,6 +137,10 @@ loading..
                     ok
                 </button>
                 <img alt="hyst-max" class="hyst-img" src="images/hyst_max.png?1"/>
+                <button data-dojo-id="excess_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.excess_temp,'excess','Cambia soglia di eccesso')}">
+                    XX.X°C                
+                </button>
+                <img alt="excess" class="hyst-img" src="images/excess.png?1"/>
             </div>
             <div>
                 <button data-dojo-id="smart_temp_on" data-dojo-type="dijit/form/ToggleButton" data-dojo-props="iconClass:'dijitCheckBoxIcon'" onClick="sts.toggleSmart()">

@@ -1,0 +1,6 @@
+#!/bin/bash
+exec 3<>/dev/udp/127.0.0.1/5555
+echo "Content-type: text/html"
+echo ""
+read TEMP
+echo -n "exc-temp"$TEMP >&3
