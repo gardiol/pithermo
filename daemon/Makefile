@@ -1,11 +1,13 @@
 ifndef DEMO
 $(info Build per TARGET - DEMO not specified)
 CFLAGS=-fPIC -g -Wall -std=c++11
+WPI_LIBS="-lwiringPi"
 else
 $(info Build per PC - DEMO specified)
 CFLAGS=-fPIC -g -Wall -std=c++11 -DDEMO
 DEMO_OBJ=obj/demowiringpi.o
 DEMO_TGT=test_temp
+WPI_LIBS=""
 endif
 
 FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./framework/basethread.cpp ./framework/cmdlineparser.cpp ./framework/configdata.cpp ./framework/configfile.cpp ./framework/debugprint.cpp ./framework/udpsocket.cpp ./framework/frameworksighandler.cpp ./framework/frameworktimer.cpp ./framework/frameworkutils.cpp ./framework/genericcommdevice.cpp ./framework/memorychecker.cpp ./framework/profiler.cpp ./framework/profilerinternal.cpp ./framework/scheduledthread.cpp ./framework/socketcommdevice.cpp ./framework/tcpclient.cpp ./framework/tcpserver.cpp ./framework/transmissionstats.cpp ./framework/sharedmemory.cpp
@@ -78,7 +80,7 @@ obj/test_temp.o: test/test_temp.cpp src/logitem.h src/tempsensor.cpp src/tempsen
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 
 pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o ${DEMO_OBJ}
-	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib -lwiringPi
+	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib ${WP_LIBS}
 
 ../cgi-bin/history: obj/frameworktimer.o obj/frameworkutils.o obj/history_cgi.o obj/historyitem.o obj/history.o obj/debugprint.o obj/logitem.o obj/logger.o
 	g++ -o $@ $^ -lpthread -lrt -lm

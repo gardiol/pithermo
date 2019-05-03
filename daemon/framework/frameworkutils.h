@@ -279,6 +279,12 @@ public:
      */
     static int string_toi( const std::string& str );
 
+    /** @brief Convert a string to an unsigned long itneger
+     * @param str the string
+     * @return the integer
+     */
+    static uint64_t string_tou(const std::string &str);
+
     /** @brief Split a string according to a marker (tokenize a string)
       * @param str string to be cut
       * @param sep the marker

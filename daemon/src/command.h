@@ -30,7 +30,9 @@ public:
                    SMART_TEMP_ON,
                    SMART_TEMP_OFF,
                    TEMPLATE_SET,
-                   AUTO};
+                   AUTO,
+                   SET_MANUAL_OFF_TIME,
+                   SET_EXCESSIVE_OVERTEMP_TS};
 
     Command( const char* buffer, uint32_t size );
     ~Command();

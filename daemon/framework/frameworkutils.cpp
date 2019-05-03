@@ -610,6 +610,11 @@ int FrameworkUtils::string_toi(const std::string &str)
     return atoi( str.c_str() );
 }
 
+uint64_t FrameworkUtils::string_tou(const std::string &str)
+{
+    return static_cast<uint64_t>(atoll( str.c_str() ));
+}
+
 std::vector<std::string> FrameworkUtils::string_split(const std::string &str, const std::string &sep)
 {
     std::string s = str;

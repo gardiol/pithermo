@@ -67,15 +67,18 @@ private:
     bool _over_temp;
     bool _under_temp;
     bool _pellet_flameout;
+    bool _excessive_overtemp;
 
     bool _prev_pellet_hot;
     float _min_temp;
     float _max_temp;
     float _smart_temp;
     float _temp_correction;
+    float _excessive_overtemp_threshold;
 
     uint64_t _sensor_success_reads;
 
+    uint64_t _manual_off_time;
     uint64_t _last_time;
     int32_t _day;
     int32_t _hour;
