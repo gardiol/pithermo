@@ -309,6 +309,12 @@ bool RunnerThread::_checkCommands()
                     _manual_off_time = tmp_mot;
                     update_status = true;
                 }
+                else if ( tmp_mot == 0 )
+                {
+                    _logger->logEvent( LogItem::MANUAL_OFF_TIME_UPDATE );
+                    _manual_off_time = 0;
+                    update_status = true;
+                }
             }
             break;
 
@@ -412,6 +418,8 @@ bool RunnerThread::_checkCommands()
                 _logger->logDebug("Changed max temp to " + cmd->getParam() );
                 _logger->logEvent( LogItem::MAX_TEMP_UPDATE );
                 _max_temp = tmp_temp;
+                // Reset the excessive overtemp, so that it can be recalculated
+                _excessive_overtemp = false;
                 update_status = true;
                 save_config = true;
             }
@@ -504,10 +512,11 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                             _logger->logEvent( LogItem::EXCESSIVE_OVERTEMP_ON );
                         }
                     }
-                    else // ... but stays active until sensor_temp drops below the target temperature, no matter the program mode
+                    // ... but stays active until sensor_temp drops below the target temperature, no matter the program mode
+                    else if ( _excessive_overtemp )
                     {
                         _excessive_overtemp = sensor_temp > target_temperature;
-                        if ( _excessive_overtemp )
+                        if ( !_excessive_overtemp )
                         {
                             _logger->logDebug("Resume from excessive overtemp");
                             _logger->logEvent( LogItem::EXCESSIVE_OVERTEMP_OFF );

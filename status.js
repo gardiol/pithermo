@@ -21,6 +21,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
         min_temp: null,
         max_temp: null,
         excess_temp: null,
+        manual_off_edit: false,
         smart_temp: false,
 	
         confirm: function(msg,ok,cmd){
@@ -99,6 +100,8 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
         },
         
         disableAll:function(){
+            dclass.add("auto-pane-set", "hidden" );
+            dclass.add("manual-pane-set", "hidden" );
             dclass.add("pellet-flameout-led", "celated");
             pellet_on.set("disabled", true );
             pellet_off.set("disabled", true );
@@ -113,6 +116,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             smart_temp_on.set("disabled", true);
             min_temp.set("disabled", true);
             max_temp.set("disabled", true);
+            excess_temp.set("disabled", true);
             min_temp_m.set("disabled", true);
 			max_temp_m.set("disabled", true);
 			min_temp_p.set("disabled", true);
@@ -124,7 +128,53 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             hyst_max.set("value", "X.X");
             hyst_min.set("value", "X.X");
         },
-
+        
+        saveOffTime: function(){
+            var val = (manual_off_date.get("value") / 1000) + (manual_off_time.get("value" ) / 1000);
+            putRequest("cgi-bin/command","set-mot"+val,function(result){sts.update()},function(err){alert("Command error: " + err );});
+            manual_off_edit.set("checked", false );
+            sts.manualOffEdit();
+        },
+        
+        manualOffEnable: function(e,x){
+            manual_off_edit.set("disabled", true);
+            manual_off_date.set("disabled", true);
+            manual_off_time.set("disabled", true);
+            manual_off_save.set("disabled", true);
+            manual_off_enable.set("disabled", true);
+            manual_off_disable.set("disabled", true);
+            if ( e ){
+                manual_off_edit.set("disabled", false);
+                manual_off_disable.set("disabled", false);
+                if ( x ){
+                    manual_off_save.set("disabled", false);
+                    manual_off_edit.set("checked", true );
+                    sts.manualOffEdit();
+                }
+            } else {
+                manual_off_enable.set("disabled", false);
+                if ( x ) {
+                    manual_off_date.set("value", 0 );                
+                    manual_off_time.set("value", 0 );                
+                    sts.saveOffTime();
+                }
+            }
+        },
+        
+        manualOffEdit: function(){
+            if ( manual_off_edit.checked ){
+                sts.manual_off_edit = true;
+                manual_off_date.set("disabled", false);
+                manual_off_time.set("disabled", false);
+                manual_off_save.set("disabled", false);
+            } else {
+                manual_off_date.set("disabled", true);
+                manual_off_time.set("disabled", true);
+                manual_off_save.set("disabled", true);
+                sts.manual_off_edit = false;
+            }
+        },
+        
         update: function(){
             if ( sts.timer ){
                 window.clearTimeout( sts.timer );
@@ -137,8 +187,15 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                     if ( s.length == 21 ){
                         sts.min_temp = parseFloat(s[10]);
                         sts.max_temp = parseFloat(s[9]);
-                        var manual_off_time = parseInt(s[19]);
                         sts.excess_temp = parseFloat(s[20]);
+                        
+                        if ( !sts.manual_off_edit ){
+                            var n = parseInt(s[19])*1000;
+                            var d = n == 0 ? new Date() :  new Date( n );
+                            manual_off_date.set("value", d);
+                            manual_off_time.set("value", d);                            
+                            sts.manualOffEnable(n != 0, false );
+                        }
                         
                         if ( s[1]=="1" ){//Active
                             attr.set("power-led", "src","images/acceso.png");                
@@ -151,6 +208,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             max_temp_m.set("disabled", false);
                             min_temp_p.set("disabled", false);
                             max_temp_p.set("disabled", false);
+                            excess_temp.set("disabled", false);
                             smart_temp_on.set("disabled", false);
                             min_temp.set("label", sts.min_temp.toFixed(1) + "°C" );
                             max_temp.set("label", sts.max_temp.toFixed(1) + "°C" );
@@ -167,6 +225,8 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             if ( ! hyst_min_enable.checked )                               
                                 hyst_min.set("value", parseFloat(s[12]) ); //Hysteresis
                             if ( s[3]=="1" ){//Manual mode
+                                dclass.remove("manual-pane-set", "hidden" );
+                                dclass.add("auto-pane-set", "hidden" );
                                 attr.set("mode-led", "src", "images/manual.png");                
                                 status_manual.set("disabled", true );
                                 status_auto.set("disabled", false );
@@ -195,6 +255,8 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                                     gas_on.set("disabled", false );
                                 }
                             } else { // Mode non manual
+                                dclass.remove("auto-pane-set", "hidden" );
+                                dclass.add("manual-pane-set", "hidden" );
                                 attr.set("mode-led", "src","images/auto.png");                
                                 status_manual.set("disabled", false );
                                 status_auto.set("disabled", true );
