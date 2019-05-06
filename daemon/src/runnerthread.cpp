@@ -41,6 +41,8 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _under_temp(false),
     _pellet_flameout(false),
     _excessive_overtemp(false),
+    _gas_status_at_overtemp(false),
+    _pellet_minimum_status_at_overtemp(false),
     _prev_pellet_hot(false),
     _min_temp(16.0),
     _max_temp(17.0),
@@ -235,7 +237,7 @@ bool RunnerThread::_checkCommands()
             std::vector<std::string> tokens = FrameworkUtils::string_split( cmd->getParam(), ":" );
             if ( tokens.size() == 3 )
             {
-//                std::string sensor_id = tokens[0];
+                //                std::string sensor_id = tokens[0];
                 _current_ext_temp = FrameworkUtils::string_tof( tokens[1] );
                 _current_ext_humidity = FrameworkUtils::string_tof( tokens[2] );
             }
@@ -463,11 +465,12 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
     if ( _heating_activated )
     {   // Don't do anything until we have a valid temperature read
         if (_sensor_success_reads > 0)
-        {            
+        {
             // First of all, check anti-ice:
             if ( _checkAntiIce() )
                 update_status = true;
 
+            // Check for pellet flameout condition, because it will impact on gas
             if ( _checkFlameout() )
                 update_status = true;
 
@@ -476,113 +479,118 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
             bool pellet_on = false;
             bool pellet_minimum_on = false;
 
+            // Anti-ice has priority on all other settings
             if ( !_anti_ice_active )
             {
+                // Start by updating smart temperature value
                 _updateSmartTemp();
 
-                // select the current target temperature:
-                if ( _current_mode == AUTO_MODE )
+                // Target temp is "MAX" or "MIN" depending on mode and setting
+                // Detect if we are in "high" or in "low" temp selected:
+                bool high_temp_active =
+                        ( (_current_mode == AUTO_MODE) && _program.useHigh() ) ||
+                        ( (_current_mode == MANUAL_MODE) && ( _pellet->isOn() || _gas->isOn() ) );
+                float target_temperature = high_temp_active ? (_smart_temp_on ? _smart_temp : _max_temp) : _min_temp;
+                float hysteresis = high_temp_active ? _hysteresis_max : _hysteresis_min;
+                float sensor_temp = _temp_sensor->getTemp();
+
+                // Verify overtemp and undertemp conditions
+                if ( _checkTargetTemperature( sensor_temp,
+                                              target_temperature,
+                                              hysteresis,
+                                              _over_temp,
+                                              _under_temp ) )
+                    update_status = true;
+
+                // Verify excess temperature condition:
+                if ( _checkExcessTemperature( sensor_temp,
+                                              target_temperature,
+                                              high_temp_active,
+                                              _excessive_overtemp_threshold,
+                                              _excessive_overtemp ) )
+                    update_status = true;
+
+                // When in "excessive overtemp", we shall turn off everything, pellet included.
+                if ( !_excessive_overtemp )
                 {
-                    // Target temp is "MAX" or "MIN" depending on program:
-                    float target_temperature =_min_temp;
-                    float hysteresis = _hysteresis_min;
-                    float sensor_temp = _temp_sensor->getTemp();
-                    bool program_high = _program.useHigh();
-
-                    if ( program_high )
+                    // In manual mode, control is fully manual and we keep whatever the user selected
+                    if  (_current_mode == MANUAL_MODE)
                     {
-                        target_temperature = (_smart_temp_on ? _smart_temp : _max_temp);
-                        hysteresis = _hysteresis_max;
-                    }
-
-                    if ( _checkTargetTemperature( sensor_temp,
-                                                  target_temperature,
-                                                  hysteresis,
-                                                  _over_temp,
-                                                  _under_temp ) )
-                        update_status = true;
-
-                    // Excessive over-temperature is activated when sensor_temp is past the threshold in "high" program mode
-                    if ( !_excessive_overtemp && program_high )
-                    {
-                        _excessive_overtemp = sensor_temp > ( target_temperature + _excessive_overtemp_threshold );
-                        if ( _excessive_overtemp )
+                        // In manual mode, the user can enable an "off" timer
+                        bool all_is_off = false;
+                        if ( _manual_off_time != 0 )
                         {
-                            _logger->logDebug("Excessive overtemp detected");
-                            _logger->logEvent( LogItem::EXCESSIVE_OVERTEMP_ON );
+                            // When reached, all will be shut off and the timer is disabled
+                            if ( _manual_off_time < _last_time )
+                            {
+                                all_is_off = true;
+                                _manual_off_time = 0;
+                                _logger->logDebug("Manual OFF time reached");
+                                _logger->logEvent( LogItem::MANUAL_OFF_TIME );
+                                _logger->logDebug("Manual OFF time reset");
+                                _logger->logEvent( LogItem::MANUAL_OFF_TIME_UPDATE );
+                                update_status = true;
+                            }
+                        }
+                        // Only if off timer has not been triggered...
+                        if ( !all_is_off )
+                        {
+                            // Always respect manual user selection
+                            pellet_on = _pellet->isOn() || _gas_status_at_overtemp;
+                            pellet_minimum_on = _pellet->isLow() || _pellet_minimum_status_at_overtemp;
+                            // The exception is GAS, which goes ON if a pellet flamout is detected.
+                            // (note that if pellet is OFF, flameout is always false)
+                            gas_on = _gas->isOn() || (!pellet_minimum_on && _pellet_flameout);
                         }
                     }
-                    // ... but stays active until sensor_temp drops below the target temperature, no matter the program mode
-                    else if ( _excessive_overtemp )
+                    // In automatic mode we use the program as source for pellet and gas status
+                    else if ( _current_mode == AUTO_MODE )
                     {
-                        _excessive_overtemp = sensor_temp > target_temperature;
-                        if ( !_excessive_overtemp )
-                        {
-                            _logger->logDebug("Resume from excessive overtemp");
-                            _logger->logEvent( LogItem::EXCESSIVE_OVERTEMP_OFF );
-                        }
-                    }
-
-                    // When in "excessive overtemp", we shall turn off everything, pellet included.
-                    if ( !_excessive_overtemp )
-                    {
-                        // If pellet should be on, we will turn it on no matter what:
-                        // (this is to prevent the pellet to turn off)
                         pellet_on = _program.usePellet();
+                        gas_on = _program.useGas();
+                    }
 
-                        if ( _over_temp )
-                        {   // remember that by default, all is off... so is gas.
-                            if ( pellet_on )
-                                pellet_minimum_on = true;
-                        }
-                        if ( _under_temp )
-                        {
-                            // Gas goes ON only in GAS program modes OR if a flameout is detected...
-                            gas_on = _program.useGas() || _pellet_flameout;
-                            // remember that by default, all is off... so is pellet minimum.
-                        }
-                    }
-                }
-                else
-                {// In manual mode, control is fully manual.
-                    bool all_is_off = false;
-                    // In manual mode, the user can enable an "off" timer
-                    if ( _manual_off_time != 0 )
+                    // When over temp is detected, turn off/minimum
+                    if ( _over_temp )
                     {
-                        // When reached, all will be shut off and the timer is disabled
-                        if ( _manual_off_time < _last_time )
-                        {
-                            all_is_off = true;
-                            _manual_off_time = 0;
-                            _logger->logDebug("Manual OFF time reached");
-                            _logger->logEvent( LogItem::MANUAL_OFF_TIME );
-                            _logger->logDebug("Manual OFF time reset");
-                            _logger->logEvent( LogItem::MANUAL_OFF_TIME_UPDATE );
-                            update_status = true;
-                        }
+                        // Status is stored so it's resumed properly
+                        _gas_status_at_overtemp = gas_on;
+                        _pellet_minimum_status_at_overtemp = pellet_minimum_on;
+                        if ( pellet_on )
+                            pellet_minimum_on = true;
+                        if ( gas_on )
+                            gas_on = false;
                     }
-                    if ( !all_is_off )
+                    else
                     {
-                        pellet_on = _pellet->isOn();
-                        pellet_minimum_on = _pellet->isLow();
-                        // The exception is GAS, which goes ON if a pellet flamout is detected.
-                        // (note that if pellet is OFF, flameout is always false)
-                        gas_on = _gas->isOn() || (!pellet_minimum_on && _pellet_flameout);
+                        _gas_status_at_overtemp = false;
+                        _pellet_minimum_status_at_overtemp = false;
                     }
-                    _under_temp = false;
-                    _over_temp = false;
-                    _excessive_overtemp = false;
-                }
+
+                    // When under temp is detected, turn on the appropriate generator
+                    if ( _under_temp )
+                    {
+                        // Gas goes ON if flameout is detected for pellet, in any mode
+                        // In manual mode: gas stays on or off (under_temp is not enforced in manual mode)
+                        // In program mode: gas depends on program
+                        gas_on = gas_on || _pellet_flameout;
+                        // If in manual mode pellet is off, ignore pellet minimum.
+                        if ( pellet_on && pellet_minimum_on )
+                            pellet_minimum_on = false;
+                    }
+                } // end of not excessive temp
             }
             else // anti-ice active, turn everything on!
             {
                 gas_on = true;
                 pellet_minimum_on = false;
+                // Pellet is not turned on, only "kept" on if already on
                 pellet_on = _pellet->isOn();
             }
 
             // Now all conditions are set...
             // Check some more "general" conditions...
+
             // Turn GAS off always if pellet is HOT:
             if ( _pellet->isHot() )
                 gas_on = false;
@@ -697,6 +705,40 @@ bool RunnerThread::_checkFlameout()
         _pellet_flameout = current_missed_start;
     return update_status;
 }
+
+
+bool RunnerThread::_checkExcessTemperature(float sensor_temp,
+                                           float target_temperature,
+                                           bool high_temp_active,
+                                           float excessive_overtemp_threshold,
+                                           bool& excessive_overtemp )
+{
+    bool update_status = false;
+    // Excessive over-temperature is activated when sensor_temp is past the threshold in "high" program mode
+    if ( !excessive_overtemp && high_temp_active )
+    {
+        excessive_overtemp = sensor_temp > ( target_temperature + excessive_overtemp_threshold );
+        if ( excessive_overtemp )
+        {
+            _logger->logDebug("Excessive overtemp detected");
+            _logger->logEvent( LogItem::EXCESSIVE_OVERTEMP_ON );
+            update_status = true;
+        }
+    }
+    // ... but stays active until sensor_temp drops below the target temperature, no matter the program mode
+    else if ( excessive_overtemp )
+    {
+        excessive_overtemp = sensor_temp > target_temperature;
+        if ( !_excessive_overtemp )
+        {
+            _logger->logDebug("Resume from excessive overtemp");
+            _logger->logEvent( LogItem::EXCESSIVE_OVERTEMP_OFF );
+            update_status = true;
+        }
+    }
+    return update_status;
+}
+
 
 bool RunnerThread::_checkTargetTemperature(float sensor_temp,
                                            float target_temperature,
@@ -852,6 +894,7 @@ void RunnerThread::_updateStatus()
     status.half = _half_hour;
     status.manual_off_time = _manual_off_time;
     status.excess_threshold = _excessive_overtemp_threshold;
+    status.excess_temp_reached = _excessive_overtemp;
     _program.writeRaw( &status );
     memcpy( _shared_status.getWritePtr(), &status, _shared_status.getSharedSize() );
 }

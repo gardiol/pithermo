@@ -24,8 +24,8 @@ public:
                     AUTO_MODE };
 
     RunnerThread(ConfigFile* config,
-                  const std::string& hst,
-                  Logger* l);
+                 const std::string& hst,
+                 Logger* l);
     virtual ~RunnerThread();
 
     void appendCommand( Command* cmd );
@@ -40,6 +40,11 @@ private:
                                  float hysteresis,
                                  bool &prev_over_temp,
                                  bool &prev_under_temp);
+    bool _checkExcessTemperature(float sensor_temp,
+                                 float target_temperature,
+                                 bool high_temp_active,
+                                 float excessive_overtemp_threshold,
+                                 bool& excessive_overtemp );
     bool _updateCurrentTime(uint64_t new_time);
     void _updateSmartTemp();
     void _updateStatus();
@@ -68,6 +73,8 @@ private:
     bool _under_temp;
     bool _pellet_flameout;
     bool _excessive_overtemp;
+    bool _gas_status_at_overtemp;
+    bool _pellet_minimum_status_at_overtemp;
 
     bool _prev_pellet_hot;
     float _min_temp;

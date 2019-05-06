@@ -38,6 +38,7 @@ struct SharedStatus
     int32_t half;
     uint64_t manual_off_time;
     float excess_threshold;
+    bool excess_temp_reached;
     char program[ 24*2*7 ];
     char templates[ SharedStatusNumTemplates ][ 24*2 ];
     char templates_names[ SharedStatusNumTemplates ][ SharedStatusTemplatesNameSize ];

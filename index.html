@@ -74,10 +74,31 @@ loading..
         </div><!-- mode box -->
     </div><!-- status info-->
       
+    <div id="manual-pane-set" class="hidden">
+        <div class="status-title">
+            Impostazioni manuali
+        </div>
+        <div>      
+            <div>
+                <button data-dojo-id="manual_off_enable" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.manualOffEnable(true,true)}">
+                    Abilita auto-spegnimento
+                </button>
+                <button data-dojo-id="manual_off_disable" disabled data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.manualOffEnable(false,true)}">
+                    Disabilita auto-spegnimento
+                </button>
+            </div>
+            <div>
+                <input data-dojo-id="manual_off_edit"  disabled data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.manualOffEdit()"/>
+                <input data-dojo-id="manual_off_date"  disabled type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
+                <input data-dojo-id="manual_off_time"  disabled type="text" value="" data-dojo-type="dijit/form/TimeTextBox" /> 
+                <button data-dojo-id="manual_off_save" disabled data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveOffTime()}">
+                    salva
+                </button>  
+            </div>
+        </div>
+    </div>
+            
     <div id="status-main">
-    
-    <div>
-      
         <div id="temp-pane-curr" class="status-boxes">
             <div class="status-title">
                 Temperature attuali
@@ -91,95 +112,65 @@ loading..
             <div>
                 <span id="update-time">--</span>
             </div>
-        </div><!-- temp pane-->
+        </div><!-- temp pane curr-->
 
         <div id="temp-pane" class="status-boxes">
-        
-            <div id="auto-pane-set" class="hidden">
-                <div class="status-title">
-                    Temperature impostate
-                </div>
-                <div>
-                    <img alt="minTemp" class="temp-img" src="images/min-temp.png?1"/>
-                    <button data-dojo-id="min_temp_m" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.min_temp-0.1)}">
-                        -
-                    </button>
-                    <button data-dojo-id="min_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.min_temp,'min','Cambia temperatura minima')}">
-                        XX.X°C                
-                    </button>
-                    <button data-dojo-id="min_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.min_temp+0.1)}">
-                        +
-                    </button>  
-                    <span data-dojo-id="hyst_min" data-dojo-type="dijit/form/NumberTextBox" style="width:2em" disabled data-dojo-props="constraints:{min:0,max:5,places:1}">
-                        X.X                
-                    </span>°C
-                    <input data-dojo-id="hyst_min_enable" data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.hystEnable(false)"/>
-                    <button data-dojo-id="hyst_min_save" data-dojo-type="dijit/form/Button" class="hidden" type="submit" data-dojo-props="onClick:function(){sts.saveHyst(false)}">
-                        ok
-                    </button>
-                    <img alt="hyst-min" class="hyst-img" src="images/hyst_min.png"/>
-                </div>
-                <div>
-                    <img alt="maxTemp" class="temp-img" src="images/max-temp.png?1"/>
-                    <button data-dojo-id="max_temp_m" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.max_temp-0.1)}">
-                        -
-                    </button>                
-                    <button data-dojo-id="max_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.max_temp,'max','Cambia temperatura massima')}">
-                        XX.X°C                
-                    </button>
-                    <button data-dojo-id="max_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.max_temp+0.1)}">
-                        +
-                    </button>
-                    <span data-dojo-id="hyst_max" data-dojo-type="dijit/form/NumberTextBox" style="width:2em" disabled data-dojo-props="constraints:{min:0,max:5,places:1}">
-                        X.X                
-                    </span>°C
-                    <input data-dojo-id="hyst_max_enable" data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.hystEnable(true)"/>
-                    <button data-dojo-id="hyst_max_save" data-dojo-type="dijit/form/Button" class="hidden" type="submit" data-dojo-props="onClick:function(){sts.saveHyst(true)}">
-                        ok
-                    </button>
-                    <img alt="hyst-max" class="hyst-img" src="images/hyst_max.png?1"/>
-                    <button data-dojo-id="excess_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.excess_temp,'excess','Cambia soglia di eccesso')}">
-                        XX.X°C                
-                    </button>
-                    <img alt="excess" class="hyst-img" src="images/excess.png?1"/>
-                </div>
-                <div>
-                    <button data-dojo-id="smart_temp_on" data-dojo-type="dijit/form/ToggleButton" data-dojo-props="iconClass:'dijitCheckBoxIcon'" onClick="sts.toggleSmart()">
-                        Smart
-                    </button>
-                    (Attuale:<span id="smart_temp">off</span>°C)
-                </div>
+            <div class="status-title">
+                Temperature impostate
             </div>
-            <div id="manual-pane-set" class="hidden">
-                <div class="status-title">
-                    Impostazioni manuali
-                </div>
-                <div>      
-                    <div>
-                        <button data-dojo-id="manual_off_enable" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.manualOffEnable(true,true)}">
-                            Abilita auto-spegnimento
-                        </button>
-                        <button data-dojo-id="manual_off_disable" disabled data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.manualOffEnable(false,true)}">
-                            Disabilita auto-spegnimento
-                        </button>
-                    </div>
-                    <div>
-                        <input data-dojo-id="manual_off_edit"  disabled data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.manualOffEdit()"/>
-                        <input data-dojo-id="manual_off_date"  disabled type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
-                        <input data-dojo-id="manual_off_time"  disabled type="text" value="" data-dojo-type="dijit/form/TimeTextBox" /> 
-                        <button data-dojo-id="manual_off_save" disabled data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveOffTime()}">
-                            salva
-                        </button>  
-                    </div>
+            <div>
+                <img alt="minTemp" class="temp-img" src="images/min-temp.png?1"/>
+                <button data-dojo-id="min_temp_m" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.min_temp-0.1)}">
+                    -
+                </button>
+                <button data-dojo-id="min_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.min_temp,'min','Cambia temperatura minima')}">
+                    XX.X°C                
+                </button>
+                <button data-dojo-id="min_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('min',sts.min_temp+0.1)}">
+                    +
+                </button>  
+                <span data-dojo-id="hyst_min" data-dojo-type="dijit/form/NumberTextBox" style="width:2em" disabled data-dojo-props="constraints:{min:0,max:5,places:1}">
+                    X.X                
+                </span>°C
+                <input data-dojo-id="hyst_min_enable" data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.hystEnable(false)"/>
+                <button data-dojo-id="hyst_min_save" data-dojo-type="dijit/form/Button" class="hidden" type="submit" data-dojo-props="onClick:function(){sts.saveHyst(false)}">
+                    ok
+                </button>
+                <img alt="hyst-min" class="hyst-img" src="images/hyst_min.png"/>
             </div>
-            
-            
-            
+            <div>
+                <img alt="maxTemp" class="temp-img" src="images/max-temp.png?1"/>
+                <button data-dojo-id="max_temp_m" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.max_temp-0.1)}">
+                    -
+                </button>                
+                <button data-dojo-id="max_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.max_temp,'max','Cambia temperatura massima')}">
+                    XX.X°C                
+                </button>
+                <button data-dojo-id="max_temp_p" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveTemp('max',sts.max_temp+0.1)}">
+                    +
+                </button>
+                <span data-dojo-id="hyst_max" data-dojo-type="dijit/form/NumberTextBox" style="width:2em" disabled data-dojo-props="constraints:{min:0,max:5,places:1}">
+                    X.X                
+                </span>°C
+                <input data-dojo-id="hyst_max_enable" data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.hystEnable(true)"/>
+                <button data-dojo-id="hyst_max_save" data-dojo-type="dijit/form/Button" class="hidden" type="submit" data-dojo-props="onClick:function(){sts.saveHyst(true)}">
+                    ok
+                </button>
+                <img alt="hyst-max" class="hyst-img" src="images/hyst_max.png?1"/>
+            </div>
+            <div>
+                <button data-dojo-id="smart_temp_on" data-dojo-type="dijit/form/ToggleButton" data-dojo-props="iconClass:'dijitCheckBoxIcon'" onClick="sts.toggleSmart()">
+                    Smart
+                </button>
+                (Attuale:<span id="smart_temp">off</span>°C)
+                <button data-dojo-id="excess_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.excess_temp,'excess','Cambia soglia di eccesso')}">
+                    XX.X°C                
+                </button>
+                <img alt="excess" class="hyst-img" src="images/excess.png?1"/>
+            </div>
         </div><!-- temp pane-->
-
-    </div>
     
-    <div id="pellet-status" class="status-boxes">
+        <div id="pellet-status" class="status-boxes">
             <div class="status-title">
                 Stufa a pellet
             </div>
@@ -224,8 +215,8 @@ loading..
                 </div>
             </div>
         </div><!-- pellet status-->
-            
-    <div id="gas-status" class="status-boxes">
+
+        <div id="gas-status" class="status-boxes">
             <div class="status-title">
                 Caldaia a gas
             </div>

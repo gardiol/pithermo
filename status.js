@@ -100,7 +100,6 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
         },
         
         disableAll:function(){
-            dclass.add("auto-pane-set", "hidden" );
             dclass.add("manual-pane-set", "hidden" );
             dclass.add("pellet-flameout-led", "celated");
             pellet_on.set("disabled", true );
@@ -184,7 +183,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                 function(result){
                     var program = null;
                     var s = result.split(" ");
-                    if ( s.length == 21 ){
+                    if ( s.length == 22 ){
                         sts.min_temp = parseFloat(s[10]);
                         sts.max_temp = parseFloat(s[9]);
                         sts.excess_temp = parseFloat(s[20]);
@@ -226,7 +225,6 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                                 hyst_min.set("value", parseFloat(s[12]) ); //Hysteresis
                             if ( s[3]=="1" ){//Manual mode
                                 dclass.remove("manual-pane-set", "hidden" );
-                                dclass.add("auto-pane-set", "hidden" );
                                 attr.set("mode-led", "src", "images/manual.png");                
                                 status_manual.set("disabled", true );
                                 status_auto.set("disabled", false );
@@ -255,7 +253,6 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                                     gas_on.set("disabled", false );
                                 }
                             } else { // Mode non manual
-                                dclass.remove("auto-pane-set", "hidden" );
                                 dclass.add("manual-pane-set", "hidden" );
                                 attr.set("mode-led", "src","images/auto.png");                
                                 status_manual.set("disabled", false );
