@@ -28,6 +28,17 @@ loading..
     </div>
 </div>
 
+<div data-dojo-type="dijit/Dialog" data-dojo-id="eOffTime" title="Autospegnimento">
+	<p class="dijitDialogPaneContentArea">
+		Spegni tra:
+		<input type="text" name="eOffTimeEdit" data-dojo-id="eOffTimeEdit" value="T01:00:00" data-dojo-type="dijit/form/TimeTextBox" />
+	</p>
+    <div class="dijitDialogPaneActionBar">
+        <button data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveOffTime()}">Salva</button>
+        <button data-dojo-type="dijit/form/Button" type="button" data-dojo-props="onClick:function(){eOffTime.hide()}">Annulla</button>
+    </div>
+</div>
+
 <div data-dojo-type="dijit/Dialog" data-dojo-id="ptName" title="Rinomina template">
 	<p class="dijitDialogPaneContentArea">
 		Nome template:
@@ -73,32 +84,32 @@ loading..
             <img alt="mde" class="info-icon" id="mode-led" src="images/manual.png?1"/>
         </div><!-- mode box -->
     </div><!-- status info-->
-      
-    <div id="manual-pane-set" class="hidden">
-        <div class="status-title">
-            Impostazioni manuali
-        </div>
-        <div>      
-            <div>
-                <button data-dojo-id="manual_off_enable" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.manualOffEnable(true,true)}">
-                    Abilita auto-spegnimento
-                </button>
-                <button data-dojo-id="manual_off_disable" disabled data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.manualOffEnable(false,true)}">
-                    Disabilita auto-spegnimento
-                </button>
+                  
+    <div id="status-main">
+    
+        <div id="manual-pane-set" class="hidden">
+            <div class="status-title">
+                Impostazioni manuali
             </div>
-            <div>
-                <input data-dojo-id="manual_off_edit"  disabled data-dojo-type="dijit/form/CheckBox" value="1" onChange="sts.manualOffEdit()"/>
-                <input data-dojo-id="manual_off_date"  disabled type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
-                <input data-dojo-id="manual_off_time"  disabled type="text" value="" data-dojo-type="dijit/form/TimeTextBox" /> 
-                <button data-dojo-id="manual_off_save" disabled data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.saveOffTime()}">
-                    salva
+            <div>      
+                <button data-dojo-id="manual_off_enable" data-dojo-type="dijit/form/ToggleButton" data-dojo-props="iconClass:'dijitCheckBoxIcon'" onClick="sts.toggleManualOff()">
+                    Auto-Off
+                </button>
+                <span id="manual-off-label"></span>                
+                <button data-dojo-id="manual_off_edit" disabled data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){eOffTime.show()}">
+                    Imposta...
                 </button>  
             </div>
-        </div>
-    </div>
+<!--            <div>
+                Per mantenere il minimno usa:
+                <div id="manual-cold-pane" class="cold-prg">
+                    <img class="button-img  program-selected" src="images/off-select-1.png" id="manual-cold-gas" /> 
+                    <img class="button-img" src="images/pellet-min-1.png" id="manual-cold-pellet" />
+                </div>
             
-    <div id="status-main">
+            </div>-->
+        </div><!-- manual pane-->
+    
         <div id="temp-pane-curr" class="status-boxes">
             <div class="status-title">
                 Temperature attuali
@@ -116,7 +127,7 @@ loading..
 
         <div id="temp-pane" class="status-boxes">
             <div class="status-title">
-                Temperature impostate
+                Controlllo Temperature
             </div>
             <div>
                 <img alt="minTemp" class="temp-img" src="images/min-temp.png?1"/>
@@ -159,14 +170,20 @@ loading..
                 <img alt="hyst-max" class="hyst-img" src="images/hyst_max.png?1"/>
             </div>
             <div>
-                <button data-dojo-id="smart_temp_on" data-dojo-type="dijit/form/ToggleButton" data-dojo-props="iconClass:'dijitCheckBoxIcon'" onClick="sts.toggleSmart()">
-                    Smart
-                </button>
-                (Attuale:<span id="smart_temp">off</span>°C)
-                <button data-dojo-id="excess_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.excess_temp,'excess','Cambia soglia di eccesso')}">
-                    XX.X°C                
-                </button>
-                <img alt="excess" class="hyst-img" src="images/excess.png?1"/>
+                <div id="smart-temp-pane">
+                    <button data-dojo-id="smart_temp_on" data-dojo-type="dijit/form/ToggleButton" data-dojo-props="iconClass:'dijitCheckBoxIcon'" onClick="sts.toggleSmart()">
+                        Smart Temp
+                    </button>
+                    (Attuale:<span id="smart_temp">off</span>°C)
+                </div>
+                <div id="excess-temp-pane">
+                Shut-off delta:
+                    <button data-dojo-id="excess_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(sts.excess_temp,'excess','Cambia soglia di eccesso')}">
+                        XX.X°C                
+                    </button>
+                    <img alt="excess" class="hyst-img" src="images/excess.png?1"/>
+                    <span id="excess-temp-detected" class="hidden">SOGLIA SUPERATA!</span>
+                </div>
             </div>
         </div><!-- temp pane-->
     

@@ -21,8 +21,8 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
         min_temp: null,
         max_temp: null,
         excess_temp: null,
-        manual_off_edit: false,
         smart_temp: false,
+        auto_off: false,
 	
         confirm: function(msg,ok,cmd){
             var dialog = new ConfirmDialog({title: "Conferma comando...",content: msg});
@@ -36,14 +36,16 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             dialog.show();
         },
         updTempBts: function(v){
-            var s=Math.floor(v)-1;
-            for ( var r = 0; r < 5; r++ ){
-                for ( var c = 0; c < 5; c++ ){                
-                    var btn = sts.tempBts[r][c];
-                    btn.set("label", s.toFixed(1) );
-                    s+=0.1;
-                }
-            }    
+            if ( v >= 1 ){
+                var s=Math.floor(v)-1;
+                for ( var r = 0; r < 5; r++ ){
+                    for ( var c = 0; c < 5; c++ ){                
+                        var btn = sts.tempBts[r][c];
+                        btn.set("label", s.toFixed(1) );
+                        s+=0.1;
+                    }
+                }    
+            }
         },
         setTemp:function(v,w,t){
             eTempVal.set("value", v );
@@ -100,6 +102,10 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
         },
         
         disableAll:function(){
+            html.set("manual-off-label", "" );
+            manual_off_enable.set("disabled", true );
+            manual_off_edit.set("disabled", true );
+            dclass.add("excess-temp-detected", "hidden");
             dclass.add("manual-pane-set", "hidden" );
             dclass.add("pellet-flameout-led", "celated");
             pellet_on.set("disabled", true );
@@ -128,50 +134,24 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             hyst_min.set("value", "X.X");
         },
         
-        saveOffTime: function(){
-            var val = (manual_off_date.get("value") / 1000) + (manual_off_time.get("value" ) / 1000);
-            putRequest("cgi-bin/command","set-mot"+val,function(result){sts.update()},function(err){alert("Command error: " + err );});
-            manual_off_edit.set("checked", false );
-            sts.manualOffEdit();
+        saveOffTime: function(v){
+            if ( !v ){
+                v = (eOffTimeEdit.get("value") / 1000) - eOffTimeEdit.get("value").getTimezoneOffset()*60;
+            }
+            putRequest("cgi-bin/command","set-mot"+v,function(result){sts.update()},function(err){alert("Command error: " + err );});
         },
         
-        manualOffEnable: function(e,x){
-            manual_off_edit.set("disabled", true);
-            manual_off_date.set("disabled", true);
-            manual_off_time.set("disabled", true);
-            manual_off_save.set("disabled", true);
-            manual_off_enable.set("disabled", true);
-            manual_off_disable.set("disabled", true);
-            if ( e ){
-                manual_off_edit.set("disabled", false);
-                manual_off_disable.set("disabled", false);
-                if ( x ){
-                    manual_off_save.set("disabled", false);
-                    manual_off_edit.set("checked", true );
-                    sts.manualOffEdit();
-                }
+        toggleManualOff: function(){
+            if ( sts.auto_off ){
+                var dialog = new ConfirmDialog({title: "Autospegnimento",
+                    content: "Disattivo spegnimento automatico?"});
+                dialog.set("buttonOk", "Si");
+                dialog.set("buttonCancel", "Annulla");
+                dialog.on("execute", function(){ sts.saveOffTime(0); } );
+                dialog.show();                
             } else {
-                manual_off_enable.set("disabled", false);
-                if ( x ) {
-                    manual_off_date.set("value", 0 );                
-                    manual_off_time.set("value", 0 );                
-                    sts.saveOffTime();
-                }
-            }
-        },
-        
-        manualOffEdit: function(){
-            if ( manual_off_edit.checked ){
-                sts.manual_off_edit = true;
-                manual_off_date.set("disabled", false);
-                manual_off_time.set("disabled", false);
-                manual_off_save.set("disabled", false);
-            } else {
-                manual_off_date.set("disabled", true);
-                manual_off_time.set("disabled", true);
-                manual_off_save.set("disabled", true);
-                sts.manual_off_edit = false;
-            }
+                eOffTime.show();                
+            }               
         },
         
         update: function(){
@@ -188,13 +168,10 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                         sts.max_temp = parseFloat(s[9]);
                         sts.excess_temp = parseFloat(s[20]);
                         
-                        if ( !sts.manual_off_edit ){
-                            var n = parseInt(s[19])*1000;
-                            var d = n == 0 ? new Date() :  new Date( n );
-                            manual_off_date.set("value", d);
-                            manual_off_time.set("value", d);                            
-                            sts.manualOffEnable(n != 0, false );
-                        }
+                        if ( s[21] =="1")
+                            dclass.remove("excess-temp-detected", "hidden");
+                        else
+                            dclass.add("excess-temp-detected", "hidden");
                         
                         if ( s[1]=="1" ){//Active
                             attr.set("power-led", "src","images/acceso.png");                
@@ -209,6 +186,8 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             max_temp_p.set("disabled", false);
                             excess_temp.set("disabled", false);
                             smart_temp_on.set("disabled", false);
+                            manual_off_enable.set("disabled", false);
+
                             min_temp.set("label", sts.min_temp.toFixed(1) + "°C" );
                             max_temp.set("label", sts.max_temp.toFixed(1) + "°C" );
                             excess_temp.set("label", sts.excess_temp.toFixed(1) + "°C" );
@@ -224,6 +203,13 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             if ( ! hyst_min_enable.checked )                               
                                 hyst_min.set("value", parseFloat(s[12]) ); //Hysteresis
                             if ( s[3]=="1" ){//Manual mode
+                                
+                                var off_time = parseInt(s[19]);
+                                sts.auto_off = off_time != 0;
+                                html.set("manual-off-label", sts.auto_off ? "spegnimento alle "+utils.printDate( off_time*1000 ) : "" );
+                                manual_off_edit.set("disabled",  !sts.auto_off);
+                                manual_off_enable.set("checked", sts.auto_off);
+
                                 dclass.remove("manual-pane-set", "hidden" );
                                 attr.set("mode-led", "src", "images/manual.png");                
                                 status_manual.set("disabled", true );

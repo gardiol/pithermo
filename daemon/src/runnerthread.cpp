@@ -59,7 +59,10 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _current_ext_humidity(0.0),
     _pellet_startup_delay(60*60),
     _hysteresis_max(0.1f),
-    _hysteresis_min(0.1f)
+    _hysteresis_min(0.1f),
+    _manual_pellet_minimum_forced_off(false),
+    _manual_gas_forced_on(false)
+
 {
     if ( _shared_status.isReady() )
     {
@@ -304,14 +307,14 @@ bool RunnerThread::_checkCommands()
             _logger->logDebug("Manual off time received");
             if ( _current_mode == MANUAL_MODE )
             {
-                uint64_t tmp_mot = FrameworkUtils::string_tou( cmd->getParam() );
-                if ( tmp_mot >= _last_time )
+                uint64_t tmp_dmot = FrameworkUtils::string_tou( cmd->getParam() );
+                if ( tmp_dmot > 0 )
                 {
                     _logger->logEvent( LogItem::MANUAL_OFF_TIME_UPDATE );
-                    _manual_off_time = tmp_mot;
+                    _manual_off_time = _last_time+tmp_dmot;
                     update_status = true;
                 }
-                else if ( tmp_mot == 0 )
+                else if ( tmp_dmot == 0 )
                 {
                     _logger->logEvent( LogItem::MANUAL_OFF_TIME_UPDATE );
                     _manual_off_time = 0;
@@ -485,27 +488,48 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                 // Start by updating smart temperature value
                 _updateSmartTemp();
 
-                // Target temp is "MAX" or "MIN" depending on mode and setting
-                // Detect if we are in "high" or in "low" temp selected:
-                bool high_temp_active =
-                        ( (_current_mode == AUTO_MODE) && _program.useHigh() ) ||
-                        ( (_current_mode == MANUAL_MODE) && ( _pellet->isOn() || _gas->isOn() ) );
-                float target_temperature = high_temp_active ? (_smart_temp_on ? _smart_temp : _max_temp) : _min_temp;
-                float hysteresis = high_temp_active ? _hysteresis_max : _hysteresis_min;
                 float sensor_temp = _temp_sensor->getTemp();
-
+                // Calculating over temp and under temp depends on mode.
+                // In MANUAL mode:
+                //       OverTemp means above maximum temperature
+                //       UnderTemp means below minimum temperature
+                //    In other words, when in "manual" mode there is a gap between _max_temp and _min_temp where
+                //    no action is taken (neither over nor under temp). Inside this gap, you can manually control.
+                // In AUTO mode, instead, it depends if the program is set for "high" or for "low":
+                //       OverTemp means above current threshold
+                //       UnderTemp means below current threshold
+                //     In other words, when in "auto" mode you are always either "over" or "under", in any case
+                //     an action will always be taken to wither keep temperature stable or try to change it.
+                float max_temp = _max_temp;
+                float min_temp = _min_temp;
+                float max_hyst = _hysteresis_max;
+                float min_hyst = _hysteresis_min;
+                if ( _current_mode == AUTO_MODE )
+                {
+                    if ( _program.useHigh() )
+                    {
+                        if ( _smart_temp_on )
+                            max_temp = _smart_temp;
+                        min_temp = max_temp;
+                        min_hyst = max_hyst;
+                    }
+                    else
+                    {
+                        max_temp = min_temp;
+                        max_hyst = min_hyst;
+                    }
+                }
                 // Verify overtemp and undertemp conditions
                 if ( _checkTargetTemperature( sensor_temp,
-                                              target_temperature,
-                                              hysteresis,
+                                              max_temp, max_hyst,
+                                              min_temp, min_hyst,
                                               _over_temp,
                                               _under_temp ) )
                     update_status = true;
 
                 // Verify excess temperature condition:
                 if ( _checkExcessTemperature( sensor_temp,
-                                              target_temperature,
-                                              high_temp_active,
+                                              _max_temp,
                                               _excessive_overtemp_threshold,
                                               _excessive_overtemp ) )
                     update_status = true;
@@ -536,11 +560,11 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                         if ( !all_is_off )
                         {
                             // Always respect manual user selection
-                            pellet_on = _pellet->isOn() || _gas_status_at_overtemp;
+                            pellet_on = _pellet->isOn();
                             pellet_minimum_on = _pellet->isLow() || _pellet_minimum_status_at_overtemp;
                             // The exception is GAS, which goes ON if a pellet flamout is detected.
                             // (note that if pellet is OFF, flameout is always false)
-                            gas_on = _gas->isOn() || (!pellet_minimum_on && _pellet_flameout);
+                            gas_on = (_gas->isOn() || _gas_status_at_overtemp) || (!pellet_minimum_on && _pellet_flameout);
                         }
                     }
                     // In automatic mode we use the program as source for pellet and gas status
@@ -570,13 +594,28 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                     // When under temp is detected, turn on the appropriate generator
                     if ( _under_temp )
                     {
-                        // Gas goes ON if flameout is detected for pellet, in any mode
-                        // In manual mode: gas stays on or off (under_temp is not enforced in manual mode)
-                        // In program mode: gas depends on program
-                        gas_on = gas_on || _pellet_flameout;
-                        // If in manual mode pellet is off, ignore pellet minimum.
-                        if ( pellet_on && pellet_minimum_on )
+                        // If pellet is on and not in flameout, switch to modulation
+                        if ( pellet_on && !_pellet_flameout )
+                        {
+                            if ( (_current_mode == MANUAL_MODE) && pellet_minimum_on )
+                                    _manual_pellet_minimum_forced_off = true;
                             pellet_minimum_on = false;
+                        }
+                        else // Pellet is off or in flameout, let's turn gas on now:
+                        {
+                            if ( (_current_mode == MANUAL_MODE) && !gas_on )
+                                    _manual_gas_forced_on = true;
+                            gas_on = true;
+                        }
+                    }
+                    else
+                    {
+                        if ( _manual_gas_forced_on )
+                            gas_on = false;
+                        if ( _manual_pellet_minimum_forced_off )
+                            pellet_minimum_on = true;
+                        _manual_gas_forced_on = false;
+                        _manual_pellet_minimum_forced_off = false;
                     }
                 } // end of not excessive temp
             }
@@ -709,13 +748,12 @@ bool RunnerThread::_checkFlameout()
 
 bool RunnerThread::_checkExcessTemperature(float sensor_temp,
                                            float target_temperature,
-                                           bool high_temp_active,
                                            float excessive_overtemp_threshold,
                                            bool& excessive_overtemp )
 {
     bool update_status = false;
-    // Excessive over-temperature is activated when sensor_temp is past the threshold in "high" program mode
-    if ( !excessive_overtemp && high_temp_active )
+    // Excessive over-temperature is activated when sensor_temp is past the threshold
+    if ( !excessive_overtemp )
     {
         excessive_overtemp = sensor_temp > ( target_temperature + excessive_overtemp_threshold );
         if ( excessive_overtemp )
@@ -729,7 +767,7 @@ bool RunnerThread::_checkExcessTemperature(float sensor_temp,
     else if ( excessive_overtemp )
     {
         excessive_overtemp = sensor_temp > target_temperature;
-        if ( !_excessive_overtemp )
+        if ( !excessive_overtemp )
         {
             _logger->logDebug("Resume from excessive overtemp");
             _logger->logEvent( LogItem::EXCESSIVE_OVERTEMP_OFF );
@@ -741,16 +779,21 @@ bool RunnerThread::_checkExcessTemperature(float sensor_temp,
 
 
 bool RunnerThread::_checkTargetTemperature(float sensor_temp,
-                                           float target_temperature,
-                                           float hysteresis,
+                                           float target_temperature_max,
+                                           float hysteresis_max,
+                                           float target_temperature_min,
+                                           float hysteresis_min,
                                            bool& prev_over_temp,
                                            bool& prev_under_temp )
 {
     bool update_status = false;
     if ( prev_under_temp )
-        target_temperature += hysteresis;
-    bool new_over = sensor_temp > target_temperature;
-    bool new_under = sensor_temp < target_temperature;
+    {
+        target_temperature_max += hysteresis_max;
+        target_temperature_min += hysteresis_min;
+    }
+    bool new_over = sensor_temp > target_temperature_max;
+    bool new_under = sensor_temp < target_temperature_min;
 
     if ( new_over != prev_over_temp )
     {

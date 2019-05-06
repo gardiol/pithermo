@@ -29,8 +29,12 @@ Generator::Generator(const std::string &n,
     _low_event(low_event),
     _high_event(high_event),
     _missed_start_event(missed_start_event),
-    _missed_start_clear_event(missed_start_clear_event),
+    _missed_start_clear_event(missed_start_clear_event),    
     _quiet(true)
+  #ifdef DEMO
+  , _off_since(0)
+  , _temp_hot(false)
+  #endif
 {
     setGPIOoutput( _command_gpio );
     setGPIOoutput( _power_gpio );
@@ -68,6 +72,9 @@ bool Generator::switchOn(bool force_power_high)
             // This is not a problem, anyway,
             setPower( POWER_HIGH );
         _on_since = FrameworkTimer::getTimeEpoc();
+#ifdef DEMO
+        _off_since = 0;
+#endif
         if ( !_quiet )
         {
             _logger->logEvent( _on_event );
@@ -88,6 +95,9 @@ bool Generator::switchOff(bool force_power_high)
             _logger->logEvent( _off_event );
             _logger->logDebug( _name + " OFF");
         }
+#ifdef DEMO
+        _off_since = FrameworkTimer::getTimeEpoc();
+#endif
         if ( force_power_high )
             // Restore power status to known value on shutoff,
             // Failing to do so can cause a mess when calculating statistics
@@ -169,10 +179,18 @@ bool Generator::isOn()
 
 bool Generator::isHot()
 {
+#ifndef DEMO
     // HIGH: mandata fredda, termostato off, relé chiuso, 3.3V
     // LOW: mandata calda, termostato on, relé aperto, 0V
     bool fdb = !readPGIObool( _status_gpio );
     return fdb;
+#else
+    if ( _on_since > 0 )
+        return (FrameworkTimer::getTimeEpoc() - _on_since) > 10;
+    else if ( _off_since > 0 )
+        return (FrameworkTimer::getTimeEpoc() - _off_since) < 10;
+    return false;
+#endif
 }
 
 uint64_t Generator::lastOnTime()

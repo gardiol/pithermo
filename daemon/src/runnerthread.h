@@ -36,13 +36,14 @@ private:
     bool _checkAntiIce();
     bool _checkFlameout();
     bool _checkTargetTemperature(float sensor_temp,
-                                 float target_temperature,
-                                 float hysteresis,
+                                 float target_temperature_max,
+                                 float hysteresis_max,
+                                 float target_temperature_min,
+                                 float hysteresis_min,
                                  bool &prev_over_temp,
                                  bool &prev_under_temp);
     bool _checkExcessTemperature(float sensor_temp,
                                  float target_temperature,
-                                 bool high_temp_active,
                                  float excessive_overtemp_threshold,
                                  bool& excessive_overtemp );
     bool _updateCurrentTime(uint64_t new_time);
@@ -97,6 +98,9 @@ private:
     uint64_t _pellet_startup_delay;
     float _hysteresis_max;
     float _hysteresis_min;
+
+    bool _manual_pellet_minimum_forced_off;
+    bool _manual_gas_forced_on;
 };
 
 #endif // RUNNERTHREAD_H

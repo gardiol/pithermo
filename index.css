@@ -207,11 +207,32 @@ img.today-table-img {
    background: beige;
 }
 
+#excess-temp-detected {
+    background: red;
+    color: yellow;
+    font-weight: bolder;
+}
+
 #power-box, #mode-box {
 	border: 1px solid black;
 	margin: 0.2em;
 	padding: 0.2em;
 	background: lightyellow;
+}
+
+#manual-pane-set {
+   padding: 0.2em;
+   width: 50%;
+   min-width: 40%;
+   margin-left: auto;
+   margin-right: auto;
+   margin-bottom: 0.2em;
+   background: peru;
+   border: 1px dashed black;
+}
+
+#manual_off_time {
+    width: 6em;
 }
 
 #status-main {
@@ -221,6 +242,13 @@ img.today-table-img {
 #status-info {
    text-align: center;
    margin-bottom: 0.5em;
+}
+
+#manual-cold-pane {
+    background: cyan;
+    margin: 0.1em;
+    border: 1px solid gray;
+    display: inline-block;
 }
 
 .status-boxes {
@@ -255,11 +283,11 @@ img.today-table-img {
 }
 
 #temp-pane {
-    height: 9em;
+    height: 11em;
 }
 
 #temp-pane-curr {
-    height: 9em;
+    height: 11em;
 }
 
 #temp-buttons {

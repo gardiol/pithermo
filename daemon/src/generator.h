@@ -60,6 +60,10 @@ private:
     LogItem::Event _missed_start_event;
     LogItem::Event _missed_start_clear_event;
     bool _quiet;
+#ifdef DEMO
+    uint64_t _off_since;
+    bool _temp_hot;
+#endif
 };
 
 #endif // GENERATOR_H
