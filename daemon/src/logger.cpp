@@ -194,6 +194,27 @@ bool Logger::fetchInterval(uint64_t from, uint64_t to, std::list<LogItem> &items
     return ret;
 }
 
+void Logger::_statsPelletOff( uint64_t& pellet_on_since,
+                              uint32_t& pellet_on_time,
+                              uint64_t& pellet_low_on_since,
+                              uint32_t& pellet_low_time,
+                              bool& pellet_was_on,
+                              bool& pellet_on,
+                              uint64_t event_time )
+{
+    if ( pellet_on_since > 0 )
+    {
+        pellet_on_time += event_time - pellet_on_since;
+        pellet_on_since = 0;
+    }
+    if ( pellet_low_on_since > 0 ) // Where at minimum? Calculate the time too...
+    {
+        pellet_low_time += event_time - pellet_low_on_since;
+        pellet_low_on_since = 0;
+    }
+    pellet_on = false;
+}
+
 bool Logger::calculateStats(uint64_t from, uint64_t to,
                             bool& on_are_valid,
                             bool& pellet_on,
@@ -209,7 +230,7 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
     std::list<LogItem> items;
     uint64_t gas_on_since = 0;
     uint64_t pellet_on_since = 0;
-    uint64_t pellet_low_on_since = 0;    
+    uint64_t pellet_low_on_since = 0;
     if ( !on_are_valid )
         ret = fetchInterval( from, to, items, true,
                              pellet_on, pellet_minimum_on, gas_on, pellet_flameout );
@@ -246,7 +267,7 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                 {
                     if ( ( pellet_on_since > 0 ) &&
                          ( pellet_low_on_since == 0 ) )
-                            pellet_low_on_since = event_time;
+                        pellet_low_on_since = event_time;
                 }
                 break;
 
@@ -297,18 +318,24 @@ bool Logger::calculateStats(uint64_t from, uint64_t to,
                 pellet_flameout = true;
                 // Stop calculating pellet stats now. There will be some discrepancy,
                 // but we don't know exactly WHEN the flameout occurred.
+                _statsPelletOff( pellet_on_since,
+                                 pellet_on_time,
+                                 pellet_low_on_since,
+                                 pellet_low_time,
+                                 pellet_was_on,
+                                 pellet_on,
+                                 event_time );
+                break;
+
             case LogItem::PELLET_OFF:
-                if ( pellet_on_since > 0 )
-                {
-                    pellet_on_time += event_time - pellet_on_since;
-                    pellet_on_since = 0;
-                }
-                if ( pellet_low_on_since > 0 ) // Where at minimum? Calculate the time too...
-                {
-                    pellet_low_time += event_time - pellet_low_on_since;
-                    pellet_low_on_since = 0;
-                }
-                pellet_on = false;
+                _statsPelletOff( pellet_on_since,
+                                 pellet_on_time,
+                                 pellet_low_on_since,
+                                 pellet_low_time,
+                                 pellet_was_on,
+                                 pellet_on,
+                                 event_time );
+                pellet_was_on = false;
                 break;
 
             case LogItem::PELLET_HOT:
