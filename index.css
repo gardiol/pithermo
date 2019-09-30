@@ -283,11 +283,11 @@ img.today-table-img {
 }
 
 #temp-pane {
-    height: 11em;
+    height: 10em;
 }
 
 #temp-pane-curr {
-    height: 11em;
+    height: 10em;
 }
 
 #temp-buttons {
@@ -295,11 +295,11 @@ img.today-table-img {
 }
 
 #pellet-status {
-    height: 11em;
+    height: 10em;
 }
 
 #gas-status {
-    height: 11em;
+    height: 10em;
 }
 
 #temp-label, #humi-label {

@@ -13,16 +13,12 @@ require([
     "dijit/form/NumberSpinner",
     "dojo/domReady!"], 
 function( dom, attr, dclass, style, dc, html, on,// Dojo
-          ConfirmDialog, Button, NumberSpinner)// Dijit
+          ConfirmDialog )// Dijit
 {
     sts = {
-        tempBts: {},
         timer: null,
-        min_temp: null,
-        max_temp: null,
         excess_temp: null,
         smart_temp: false,
-        auto_off: false,
 	
         confirm: function(msg,ok,cmd){
             var dialog = new ConfirmDialog({title: "Conferma comando...",content: msg});
@@ -35,57 +31,45 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             });
             dialog.show();
         },
-        updTempBts: function(v){
-            if ( v >= 1 ){
-                var s=Math.floor(v)-1;
-                for ( var r = 0; r < 5; r++ ){
-                    for ( var c = 0; c < 5; c++ ){                
-                        var btn = sts.tempBts[r][c];
-                        btn.set("label", s.toFixed(1) );
-                        s+=0.1;
-                    }
-                }    
-            }
-        },
-        setTemp:function(v,w,t){
-            eTempVal.set("value", v );
-            eTemp.set("minOrMax", w);
-            eTemp.set("title", t);
-            sts.updTempBts(v);
+        setTemp:function(w){
+            var v="xx.x",t="err";         
+            if ( w == 0 ){
+                v = min_temp.get('label');
+                t = "Cambia temperatura minima";
+            }else if(w==1){
+                v = max_temp.get('label');
+                t = "Cambia temperatura massima";
+            }else if(w==2){
+                v = min_hyst.get('label');
+                t = "Cambia isteresi minima";
+            }else if(w==3){
+                v = max_hyst.get('label');
+                t = "Cambia isteresi massima";
+            }else if(w==4){
+                v = excess_temp.get('label');
+                t = "Cambia soglia di eccesso";
+            }            
+            eTemp.set("from", w);   
+            eTemp.set("title", t );
+            eTempVal.set("value", parseFloat(v) );
             eTemp.show();		  
         },        
-        saveTemp: function(m,v){	
-            postRequest("cgi-bin/set_"+m+"_temp",v,function(result){sts.update()},function(err){alert("Command error: " + err );});
-        },
-        hystEnable: function(w){
-            if ( w ){
-                var e = hyst_max_enable.checked;
-                hyst_max.set("disabled", !e );
-                if ( e )
-                    dclass.remove(hyst_max_save.domNode, "hidden" );
-                else
-                    dclass.add(hyst_max_save.domNode, "hidden" );
-            }else{
-                var e = hyst_min_enable.checked;
-                hyst_min.set("disabled", !e );
-                if ( e )
-                    dclass.remove(hyst_min_save.domNode, "hidden" );
-                else
-                    dclass.add(hyst_min_save.domNode, "hidden" );
+        saveTemp: function(){	
+            var m = eTemp.attr('from');
+            var v = eTempVal.get('value');
+            var c = "";
+            if ( m == 0 ){
+                c = "min-temp"+v;
+            }else if ( m == 1 ){
+                c = "max-temp"+v;
+            }else if ( m == 2 ){
+                c = "set-hyst-min"+v;
+            }else if ( m == 3 ){
+                c = "set-hyst-max"+v;
+            }else if ( m == 4 ){
+                c = "exc-temp"+v;
             }
-        },
-        saveHyst: function(w){
-            if ( w ){
-                putRequest("cgi-bin/command","set-hyst-max"+hyst_max.get("value"),function(result){sts.update()},function(err){alert("Command error: " + err );});
-                hyst_max.set("disabled", true );
-                dclass.toggle(hyst_max_save.domNode, "hidden" );
-                hyst_max_enable.set("checked", false );
-            }else{
-                putRequest("cgi-bin/command","set-hyst-min"+hyst_min.get("value"),function(result){sts.update()},function(err){alert("Command error: " + err );});
-                hyst_min.set("disabled", true );
-                dclass.toggle(hyst_min_save.domNode, "hidden" );
-                hyst_min_enable.set("checked", false );
-            }
+            putRequest("cgi-bin/command",c,function(result){sts.update()},function(err){alert("Command error: " + err );});
         },
         toggleSmart: function(){ 
             smart_temp_on.set("checked", sts.smart_temp);
@@ -101,10 +85,27 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             dialog.show();
         },
         
+        saveOffTime: function(){
+            var v = eOffTime.attr("off-time") - (new Date() / 1000);
+            putRequest("cgi-bin/command","set-mot"+v,function(result){sts.update()},function(err){alert("Command error: " + err );});
+        },
+        disableOffTime: function(){
+            putRequest("cgi-bin/command","set-mot0",function(result){sts.update()},function(err){alert("Command error: " + err );});
+        },
+        setOffTime: function(){
+            var v = Math.floor( new Date() / 1000 );
+            eOffTime.set("off-time", v);          
+            sts.updateOffTime(1800);
+            eOffTime.show();
+        },
+        updateOffTime: function(v){
+            eOffTime.set("off-time", eOffTime.attr("off-time")+v );          
+            eOffTimeEdit.set("value", utils.printDate( eOffTime.attr("off-time")*1000 ) );
+        },
+        
         disableAll:function(){
-            html.set("manual-off-label", "" );
-            manual_off_enable.set("disabled", true );
-            manual_off_edit.set("disabled", true );
+            manual_off_time.set("disabled", true );
+            manual_off_time.set("label", "--:--" );
             dclass.add("excess-temp-detected", "hidden");
             dclass.add("manual-pane-set", "hidden" );
             dclass.add("pellet-flameout-led", "celated");
@@ -122,36 +123,12 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             min_temp.set("disabled", true);
             max_temp.set("disabled", true);
             excess_temp.set("disabled", true);
-            min_temp_m.set("disabled", true);
-			max_temp_m.set("disabled", true);
-			min_temp_p.set("disabled", true);
-			max_temp_p.set("disabled", true);
             html.set("smart_temp", "off");
             min_temp.set("label", "XX.X°C" );
-			max_temp.set("label", "XX.X°C" );
-			excess_temp.set("label", "XX.X°C" );
+            max_temp.set("label", "XX.X°C" );
+            excess_temp.set("label", "XX.X°C" );
             hyst_max.set("value", "X.X");
             hyst_min.set("value", "X.X");
-        },
-        
-        saveOffTime: function(v){
-            if ( !v ){
-                v = (eOffTimeEdit.get("value") / 1000) - eOffTimeEdit.get("value").getTimezoneOffset()*60;
-            }
-            putRequest("cgi-bin/command","set-mot"+v,function(result){sts.update()},function(err){alert("Command error: " + err );});
-        },
-        
-        toggleManualOff: function(){
-            if ( sts.auto_off ){
-                var dialog = new ConfirmDialog({title: "Autospegnimento",
-                    content: "Disattivo spegnimento automatico?"});
-                dialog.set("buttonOk", "Si");
-                dialog.set("buttonCancel", "Annulla");
-                dialog.on("execute", function(){ sts.saveOffTime(0); } );
-                dialog.show();                
-            } else {
-                eOffTime.show();                
-            }               
         },
         
         update: function(){
@@ -164,8 +141,6 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                     var program = null;
                     var s = result.split(" ");
                     if ( s.length == 22 ){
-                        sts.min_temp = parseFloat(s[10]);
-                        sts.max_temp = parseFloat(s[9]);
                         sts.excess_temp = parseFloat(s[20]);
                         
                         if ( s[21] =="1")
@@ -180,16 +155,14 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
 
                             min_temp.set("disabled", false);
                             max_temp.set("disabled", false);
-                            min_temp_m.set("disabled", false);
-                            max_temp_m.set("disabled", false);
-                            min_temp_p.set("disabled", false);
-                            max_temp_p.set("disabled", false);
                             excess_temp.set("disabled", false);
                             smart_temp_on.set("disabled", false);
-                            manual_off_enable.set("disabled", false);
+                            manual_off_time.set("disabled", false);
 
-                            min_temp.set("label", sts.min_temp.toFixed(1) + "°C" );
-                            max_temp.set("label", sts.max_temp.toFixed(1) + "°C" );
+                            min_temp.set("label", parseFloat(s[10]).toFixed(1) + "°C" );
+                            max_temp.set("label", parseFloat(s[9]).toFixed(1) + "°C" );
+                            min_hyst.set("label", parseFloat(s[12]).toFixed(1) + "°C" );
+                            max_hyst.set("label", parseFloat(s[11]).toFixed(1) + "°C" );
                             excess_temp.set("label", sts.excess_temp.toFixed(1) + "°C" );
                             sts.smart_temp = s[17]=="1";//smart temp on
                             smart_temp_on.set("checked", sts.smart_temp);
@@ -198,18 +171,12 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             }else{
                                 html.set("smart_temp", "off");
                             }
-                            if ( ! hyst_max_enable.checked )                               
-                                hyst_max.set("value", parseFloat(s[11]) ); //Hysteresis
-                            if ( ! hyst_min_enable.checked )                               
-                                hyst_min.set("value", parseFloat(s[12]) ); //Hysteresis
                             if ( s[3]=="1" ){//Manual mode
-                                
-                                var off_time = parseInt(s[19]);
-                                sts.auto_off = off_time != 0;
-                                html.set("manual-off-label", sts.auto_off ? "spegnimento alle "+utils.printDate( off_time*1000 ) : "" );
-                                manual_off_edit.set("disabled",  !sts.auto_off);
-                                manual_off_enable.set("checked", sts.auto_off);
-
+                                var moft = parseInt(s[19]);
+                                if ( moft != 0 )
+                                    manual_off_time.set("label", utils.printDate( moft*1000 ) );
+                                else
+                                    manual_off_time.set("label", "--:--" );
                                 dclass.remove("manual-pane-set", "hidden" );
                                 attr.set("mode-led", "src", "images/manual.png");                
                                 status_manual.set("disabled", true );
@@ -284,22 +251,5 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                     sts.timer = window.setTimeout( function(){ sts.update(); }, 1000 );
                 });
             }
-        };
-	
-       
-        for ( var r = 0; r < 5; r++ ){
-            var x = dc.create("tr", null, dom.byId("eTempTable") );
-            sts.tempBts[r] = {};
-            for ( var c = 0; c < 5; c++ ){                
-                sts.tempBts[r][c] = new Button({
-                        label:'xx.x',
-                        onClick: function(){
-                            eTempVal.set("value", parseFloat(this.get("label")) );
-                            sts.updTempBts(eTempVal.get("value"));
-                        }
-                    }, dc.create("td",{}, x) );
-                sts.tempBts[r][c].startup();
-            }
-        }    
-        
+        };        
 });
