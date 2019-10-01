@@ -17,8 +17,6 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
 {
     sts = {
         timer: null,
-        excess_temp: null,
-        smart_temp: false,
 	
         confirm: function(msg,ok,cmd){
             var dialog = new ConfirmDialog({title: "Conferma comando...",content: msg});
@@ -72,13 +70,13 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             putRequest("cgi-bin/command",c,function(result){sts.update()},function(err){alert("Command error: " + err );});
         },
         toggleSmart: function(){ 
-            smart_temp_on.set("checked", sts.smart_temp);
+            var smart_temp = !smart_temp_on.checked; // due to state change on click
             var dialog = new ConfirmDialog({title: "Smart Temp",
-                content: !sts.smart_temp ? "Abilito la smart temp?" : "Disabilito la smart temp?"});
+                content: !smart_temp ? "Abilito la temperatura smart?" : "Disabilito la temperatura smart?"});
             dialog.set("buttonOk", "Si");
             dialog.set("buttonCancel", "Annulla");
             dialog.on("execute", function(){
-                putRequest("cgi-bin/command", sts.smart_temp ? "smart-temp-off" : "smart-temp-on", 
+                putRequest("cgi-bin/command", smart_temp ? "smart-temp-off" : "smart-temp-on", 
                     function(result){sts.update();},
                     function(err){alert("Command error: " + err );});
             });
@@ -123,7 +121,6 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             min_temp.set("disabled", true);
             max_temp.set("disabled", true);
             excess_temp.set("disabled", true);
-            html.set("smart_temp", "off");
             min_temp.set("label", "XX.X°C" );
             max_temp.set("label", "XX.X°C" );
             excess_temp.set("label", "XX.X°C" );
@@ -141,7 +138,6 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                     var program = null;
                     var s = result.split(" ");
                     if ( s.length == 22 ){
-                        sts.excess_temp = parseFloat(s[20]);
                         
                         if ( s[21] =="1")
                             dclass.remove("excess-temp-detected", "hidden");
@@ -163,13 +159,13 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                             max_temp.set("label", parseFloat(s[9]).toFixed(1) + "°C" );
                             min_hyst.set("label", parseFloat(s[12]).toFixed(1) + "°C" );
                             max_hyst.set("label", parseFloat(s[11]).toFixed(1) + "°C" );
-                            excess_temp.set("label", sts.excess_temp.toFixed(1) + "°C" );
-                            sts.smart_temp = s[17]=="1";//smart temp on
-                            smart_temp_on.set("checked", sts.smart_temp);
-                            if ( sts.smart_temp ){
-                                html.set("smart_temp", parseFloat(s[18]).toFixed(1));
+                            excess_temp.set("label", parseFloat(s[20]).toFixed(1) + "°C" );
+                            if ( s[17]=="1" ){ //smart temp on
+                                smart_temp_on.set("checked", true);
+                                smart_temp_on.set("label", "smart ("+parseFloat(s[18]).toFixed(1)+"°C)");
                             }else{
-                                html.set("smart_temp", "off");
+                                smart_temp_on.set("checked", false);
+                                smart_temp_on.set("label", "smart (--.-°C)");
                             }
                             if ( s[3]=="1" ){//Manual mode
                                 var moft = parseInt(s[19]);
@@ -233,7 +229,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                         html.set("temp-label",parseFloat(s[13]).toFixed(1) + "C (" + parseFloat(s[15]).toFixed(1) + "C)" ); // t.int/ext
                         html.set("humi-label", parseFloat(s[14]).toFixed(1) + "% (" + parseFloat(s[16]).toFixed(1) + "%)" );// h.int/ext                        
                         
-                        html.set("update-time", utils.printDate(new Date()) + " (ok)" );
+                        html.set("update-time", /*utils.printDate(new Date()) +*/" (ok)" );
                     } else {// result is valid
                         sts.disableAll();
                     }
@@ -247,7 +243,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                     attr.set("pellet-minimum-status-led", "src", "images/pellet-modulazione.png");
                     attr.set("pellet-status-led", "src", "images/pellet-off.png");
                     attr.set("gas-status-led", "src", "images/gas-off.png");
-                    html.set("update-time", utils.printDate(new Date()) + " (ko)" );
+                    html.set("update-time", /*utils.printDate(new Date()) +*/ " (ko)" );
                     sts.timer = window.setTimeout( function(){ sts.update(); }, 1000 );
                 });
             }

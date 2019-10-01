@@ -181,23 +181,11 @@
                   
     <div id="status-main">
     
-        <div id="manual-pane-set" class="hidden">
-            <div class="status-title">
-                Impostazioni manuali
-            </div>
-            <div>    
-                Spegnimento automatico alle:  
-                <button data-dojo-id="manual_off_time" 
-                        data-dojo-type="dijit/form/Button" 
-                        data-dojo-props="onClick:function(){sts.setOffTime()}">
-                    --:--
-                </button>
-            </div>
-        </div><!-- manual pane-->
-    
         <div id="temp-pane-curr" class="status-boxes">
             <div class="status-title">
                 Temperature attuali
+                                <span id="update-time">--</span>
+
             </div>
             <div id="temp-stats">
                 Temperatura: <span id="temp-label"></span>
@@ -205,21 +193,27 @@
             <div>
                 Umidità: <span id="humi-label"></span>
             </div>
-            <div>
-                <span id="update-time">--</span>
+            <div id="manual-pane-set">    
+                Spegnimento alle:  
+                <button data-dojo-id="manual_off_time" 
+                        data-dojo-type="dijit/form/Button" 
+                        data-dojo-props="onClick:function(){sts.setOffTime()}">
+                    --:--
+                </button>
             </div>
-                <div id="excess-temp-pane">
-                Shut-off delta:
-                    <button data-dojo-id="excess_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(4)}">
-                        XX.X°C                
-                    </button>
-                    <img alt="excess" class="hyst-img" src="images/excess.png?1"/>
-                    <span id="excess-temp-detected" class="hidden">SOGLIA SUPERATA!</span>
-                </div>        </div><!-- temp pane curr-->
+        </div><!-- temp pane curr-->
 
         <div id="temp-pane" class="status-boxes">
             <div class="status-title">
                 Controlllo Temperature
+                <div class="status-widget">
+                    <button data-dojo-id="smart_temp_on" 
+                            data-dojo-type="dijit/form/ToggleButton" 
+                            data-dojo-props="iconClass:'dijitCheckBoxIcon'" 
+                            onClick="sts.toggleSmart()">
+                        smart (--.-°C)
+                    </button>
+                </div>
             </div>
             <div>
                 <img alt="minTemp" class="temp-img" src="images/min-temp.png?1"/>
@@ -255,14 +249,14 @@
                 </button>
                 <img alt="hyst-max" class="hyst-img" src="images/hyst_max.png?1"/>
             </div>
-            <div>
-                <div id="smart-temp-pane">
-                    <button data-dojo-id="smart_temp_on" data-dojo-type="dijit/form/ToggleButton" data-dojo-props="iconClass:'dijitCheckBoxIcon'" onClick="sts.toggleSmart()">
-                        Smart Temp
-                    </button>
-                    (Attuale:<span id="smart_temp">off</span>°C)
-                </div>
-            </div>
+            <div id="excess-temp-pane">
+            Shut-off delta:
+                <button data-dojo-id="excess_temp" data-dojo-type="dijit/form/Button" type="submit" data-dojo-props="onClick:function(){sts.setTemp(4)}">
+                    XX.X°C                
+                </button>
+                <img alt="excess" class="hyst-img" src="images/excess.png?1"/>
+                <span id="excess-temp-detected" class="hidden">SOGLIA SUPERATA!</span>
+            </div>        
         </div><!-- temp pane-->
     
         <div id="pellet-status" class="status-boxes">

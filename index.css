@@ -221,14 +221,8 @@ img.today-table-img {
 }
 
 #manual-pane-set {
-   padding: 0.2em;
-   width: 50%;
-   min-width: 40%;
    margin-left: auto;
    margin-right: auto;
-   margin-bottom: 0.2em;
-   background: peru;
-   border: 1px dashed black;
 }
 
 #manual_off_time {
@@ -265,7 +259,14 @@ img.today-table-img {
 	font-style: bold;
 	font-size: 140%;
 	border-bottom: 1px dotted black;
-    margin-bottom: 0.5em;
+  margin-bottom: 0.5em;
+  height: 1.5em;
+}
+
+.status-widget {
+  font-style: normal;
+  font-size: 60%;
+   display: inline-table;
 }
 
 #update-time {
