@@ -328,7 +328,7 @@
                     data-dojo-type="dijit/form/CheckBox" 
                     onChange="evt.toggleRange();"/>
             Scegli periodo
-            <div id="events-range" class="hidden" style="display: inline">
+            <div id="events-range" class="hidden">
                 Dal:
                 <input data-dojo-id="eventsStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
                 al:
@@ -682,28 +682,30 @@
     </div>
 </div><!-- program area-->
 
+
+
 <div id="history-area">
   <div id="history-controls">
+    <img id="history-size" src="images/enlarge.png?1" class="enlarge-img" style="margin-left: 3em;"/>
 	 <div>
-        <div>
-            <input data-dojo-id="historyUseRange" data-dojo-type="dijit/form/CheckBox" onChange="hst.toggleRange();"/>
+            Grafico 
+            (<input data-dojo-id="historyUseRange" data-dojo-type="dijit/form/CheckBox" onChange="hst.toggleRange();"/>
             Scegli periodo
-			<button data-dojo-id="historyRangeUpdate" data-dojo-type="dijit/form/Button" onClick="hst.update()" type="button">Aggiorna!</button>
-        </div>
-		<div id="history-range" class="hidden">
-			Dal:
-			<input data-dojo-id="historyStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
-			al:
-			<input data-dojo-id="historyEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
-		</div>
+        <div id="history-range" class="hidden">
+            Dal:
+            <input data-dojo-id="historyStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
+            al:
+            <input data-dojo-id="historyEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
+        </div>)
+		<button data-dojo-id="historyRangeUpdate" data-dojo-type="dijit/form/Button" onClick="hst.update()" type="button">Aggiorna!</button>
         <div>
             <input id="show-temp" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="hst.drawGraph()"/>Temperatura
             <input id="show-humi" data-dojo-type="dijit/form/CheckBox" value="2" onChange="hst.drawGraph()"/>Umidità
             <input id="show-ext-temp" data-dojo-type="dijit/form/CheckBox" value="3" checked onChange="hst.drawGraph()"/>Temperatura esterna
             <input id="show-ext-humi" data-dojo-type="dijit/form/CheckBox" value="4" onChange="hst.drawGraph()"/>Umidità esterna
-            <img id="history-size" src="images/enlarge.png?1" class="temp-img" style="margin-left: 3em;"/>
         </div>
     </div>
+
     <div>
 		<div id="history-stats">
 			<div id="history-stats-t">

@@ -170,9 +170,13 @@ img.today-table-img {
     height: 48em !important;
 }
 
+#history-range {
+  display: inline;
+}
+
 #history-controls {
     text-align: center;
-    padding: 1em 0 0.2em 0;
+    padding: 0 0 0.2em 0;
     background: linear-gradient(PeachPuff,LightGrey);
     border-top: 2px groove gray;
 }
@@ -342,6 +346,10 @@ img#pellet-feedback-led {
     padding-bottom: 0.5em;
     border-top: 2px groove gray;
     height: 1.5em;
+}
+
+#events-range {
+  display: inline;
 }
 
 #messages {
