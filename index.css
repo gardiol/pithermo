@@ -52,12 +52,13 @@
 
 #program-selector > div {
 	display: inline-block;
-	border: 2px solid gray;
-	padding: 1em;
+	border: 4px solid darkgray;
+	padding: 0.3em;
+  margin-bottom: 0.5em;
 }
 
 #program-selector > div  > img {
-	height: 3em;
+	height: 2em;
 	vertical-align: middle;
 }
 
@@ -95,7 +96,7 @@ img.today-table-img {
 }
 
 .program-selected {
-    border: 4px dashed darkred !important;
+    border: 4px solid darkblue !important;
 }
 
 #program-changed {
