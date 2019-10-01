@@ -330,8 +330,8 @@ img.status-icon-flame {
 }
 
 img.info-icon {
-	height: 2.5em;
-	vertical-align: middle;
+	height: 3em;
+	vertical-align: top;
 }
 
 img#pellet-feedback-led {

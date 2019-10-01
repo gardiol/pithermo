@@ -29,8 +29,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
 {
     hst = { 
         ttipRect: null,
-        hStart: null,
-        hEnd: null,
         data: {},
         mins: null,
         maxs: null,
@@ -52,7 +50,8 @@ function( dom, attr, dclass, style, html, on,// Dojo
 
         toggleRange: function(){
             dclass.toggle(dom.byId("history-range"), "hidden");
-            hst.update();
+            if ( !historyUseRange.checked )
+                hst.update();
         },
         
         drawGraph: function(){
@@ -73,10 +72,10 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 hst.nPoints++;
             }
             if ( hst.mins ){
-                html.set(dom.byId("history-stats-te"), "T(int): " + hst.mins[0].toFixed(1) + " ...(" + hst.avgs[0].toFixed(1) + ")... " + hst.maxs[0].toFixed(1) + "" );
-                html.set(dom.byId("history-stats-ex"), "T(est): " + hst.mins[2].toFixed(1) + " ...(" + hst.avgs[2].toFixed(1) + ")... " + hst.maxs[2].toFixed(1) + "" );
-                html.set(dom.byId("history-stats-hu"), "H(int): " + hst.mins[1].toFixed(1) + " ...(" + hst.avgs[1].toFixed(1) + ")... " + hst.maxs[1].toFixed(1) + "" );
-                html.set(dom.byId("history-stats-hx"), "H(est): " + hst.mins[3].toFixed(1) + " ...(" + hst.avgs[3].toFixed(1) + ")... " + hst.maxs[3].toFixed(1) + "" );
+                html.set(dom.byId("history-stats-te"), hst.mins[0].toFixed(1) + " (" + hst.avgs[0].toFixed(1) + ") " + hst.maxs[0].toFixed(1) );
+                html.set(dom.byId("history-stats-ex"), hst.mins[2].toFixed(1) + " (" + hst.avgs[2].toFixed(1) + ") " + hst.maxs[2].toFixed(1) );
+                html.set(dom.byId("history-stats-hu"), hst.mins[1].toFixed(1) + " (" + hst.avgs[1].toFixed(1) + ") " + hst.maxs[1].toFixed(1) );
+                html.set(dom.byId("history-stats-hx"), hst.mins[3].toFixed(1) + " (" + hst.avgs[3].toFixed(1) + ") " + hst.maxs[3].toFixed(1) );
             }
             for ( var n in axna )
                 hst.grp.updateSeries( axna[n], list[n] );    
@@ -84,17 +83,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
             hst.grp.setAxisWindow("x", hst.xScale, hst.xOffset ); 
             hst.grp.render();        
         },
-			
-        clearData: function(){
-            hst.data = {};
-            hst.mins = null;
-            hst.maxs = null;
-            hst.avgs = null;
-            hst.xref = [];
-            hst.nPoints = 0;
-            hst.drawGraph();                                
-        },
-    
+			    
         setData: function(new_rows){
             var len = new_rows.length;
             var pos = 0;
@@ -126,27 +115,28 @@ function( dom, attr, dclass, style, html, on,// Dojo
         
         update: function(){
             if ( !historyUseRange.checked ){
-                hst.hStart = new Date();
-                hst.hEnd = new Date();
-                historyEnd.set("value", hst.hEnd );
-                historyStart.set("value", hst.hStart );
-            } else {
-                hst.hEnd = historyEnd.get("value")
-                hst.hStart = historyStart.get("value")
+                historyEnd.set("value", new Date() );
+                historyStart.set("value", new Date() );
             }
-            var sDate = hst.hStart;sDate.setHours(0);sDate.setMinutes(0);sDate.setSeconds(0);
-            var eDate = hst.hEnd;eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(59);
+            var sDate = historyStart.get("value");sDate.setHours(0);sDate.setMinutes(0);sDate.setSeconds(0);
+            var eDate = historyEnd.get("value");eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(59);
             var startDate = Math.floor( sDate / 1000 );
             var endDate = Math.floor( eDate / 1000 ); 
             var n_samples = (endDate-startDate)/600; // 1pt every 10 mins
             if ( n_samples < 2 ) n_samples = 2;
             if ( n_samples > 6*48 ) n_samples = 6*48; 
             
-            hst.clearData();
             postRequest("cgi-bin/history",startDate+":"+endDate+":"+n_samples.toFixed(0),
                 function(result){
-                    if ( result )
+                    if ( result ){
+                        hst.data = {};
+                        hst.mins = null;
+                        hst.maxs = null;
+                        hst.avgs = null;
+                        hst.xref = [];
+                        hst.nPoints = 0;
                         hst.setData(result);
+                    }
                 },
                 function(err){
                 });                    
