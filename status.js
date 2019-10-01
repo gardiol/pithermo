@@ -71,7 +71,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
         },
         toggleSmart: function(){ 
             var smart_temp = !smart_temp_on.checked; // due to state change on click
-            var dialog = new ConfirmDialog({title: "Smart Temp",
+            var dialog = new ConfirmDialog({title: "Temperatura autoregolata",
                 content: !smart_temp ? "Abilito la temperatura smart?" : "Disabilito la temperatura smart?"});
             dialog.set("buttonOk", "Si");
             dialog.set("buttonCancel", "Annulla");

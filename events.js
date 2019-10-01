@@ -89,10 +89,10 @@ function( dom, dclass, on, dc)    // Dojo
                 evt.hEnd = eventsEnd.get("value")
                 evt.hStart = eventsStart.get("value")
             }
-                var sDate = evt.hStart;sDate.setHours(0);sDate.setMinutes(0);sDate.setSeconds(0);
-                var eDate = evt.hEnd;eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(59);
-				var startDate = Math.floor( sDate / 1000 );
-				var endDate = Math.floor( eDate / 1000 ); 
+            var sDate = evt.hStart;sDate.setHours(0);sDate.setMinutes(0);sDate.setSeconds(0);
+            var eDate = evt.hEnd;eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(59);
+			var startDate = Math.floor( sDate / 1000 );
+			var endDate = Math.floor( eDate / 1000 ); 
 
             postRequest("cgi-bin/events",startDate+":"+endDate+":120",
 				function(events){

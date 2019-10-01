@@ -39,7 +39,7 @@
 
 #program-editor {
    border-top: 1px solid gray;
-   padding: 0.4em;
+   padding: 0.5em;
 }
 
 .hot-prg {
@@ -67,7 +67,6 @@
 
 .program-table {
    display: inline-block;
-   margin-top: 1em;
    background: LemonChiffon;
 	border-collapse: collapse;
    border: 1px solid black;
@@ -278,6 +277,12 @@ img.today-table-img {
    vertical-align: middle;
 }
 
+.enlarge-img {
+   height: 2em;
+   vertical-align: top;
+   float: right;
+}
+
 .hyst-img {
    height: 1em;
    vertical-align: middle;
@@ -329,14 +334,18 @@ img#pellet-feedback-led {
 }
 
 #events {
-    padding-top: 1em;
+    margin-top: 1em;
+    margin-left: 0.2em;
+    margin-right: 0.2em;
     text-align: center;
     padding-bottom: 0.5em;
+    border-top: 2px groove gray;
+    height: 1.5em;
 }
 
 #messages {
-	margin-left: 3em;
-	margin-right: 3em;
+	margin-left: 0.5em;
+	margin-right: 0.5em;
 	border: 1px solid gray;
 	height: 5em;
 	overflow-y: scroll;

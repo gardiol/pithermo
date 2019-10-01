@@ -85,12 +85,8 @@ function( dom, attr, dclass, style, dc, html, json, on, query,  // Dojo
                 html.set(dom.byId("program-changed"), "Salvare il template modificato?");
             if ( !prg.edited ){
                 dclass.add(dom.byId("program-change"), "celated");
-                dclass.add(prg.restore, "hidden");
-                dclass.add(prg.apply, "hidden");
             }else{
                 dclass.remove(dom.byId("program-change"), "celated");
-                dclass.remove(prg.restore, "hidden");
-                dclass.remove(prg.apply, "hidden");
             }
         },
         setEditTemplate: function(e){

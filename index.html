@@ -320,20 +320,22 @@
 
     </div><!-- status main-->
     
+
     <div id="events">
         <div>
-            <div>
-                <input data-dojo-id="eventsUseRange" data-dojo-type="dijit/form/CheckBox" onChange="evt.toggleRange();"/>
-                Scegli periodo
-                <img id="events-size" src="images/enlarge.png?1" class="temp-img" style="margin-left: 3em;"/>
-            </div>
-            <div id="events-range" class="hidden">
+            Lista degli eventi: 
+            (<input data-dojo-id="eventsUseRange" 
+                    data-dojo-type="dijit/form/CheckBox" 
+                    onChange="evt.toggleRange();"/>
+            Scegli periodo
+            <div id="events-range" class="hidden" style="display: inline">
                 Dal:
                 <input data-dojo-id="eventsStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
                 al:
                 <input data-dojo-id="eventsEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
                 <button data-dojo-id="eventsRangeUpdate" data-dojo-type="dijit/form/Button" onClick="evt.update()" type="button">Aggiorna!</button>
-            </div>
+            </div>)
+            <img id="events-size" src="images/enlarge.png?1" class="enlarge-img"/>
         </div>
     </div>
     <div id="messages">
@@ -342,8 +344,16 @@
 
 </div><!-- status area-->
     
+
+
+
+
+
 <div id="program-area">
     <div id="program-header">
+        Programmazione automatica
+                    <button data-dojo-id="programEdit" data-dojo-type="dijit/form/Button" onClick="prg.toggleEdit()">modifica...</button>
+
         <div id="today-table-div">
             <table class="program-table">
                 <col class="halfCol">
@@ -476,11 +486,14 @@
                 </tr>
             </table>
         </div>
-        <div>
-            <button data-dojo-id="programEdit" data-dojo-type="dijit/form/Button" onClick="prg.toggleEdit()">Modifica programma</button>
-        </div>
     </div>
+
     <div id="program-editor" class="hidden">
+        <div id="program-change" class="celated">
+            <img id="program-apply" class="button-img" src="images/apply.png?1"/>
+            <span id="program-changed">Salvare il programma modificato?</span>
+            <img id="program-restore" class="button-img" src="images/restore.png?1"/>
+        </div>
         <div id="program-selector">
             <div id="select-pelletgas" class="hot-prg" >
                 <img alt="x" id="select-pelletgas-img" src="images/pellet-gas-1.png?1"/>
@@ -502,11 +515,6 @@
                 <img alt="m" id="select-pellet-minimum-img" src="images/pellet-min-1.png?1"/>
                 <span>Pellet</span>
             </div>
-        </div>
-        <div id="program-change" class="celated">
-            <img id="program-apply" class="button-img" src="images/apply.png?1"/>
-            <span id="program-changed">Salvare il programma modificato?</span>
-            <img id="program-restore" class="button-img" src="images/restore.png?1"/>
         </div>
         <div id="program-content">
             <div id="program-table">
