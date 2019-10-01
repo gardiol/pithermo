@@ -323,8 +323,8 @@
 
     <div id="events">
         <div>
-            Lista degli eventi: 
-            (<input data-dojo-id="eventsUseRange" 
+            <span>Lista degli eventi: (</span>
+            <input data-dojo-id="eventsUseRange" 
                     data-dojo-type="dijit/form/CheckBox" 
                     onChange="evt.toggleRange();"/>
             Scegli periodo
@@ -334,7 +334,8 @@
                 al:
                 <input data-dojo-id="eventsEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
                 <button data-dojo-id="eventsRangeUpdate" data-dojo-type="dijit/form/Button" onClick="evt.update()" type="button">Aggiorna!</button>
-            </div>)
+            </div>
+            <span>)</span>
             <img id="events-size" src="images/enlarge.png?1" class="enlarge-img"/>
         </div>
     </div>
