@@ -204,6 +204,18 @@ img.today-table-img {
    display: inline-block;
 }
 
+#history-stats-te-min, #history-stats-hu-min, #history-stats-ex-min, #history-stats-hx-min {
+  color: blue;
+}
+
+#history-stats-te-avg, #history-stats-hu-avg, #history-stats-ex-avg, #history-stats-hx-avg {
+  color: purple;
+}
+
+#history-stats-te-max, #history-stats-hu-max, #history-stats-ex-max, #history-stats-hx-max {
+  color: red;
+}
+
 /* Status are specific */
 #status-area {
    padding: 1em 0 1em 0;

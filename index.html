@@ -706,56 +706,86 @@
             <img alt="pwr" class="info-icon" id="power-led" src="images/inside.png?1"/>
             <div class="col">
                 <div>
-                    <input  id="show-temp" 
+                    <input  data-dojo-id="show_temp" 
                             data-dojo-type="dijit/form/CheckBox" 
                             value="1" 
                             checked 
-                            onChange="hst.drawGraph()"/>
-                    <label for="show-temp">
+                            onChange="hst.drawSerie(0,show_temp.checked)"/>
+                    <label for="show_temp">
                         Temperatura
                     </label>
                 </div>
-                <div id="history-stats-te"></div>
+                <div id="history-stats-te">
+                    <span id="history-stats-te-min"></span> (<span id="history-stats-te-avg"></span>) <span id="history-stats-te-max"></span>
+                </div>
                 <div>
-                    <input  id="show-humi" 
+                    <input  data-dojo-id="show_humi" 
                             data-dojo-type="dijit/form/CheckBox" 
                             value="2" 
-                            onChange="hst.drawGraph()"/>
-                    <label for="show-humi">
+                            onChange="hst.drawSerie(1,show_humi.checked)"/>
+                    <label for="show_humi">
                         Umidità
                     </label>
                 </div>
-                <div id="history-stats-hu"></div>
+                <div id="history-stats-hu">
+                    <span id="history-stats-hu-min"></span> (<span id="history-stats-hu-avg"></span>) <span id="history-stats-hu-max"></span>
+                </div>
             </div><!--col-->  
         </div><!--power box-->    
         <div id="mode-box" class="col">     
             <div class="col">
                 <div>
-                    <input  id="show-ext-temp" 
+                    <input  data-dojo-id="show_ext_temp" 
                             data-dojo-type="dijit/form/CheckBox" 
                             value="3"
                             checked 
-                            onChange="hst.drawGraph()"/>
-                    <label for="show-ext-temp">
+                            onChange="hst.drawSerie(2,show_ext_temp.checked)"/>
+                    <label for="show_ext_temp">
                         Temperatura
                     </label>
                 </div>
-                <div id="history-stats-ex"></div>
+                <div id="history-stats-ex">
+                    <span id="history-stats-ex-min"></span> (<span id="history-stats-ex-avg"></span>) <span id="history-stats-ex-max"></span>
+                </div>
                 <div>
-                    <input  id="show-ext-humi" 
+                    <input  data-dojo-id="show_ext_humi" 
                             data-dojo-type="dijit/form/CheckBox" 
                             value="4" 
-                            onChange="hst.drawGraph()"/>
-                    <label for="show-ext-humi">
+                            onChange="hst.drawSerie(3,show_ext_humi.checked)"/>
+                    <label for="show_ext_humi">
                         Umidità
                     </label>
                 </div>
-                <div id="history-stats-hx"></div>
+                <div id="history-stats-hx">
+                    <span id="history-stats-hx-min"></span> (<span id="history-stats-hx-avg"></span>) <span id="history-stats-hx-max"></span>
+                </div>
             </div><!--col-->
             <img alt="mde" class="info-icon" id="mode-led" src="images/outside.png?1"/>
         </div><!-- mode box -->
-    </div><!-- status info-->
+    </div><!-- temperature -->
 
+    <div>
+        <span>
+            <input  data-dojo-id="show_gas" 
+                    data-dojo-type="dijit/form/CheckBox" 
+                    value="4" 
+                    checked
+                    onChange="hst.drawSerie(6,show_gas.checked);hst.drawSerie(7,show_gas.checked)"/>
+            <label for="show_ext_humi">
+                Eventi gas
+            </label>
+        </span>
+        <span>
+            <input  data-dojo-id="show_pellet" 
+                    data-dojo-type="dijit/form/CheckBox" 
+                    value="4" 
+                    checked
+                    onChange="hst.drawSerie(4,show_pellet.checked);hst.drawSerie(5,show_pellet.checked)"/>
+            <label for="show_ext_humi">
+                Eventi Pellet
+            </label>
+        </span>
+    </div>
 
     <div>
         <button data-dojo-id="history_zoom_omin" data-dojo-type="dijit/form/Button" onClick="hst.fuzzle(-100,1)" type="button">|&lt;&lt;</button>

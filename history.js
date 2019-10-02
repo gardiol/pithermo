@@ -28,22 +28,20 @@ function( dom, attr, dclass, style, html, on,// Dojo
           Chart, Default, Columns, Lines, Grid, Chris, Areas, Markers, Tooltip, Magnify, Legend )// Charing
 {
     hst = { 
-        ttipRect: null,
-        data: {},
-        mins: null,
-        maxs: null,
-        avgs: null,
-        xref: [],
-        nPoints:0,
+        axNames: { 0:"Temp", 1:"Humi", 2:"TempExt", 3:"HumiExt", 4:"PelletOn", 5:"PelletOff", 6:"GasOn", 7:"GasOff" },
+        data: { 0:[20,20,20], 1:[100,100,100], 2:[20,20,20], 3:[100,100,100], 4:[0,0,0], 5:[0,0,0], 6:[0,0,0], 7:[0,0,0] },
+        timeRef: [0,1,2],
         xScale: 1,
         xOffset: 0,
+        ttipRect: null,
         
         grp: new Chart("history-graph",{ title: "Storico", titlePos: "bottom", titleGap: 25}),
 
         fuzzle:function(o,s){
-            hst.xScale = Math.min( hst.nPoints/60, Math.max( 1, hst.xScale * s ) );
-            var step = (hst.nPoints/60)*hst.xScale;
-            hst.xOffset = Math.min( hst.nPoints-60, Math.max( 0, hst.xOffset + o * step) );            
+            var nPoints = hst.data[0].length;
+            hst.xScale = Math.min( nPoints/60, Math.max( 1, hst.xScale * s ) );
+            var step = (nPoints/60)*hst.xScale;
+            hst.xOffset = Math.min( nPoints-60, Math.max( 0, hst.xOffset + o * step) );            
             hst.grp.setAxisWindow( "x", hst.xScale, hst.xOffset );
             hst.grp.render(); 
         },
@@ -54,65 +52,11 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 hst.update();
         },
         
-        drawGraph: function(){
-            var axna = { 0:"Temp", 1:"Humi", 2:"TempExt", 3:"HumiExt", 4:"PelletOn", 5:"PelletOff", 6:"GasOn", 7:"GasOff" };
-            var show = { 0:dom.byId("show-temp").checked,
-                         1:dom.byId("show-humi").checked,
-                         2:dom.byId("show-ext-temp").checked,
-                         3:dom.byId("show-ext-humi").checked, 4:true, 5:true, 6:true, 7:true };
-            var list = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[] };
-            hst.nPoints = 0;
-            for (var time in hst.data){
-                hst.xref.push( time );
-                for ( var n in axna ){
-                    var val = hst.data[time][n];
-                    if ( show[n] )
-                        list[n].push( parseFloat(val.toFixed(1)) );
-                }
-                hst.nPoints++;
-            }
-            if ( hst.mins ){
-                html.set(dom.byId("history-stats-te"), hst.mins[0].toFixed(1) + " (" + hst.avgs[0].toFixed(1) + ") " + hst.maxs[0].toFixed(1) );
-                html.set(dom.byId("history-stats-ex"), hst.mins[2].toFixed(1) + " (" + hst.avgs[2].toFixed(1) + ") " + hst.maxs[2].toFixed(1) );
-                html.set(dom.byId("history-stats-hu"), hst.mins[1].toFixed(1) + " (" + hst.avgs[1].toFixed(1) + ") " + hst.maxs[1].toFixed(1) );
-                html.set(dom.byId("history-stats-hx"), hst.mins[3].toFixed(1) + " (" + hst.avgs[3].toFixed(1) + ") " + hst.maxs[3].toFixed(1) );
-            }
-            for ( var n in axna )
-                hst.grp.updateSeries( axna[n], list[n] );    
-
-            hst.grp.setAxisWindow("x", hst.xScale, hst.xOffset ); 
+        drawSerie: function(s,v){            
+            hst.grp.updateSeries( hst.axNames[s], v ? hst.data[s] : [] );    
             hst.grp.render();        
         },
 			    
-        setData: function(new_rows){
-            var len = new_rows.length;
-            var pos = 0;
-            while ( pos < len ){
-                var line_end = new_rows.indexOf( "\n", pos );
-                if ( line_end != -1 ){
-                    var row = new_rows.substr( pos, line_end-pos+1 );
-                    var split_row = row.split(" ");
-                    hst.data[ parseInt(split_row[0]) ] = { 0: parseFloat(split_row[1]), 
-                                                           1: parseFloat(split_row[2]), 
-                                                           2: parseFloat(split_row[3]), 
-                                                           3: parseFloat(split_row[4]), 
-                                                           4: parseFloat(split_row[5]), 
-                                                           5: parseFloat(split_row[6]), 
-                                                           6: parseFloat(split_row[7]), 
-                                                           7: parseFloat(split_row[8]) };
-                    pos = line_end+1;
-                } else {
-                    var row = new_rows.substr( pos );
-                    var split_row = row.split(" ");
-                    hst.mins = {0: parseFloat(split_row[0]), 1: parseFloat(split_row[3]), 2:parseFloat(split_row[6]), 3:parseFloat(split_row[9]) };
-                    hst.maxs = {0: parseFloat(split_row[1]), 1: parseFloat(split_row[4]), 2:parseFloat(split_row[7]), 3:parseFloat(split_row[10]) };
-                    hst.avgs = {0: parseFloat(split_row[2]), 1: parseFloat(split_row[5]), 2:parseFloat(split_row[8]), 3:parseFloat(split_row[11]) };                    
-                    pos = len;
-                }
-            }
-            hst.drawGraph();
-        },
-        
         update: function(){
             if ( !historyUseRange.checked ){
                 historyEnd.set("value", new Date() );
@@ -127,15 +71,50 @@ function( dom, attr, dclass, style, html, on,// Dojo
             if ( n_samples > 6*48 ) n_samples = 6*48; 
             
             postRequest("cgi-bin/history",startDate+":"+endDate+":"+n_samples.toFixed(0),
-                function(result){
-                    if ( result ){
-                        hst.data = {};
-                        hst.mins = null;
-                        hst.maxs = null;
-                        hst.avgs = null;
-                        hst.xref = [];
-                        hst.nPoints = 0;
-                        hst.setData(result);
+                function(new_rows){
+                    if ( new_rows ){
+                        var len = new_rows.length;
+                        var pos = 0;
+                        hst.data = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[] };
+                        hst.timeRef = [];
+                        while ( pos < len ){
+                            var line_end = new_rows.indexOf( "\n", pos );
+                            if ( line_end != -1 ){
+                                var row = new_rows.substr( pos, line_end-pos+1 );
+                                var split_row = row.split(" ");
+                                var time = parseInt(split_row[0]);
+                                for ( var q = 0; q < 8; q++ )
+                                    hst.data[q].push( parseFloat(split_row[q+1]) );
+                                hst.timeRef.push( time );
+                                pos = line_end+1;
+                            } else {
+                                var row = new_rows.substr( pos );
+                                var split_row = row.split(" ");
+                                html.set(dom.byId("history-stats-te-min"), parseFloat(split_row[0]).toFixed(1) );
+                                html.set(dom.byId("history-stats-te-avg"), parseFloat(split_row[2]).toFixed(1) );
+                                html.set(dom.byId("history-stats-te-max"), parseFloat(split_row[1]).toFixed(1) );
+                                html.set(dom.byId("history-stats-ex-min"), parseFloat(split_row[6]).toFixed(1) );
+                                html.set(dom.byId("history-stats-ex-avg"), parseFloat(split_row[8]).toFixed(1) );
+                                html.set(dom.byId("history-stats-ex-max"), parseFloat(split_row[7]).toFixed(1) );
+                                html.set(dom.byId("history-stats-hu-min"), parseFloat(split_row[3]).toFixed(1) );
+                                html.set(dom.byId("history-stats-hu-avg"), parseFloat(split_row[5]).toFixed(1) );
+                                html.set(dom.byId("history-stats-hu-max"), parseFloat(split_row[4]).toFixed(1) );
+                                html.set(dom.byId("history-stats-hx-min"), parseFloat(split_row[9]).toFixed(1) );
+                                html.set(dom.byId("history-stats-hx-avg"), parseFloat(split_row[11]).toFixed(1) );
+                                html.set(dom.byId("history-stats-hx-max"), parseFloat(split_row[10]).toFixed(1) );
+                                pos = len;
+                            }
+                        }
+                        hst.grp.updateSeries( hst.axNames[0], show_temp.checked ? hst.data[0] : [] );
+                        hst.grp.updateSeries( hst.axNames[1], show_humi.checked ? hst.data[1] : [] );
+                        hst.grp.updateSeries( hst.axNames[2], show_ext_temp.checked ? hst.data[2] : [] );
+                        hst.grp.updateSeries( hst.axNames[3], show_ext_humi.checked ? hst.data[3] : [] );
+                        hst.grp.updateSeries( hst.axNames[4], show_pellet.checked ? hst.data[4] : [] );
+                        hst.grp.updateSeries( hst.axNames[5], show_pellet.checked ? hst.data[5] : [] );
+                        hst.grp.updateSeries( hst.axNames[6], show_gas.checked ? hst.data[6] : [] );
+                        hst.grp.updateSeries( hst.axNames[7], show_gas.checked ? hst.data[7] : [] );
+                        hst.grp.render(); 
+
                     }
                 },
                 function(err){
@@ -159,85 +138,174 @@ function( dom, attr, dclass, style, html, on,// Dojo
         startup:function(){
             hst.grp.setTheme(Chris);
             
-            hst.grp.addPlot("tempPlot",{tension: "X", type: Lines,lines: true, areas: false, markers: false, hAxis:"x", vAxis:"t"});
-            hst.grp.addAxis("x", 	{plot:"tempPlot",
-                        majorTickStep: 6, majorTicks: true, majorLabels: true,
-                        minorTicks: true, minorLabels: true,
-                        microTicks: false,microLabels: false,
-                        labelFunc:function(text,value,prec){
-                            return utils.date2str( hst.xref[value]*1000)+"<br> "+utils.time2str( hst.xref[value]*1000);
-                        }
-                    });
-            hst.grp.addAxis("t", 	{plot:"tempPlot", 
-                        vertical: true, 
-                        dropLabels: false,
-                        majorTickStep: 5, majorTicks: true, majorLabels: true,
-                        minorTickStep: 1, minorTicks: true, minorLabels: false,
-                        microTickStep: 0.1, microTicks: false,
-                        fixLower: "major",  fixUpper: "major"
-                    });
-            hst.grp.addSeries("Temp", [0,1],{ plot: "tempPlot", legend:"Temperatura interna"});
-            hst.grp.addSeries("TempExt", [0,1],{ plot: "tempPlot", legend:"Temperatura esterna"});
-            new Magnify( hst.grp, "tempPlot", { scale: 3 });
-            hst.grp.connectToPlot("tempPlot",
-                function(evt){
-                    if ( evt.type == "onclick" ){
-                        hst.showTip( {x:evt.cx,y:evt.cy}, 
-                                     "<div style='text-align:center;'>"+evt.y+"°C<br><span style='font-size:60%;'>" + utils.printDate(hst.xref[evt.x]*1000) +"</span></div>",
-                                     ["after-centered", "before-centered"] );
-                    } else if(evt.type === "onplotreset" || evt.type === "onmouseout"){
-                        hst.hideTip();
-                    }
-                });
-            
-            hst.grp.addPlot("humiPlot",{ type: Lines,lines: true, areas: false, markers: false, tension: "X", hAxis: "x",vAxis: "h" });
-            hst.grp.addAxis("h", {plot:"humiPlot", vertical: true, leftBottom: false,
-                                    majorTickStep: 10, majorTicks: true, majorLabels: true,
-                                    minorTickStep: 1, minorTicks: true, minorLabels: false,
-                                    microTicks: false, microLabels: false,
-                                    fixLower: "major", fixUpper: "major"});
-            hst.grp.addSeries("Humi",[0,100],{plot: "humiPlot", legend:"Umidità interna"});
-            hst.grp.addSeries("HumiExt",[0,100],{plot: "humiPlot", legend: "Umidità esterna"});
-            new Magnify( hst.grp, "humiPlot", { scale: 3 });
-            hst.grp.connectToPlot("humiPlot",
-                function(evt){
-                    if ( evt.type == "onclick" ){
-                        hst.showTip( {x:evt.cx,y:evt.cy}, 
-                                     "<div style='text-align:center;'>"+evt.y+"%<br><span style='font-size:60%;'>" + utils.printDate(hst.xref[evt.x]*1000) +"</span></div>",
-                                     ["after-centered", "before-centered"] );
-                    } else if(evt.type === "onplotreset" || evt.type === "onmouseout"){
-                        hst.hideTip();
-                    }
-                });
+            hst.grp.addPlot("tempPlot",
+                            {
+                                tension: "X", 
+                                type: Lines,
+                                lines: true, 
+                                areas: false, 
+                                markers: false, 
+                                hAxis:"x",
+                                 vAxis:"t"
+                             });
 
-            hst.grp.addPlot("eventsPlot",{ type: Columns, hAxis: "x", vAxis:"e" });
-            hst.grp.addAxis("e", {plot:"eventsPlot", vertical: true, min: 0, max: 1,
-                                majorTicks: false, majorLabels: false,
-                                minorTicks: false, minorLabels: false,
-                                microTicks: false, microLabels: false });
-            hst.grp.addSeries("GasOn",[0,1],{plot: "eventsPlot", legend:"Gas ON"});
-            hst.grp.addSeries("GasOff",[0,1],{plot: "eventsPlot", legend:"Gas OFF"});
-            hst.grp.addSeries("PelletOn",[0,1],{plot: "eventsPlot", legend:"Pellet ON"});
-            hst.grp.addSeries("PelletOff",[0,1],{plot: "eventsPlot", legend:"Pellet OFF"});
-            hst.grp.connectToPlot("eventsPlot",
-                function(evt){
-                    if ( evt.type == "onclick" ){
-                        hst.showTip( evt.shape.shape, 
-                                     "<div style='text-align:center;'>"+evt.run.name+"<br><span style='font-size:60%;'>"+utils.printDate(hst.xref[evt.x]*1000) +"</span></div>", ["above"] );
-                    } else if(evt.type === "onplotreset" || evt.type === "onmouseout"){
-                        hst.hideTip();
-                    }
-                });
+            hst.grp.addAxis("x", 	
+                            {
+                                plot:"tempPlot",
+                                majorTickStep: 6, 
+                                majorTicks: true, 
+                                majorLabels: true,
+                                minorTicks: true, 
+                                minorLabels: true,
+                                microTicks: false,
+                                microLabels: false,
+                                labelFunc:function(text,value,prec){
+                                    return utils.date2str( hst.timeRef[value]*1000)+"<br> "+utils.time2str( hst.timeRef[value]*1000);
+                                }
+                            });
+            hst.grp.addAxis("t", 	
+                            {
+                                plot:"tempPlot", 
+                                vertical: true, 
+                                dropLabels: false,
+                                majorTickStep: 5, 
+                                majorTicks: true, 
+                                majorLabels: true,
+                                minorTickStep: 1, 
+                                minorTicks: true, 
+                                minorLabels: false,
+                                microTickStep: 0.1, 
+                                microTicks: false,
+                                fixLower: "major",  
+                                ixUpper: "major"
+                            });
+
+            hst.grp.addSeries("Temp", 
+                                hst.data[0],
+                                { 
+                                    plot: "tempPlot", 
+                                    legend:"Temperatura interna"
+                                });
+            hst.grp.addSeries("TempExt", 
+                                hst.data[1],
+                                { 
+                                    plot: "tempPlot", 
+                                    legend:"Temperatura esterna"
+                                });
+
+            hst.grp.addPlot("humiPlot",
+                            { 
+                                type: Lines,
+                                lines: true, 
+                                areas: false, 
+                                markers: false, 
+                                tension: "X",
+                                hAxis: "x",
+                                vAxis: "h" 
+                            });
+
+            hst.grp.addAxis("h",
+                            {
+                                plot:"humiPlot", 
+                                vertical: true, 
+                                leftBottom: false,
+                                majorTickStep: 10, 
+                                majorTicks: true, 
+                                majorLabels: true,
+                                minorTickStep: 1, 
+                                minorTicks: true, 
+                                minorLabels: false,
+                                microTicks: false, 
+                                microLabels: false,
+                                fixLower: "major", 
+                                fixUpper: "major"
+                            });
+
+            hst.grp.addSeries("Humi",
+                                hst.data[2],
+                                {
+                                    plot: "humiPlot", 
+                                    legend:"Umidità interna"
+                                });
+
+            hst.grp.addSeries("HumiExt",
+                                hst.data[3],
+                                {
+                                    plot: "humiPlot", 
+                                    legend: "Umidità esterna"
+                                });
+
+            hst.grp.addPlot("eventsPlot",
+                            {
+                                type: Columns, 
+                                hAxis: "x", 
+                                vAxis:"e"
+                            });
+
+            hst.grp.addAxis("e", 
+                            {
+                                plot:"eventsPlot", 
+                                vertical: true, 
+                                min: 0, 
+                                max: 1,
+                                majorTicks: false, 
+                                majorLabels: false,
+                                minorTicks: false, 
+                                minorLabels: false,
+                                microTicks: false, 
+                                microLabels: false
+                            });
+
+            hst.grp.addSeries("GasOn",
+                                hst.data[6],
+                                {
+                                    plot: "eventsPlot",
+                                    legend:"Gas ON"
+                                });
+
+            hst.grp.addSeries("GasOff",
+                                hst.data[7],
+                                {
+                                    plot: "eventsPlot", 
+                                    legend:"Gas OFF"
+                                });
+
+            hst.grp.addSeries("PelletOn",
+                                hst.data[4],
+                                {
+                                    plot: "eventsPlot", 
+                                    legend:"Pellet ON"
+                                });
+
+            hst.grp.addSeries("PelletOff",
+                                hst.data[5],
+                                {
+                                    plot: "eventsPlot", 
+                                    legend:"Pellet OFF"
+                                });
             
-            hst.grp.addPlot("gridPlot", { type: Grid, hAxis: "x",vAxis: "t",
-                    hMajorLines: true,
-                    hMinorLines: true,
-                    vMajorLines: false,
-                    vMinorLines: false,
-                    majorHLine: { color: "gray", width: 1, style: "dash"},
-                    minorHLine: { color: "gray", width: 1, style: "dot" } });
+            hst.grp.addPlot("gridPlot", 
+                            { 
+                                type: Grid, 
+                                hAxis: "x",
+                                vAxis: "t",
+                                hMajorLines: true,
+                                hMinorLines: true,
+                                vMajorLines: false,
+                                vMinorLines: false,
+                                majorHLine: { 
+                                                color: "gray", 
+                                                width: 1, 
+                                                style: "dash"
+                                            },
+                                minorHLine: { 
+                                                color: "gray", 
+                                                width: 1, 
+                                                style: "dot" 
+                                            } 
+                            });
             
-            hst.grp.render();        
+            hst.grp.render();
             new Legend({chartRef:hst.grp, horizontal:4}, 'history-legend');
 
             on(dom.byId("history-size"),"click", function(v) {
