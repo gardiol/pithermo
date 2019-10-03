@@ -29,117 +29,183 @@ function( dom, attr, dclass, style, html, on,// Dojo
           Chart, Default, Lines, StackedColumns,StackedAreas,Chris, Areas, Markers, Grid, Tooltip, Magnify, Legend )// Charing
 {
     sta = { 
+        axNames: { 0:"Pellet", 1:"PelletLow", 2:"Gas", 3:"Mins", 4:"Maxs", 5:"Avgs", 6:"MinsE", 7:"MaxsE", 8:"AvgsE", 9:"Totals" },
+        data: { 0:[1,1,1], 1:[1,1,1], 2:[1,1,1], 3:[1,1,1], 4:[0,0,0], 5:[0,0,0], 6:[0,0,0], 7:[0,0,0], 8:[0,0,0], 9:[0,0,0] },
+        timeRef: [0,1,2],
         ttipRect: null,
         hStart: null,
         hEnd: null,
-        grpRef: {},
-        data:  {},
-        totalP: 0,
-        totalPl:0,
-        totalG:0,
         
         grp: new Chart("stats-graph",{ title: "Statistiche funzionamento", titlePos: "bottom", titleGap: 25}),
 
-        toggleRange: function(){
-            dclass.toggle(dom.byId("stats-range"), "hidden");
-            sta.update();
+        toggleTempi: function(){
+            if ( stats_show_tempi.checked ){
+                sta.grp.updateSeries( sta.axNames[0], stats_show_tempi_pellet_mod.checked ? sta.data[0] : [] );
+                sta.grp.updateSeries( sta.axNames[1], stats_show_tempi_pellet_min.checked ? sta.data[1] : [] );
+                sta.grp.updateSeries( sta.axNames[2], stats_show_tempi_gas.checked ? sta.data[2] : [] );
+                stats_show_tempi_pellet_mod.set("disabled", false );
+                stats_show_tempi_pellet_min.set("disabled", false );
+                stats_show_tempi_gas.set("disabled", false );
+            } else {
+                sta.grp.updateSeries( sta.axNames[0], [] );    
+                sta.grp.updateSeries( sta.axNames[1], [] );    
+                sta.grp.updateSeries( sta.axNames[2], [] );    
+                stats_show_tempi_pellet_mod.set("disabled", true );
+                stats_show_tempi_pellet_min.set("disabled", true );
+                stats_show_tempi_gas.set("disabled", true );
+            }
+            sta.grp.render();        
         },
 
-        drawGraph: function(){
-            var axna = { 0:"Pellet", 1:"PelletLow", 2:"Gas", 3:"Mins", 4:"Maxs", 5:"Avgs", 6:"MinsE", 7:"MaxsE", 8:"AvgsE" };
-            var show = { 0:dom.byId("stats-show-a").checked&&dom.byId("stats-show-p").checked,
-                            1:dom.byId("stats-show-a").checked&&dom.byId("stats-show-pl").checked,
-                            2:dom.byId("stats-show-a").checked&&dom.byId("stats-show-g").checked,
-                            3:dom.byId("stats-show-ti").checked&&dom.byId("stats-show-tmin").checked, 
-                            4:dom.byId("stats-show-ti").checked&&dom.byId("stats-show-tmax").checked, 
-                            5:dom.byId("stats-show-ti").checked&&dom.byId("stats-show-tavg").checked,
-                            6:dom.byId("stats-show-te").checked&&dom.byId("stats-show-tmin").checked, 
-                            7:dom.byId("stats-show-te").checked&&dom.byId("stats-show-tmax").checked, 
-                            8:dom.byId("stats-show-te").checked&&dom.byId("stats-show-tavg").checked };
-            var list = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[] };
-            var tots = [];
-            var x = 1;
-            for (var time in sta.data){
-                sta.grpRef[x] = time;
-                var tot = 0;
-                for ( var n in axna ){                    
-                    var val = sta.data[time][n];
-                    if ( show[n] ){
-                        list[n].push( val );
-                        if ( n < 3 )
-                            tot += val;
-                    }
+        toggleTempExt: function(){
+            if ( stats_show_temp_ext.checked ){
+                sta.grp.updateSeries( sta.axNames[6], stats_show_temp_min.checked ? sta.data[6] : [] );    
+                sta.grp.updateSeries( sta.axNames[7], stats_show_temp_max.checked ? sta.data[7] : [] );
+                sta.grp.updateSeries( sta.axNames[8], stats_show_temp_avg.checked ? sta.data[8] : [] );
+                stats_show_temp_min.set("disabled", false );
+                stats_show_temp_avg.set("disabled", false );
+                stats_show_temp_max.set("disabled", false );
+            } else {
+                sta.grp.updateSeries( sta.axNames[6], [] );    
+                sta.grp.updateSeries( sta.axNames[7], [] );    
+                sta.grp.updateSeries( sta.axNames[8], [] );
+                if ( !stats_show_temp_int.checked ){
+                    stats_show_temp_min.set("disabled", true );
+                    stats_show_temp_avg.set("disabled", true );
+                    stats_show_temp_max.set("disabled", true );
                 }
-                tots.push( tot );
-                x++;
             }
-            for ( var n in axna )
-                sta.grp.updateSeries( axna[n], list[n] );
-            sta.grp.updateSeries( "Totals", tots );
-            html.set(dom.byId("stats-total-pellet"), "Pellet acceso per: " + (sta.totalP+sta.totalPl).toFixed(1) + "h" );
-            html.set(dom.byId("stats-total-pellet-mod"), " (in modulazione per: " + sta.totalP.toFixed(1) + "h" );
-            html.set(dom.byId("stats-total-pellet-min"), " e al minimo per: " + sta.totalPl.toFixed(1) + "h)" );
-            html.set(dom.byId("stats-total-gas"), "Gas acceso per: " + sta.totalG.toFixed(1) + "h" );
-            sta.grp.render(); 
+            sta.grp.render();        
         },
-        
-        clearData: function(){
-            sta.data = {};
-            sta.grpRef = {};
-            sta.totalP = sta.totalPl = sta.totalG = 0;
-            sta.drawGraph();                                
-        },
-        
-        setData: function(new_rows){
-            var len = new_rows.length;
-            var pos = 0;
-            while ( pos < len ){
-                var line_end = new_rows.indexOf( "\n", pos );
-                if ( line_end != -1 ){
-                    var row = new_rows.substr( pos, line_end-pos+1 );
-                    var split_row = row.split(" ");
-                    sta.data[ parseInt(split_row[0]) ] = {0: ((parseFloat(split_row[1])-parseFloat(split_row[2])) / 3600.0), // pellet time
-                                                            1: parseFloat(split_row[2] / 3600.0), // pellet min time
-                                                            2: parseFloat(split_row[3] / 3600.0), // gas time
-                                                            3: parseFloat(split_row[4]), // t min
-                                                            4: parseFloat(split_row[5]), // t max
-                                                            5: parseFloat(split_row[6]), // t avg
-                                                            6: parseFloat(split_row[7]), // t ext min
-                                                            7: parseFloat(split_row[8]), // t ext max
-                                                            8: parseFloat(split_row[9])} // t ext avg
-                    pos = line_end+1;
-                } else {
-                    var row = new_rows.substr( pos );
-                    var split_row = row.split(" ");
-                    sta.totalP = parseFloat(split_row[1] / 3600.0);
-                    sta.totalPl= parseFloat(split_row[2] / 3600.0);
-                    sta.totalG = parseFloat(split_row[3] / 3600.0);
-                    pos = len;
-                    }
+
+        toggleTempInt: function(){
+            if ( stats_show_temp_int.checked ){
+                sta.grp.updateSeries( sta.axNames[3], stats_show_temp_min.checked ? sta.data[3] : [] );    
+                sta.grp.updateSeries( sta.axNames[4], stats_show_temp_max.checked ? sta.data[4] : [] );
+                sta.grp.updateSeries( sta.axNames[5], stats_show_temp_avg.checked ? sta.data[5] : [] );
+                stats_show_temp_min.set("disabled", false );
+                stats_show_temp_avg.set("disabled", false );
+                stats_show_temp_max.set("disabled", false );
+            } else {
+                sta.grp.updateSeries( sta.axNames[3], [] );    
+                sta.grp.updateSeries( sta.axNames[4], [] );    
+                sta.grp.updateSeries( sta.axNames[5], [] );   
+                if ( !stats_show_temp_ext.checked ){ 
+                    stats_show_temp_min.set("disabled", true );
+                    stats_show_temp_avg.set("disabled", true );
+                    stats_show_temp_max.set("disabled", true );
+                }
             }
-            sta.drawGraph();
+            sta.grp.render();        
         },
-        
+
+        toggleTempMin: function(){
+            if ( stats_show_temp_min.checked ){
+                sta.grp.updateSeries( sta.axNames[3], stats_show_temp_int.checked ? sta.data[3] : [] );    
+                sta.grp.updateSeries( sta.axNames[6], stats_show_temp_ext.checked ? sta.data[6] : [] );
+            } else {
+                sta.grp.updateSeries( sta.axNames[3], [] );    
+                sta.grp.updateSeries( sta.axNames[6], [] );    
+            }
+            sta.grp.render();        
+        },
+
+        toggleTempMax: function(){
+            if ( stats_show_temp_max.checked ){
+                sta.grp.updateSeries( sta.axNames[4], stats_show_temp_int.checked ? sta.data[4] : [] );    
+                sta.grp.updateSeries( sta.axNames[7], stats_show_temp_ext.checked ? sta.data[7] : [] );
+            } else {
+                sta.grp.updateSeries( sta.axNames[4], [] );    
+                sta.grp.updateSeries( sta.axNames[7], [] );    
+            }
+            sta.grp.render();        
+        },
+
+        toggleTempAvg: function(){
+            if ( stats_show_temp_avg.checked ){
+                sta.grp.updateSeries( sta.axNames[5], stats_show_temp_int.checked ? sta.data[5] : [] );    
+                sta.grp.updateSeries( sta.axNames[8], stats_show_temp_ext.checked ? sta.data[8] : [] );
+            } else {
+                sta.grp.updateSeries( sta.axNames[5], [] );    
+                sta.grp.updateSeries( sta.axNames[8], [] );    
+            }
+            sta.grp.render();        
+        },
+
+        toggleRange: function(){
+            dclass.toggle(dom.byId("stats-range"), "hidden");
+            if ( !statsUseRange.checked )
+                sta.update();
+        },
+
+        drawSerie: function(s,v){            
+            sta.grp.updateSeries( sta.axNames[s], v ? sta.data[s] : [] );    
+            sta.grp.render();        
+        },
+                
         update: function(){
             if ( !statsUseRange.checked ){
-                sta.hStart = new Date(new Date() - 1000*60*60*24*15); 
-                sta.hEnd = new Date();
-                statsEnd.set("value", sta.hEnd );
-                statsStart.set("value", sta.hStart );
-            } else {
-                sta.hEnd = statsEnd.get("value")
-                sta.hStart = statsStart.get("value")
+                statsStart.set("value", new Date(new Date() - 1000*60*60*24*15) );
+                statsEnd.set("value", new Date() );
             }
-            var sDate = sta.hStart;sDate.setHours(0);sDate.setMinutes(0);sDate.setSeconds(0);
-            var eDate = sta.hEnd;eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(59);
+            var sDate = statsStart.get("value");sDate.setHours(0);sDate.setMinutes(0);sDate.setSeconds(0);
+            var eDate = statsEnd.get("value");eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(59);
             var startDate = Math.floor( sDate / 1000 );
             var endDate = Math.floor( eDate / 1000 ); 
 
-            sta.clearData();
             postRequest("cgi-bin/stats",startDate+":"+endDate,
-                function(result){
-                    if ( result )
-                        sta.setData(result);
+                function(new_rows){
+                    if ( new_rows ){
+                        var len = new_rows.length;
+                        var pos = 0;
+                        sta.data = { 0:[], 1:[], 2:[], 3:[], 4:[], 5:[], 6:[], 7:[], 8:[], 9:[] };
+                        sta.timeRef = [];
+                        while ( pos < len ){
+                            var line_end = new_rows.indexOf( "\n", pos );
+                            if ( line_end != -1 ){
+                                var row = new_rows.substr( pos, line_end-pos+1 );
+                                var split_row = row.split(" ");
+                                sta.timeRef.push( parseFloat(split_row[0]) ); // time
+                                var pellet_tot = parseFloat(split_row[1]);
+                                var pellet_low = parseFloat(split_row[2]);
+                                var gas_time = parseFloat(split_row[3]); // gas time
+                                sta.data[0].push( (pellet_tot - pellet_low) / 3600.0 );// pellet mod
+                                sta.data[1].push( pellet_low / 3600.0 );// pellet min
+                                sta.data[2].push( gas_time / 3600.0 );// gas
+                                sta.data[3].push( parseFloat(split_row[4]) ); // t min
+                                sta.data[4].push( parseFloat(split_row[5]) ); // t max
+                                sta.data[5].push( parseFloat(split_row[6]) ); // t avg
+                                sta.data[6].push( parseFloat(split_row[7]) ); // t ext min
+                                sta.data[7].push( parseFloat(split_row[8]) ); // t ext max
+                                sta.data[8].push( parseFloat(split_row[9]) ); // t ext avg
+                                sta.data[9].push( (pellet_tot + gas_time) / 3600.0 ); // totals
+
+                                pos = line_end+1;
+                            } else {
+                                var row = new_rows.substr( pos );
+                                var split_row = row.split(" ");
+                                var totalP = parseFloat(split_row[1] / 3600.0);
+                                var totalPl= parseFloat(split_row[2] / 3600.0);
+                                var totalG = parseFloat(split_row[3] / 3600.0);
+                                html.set(dom.byId("stats-total-pellet"), (totalP+totalPl).toFixed(1) + "h" );
+                                html.set(dom.byId("stats-total-pellet-mod"), totalP.toFixed(1) + "h" );
+                                html.set(dom.byId("stats-total-pellet-min"), totalPl.toFixed(1) + "h)" );
+                                html.set(dom.byId("stats-total-gas"), totalG.toFixed(1) + "h" );
+                                pos = len;
+                                }
+                        }
+                        sta.grp.updateSeries( sta.axNames[0], stats_show_tempi.checked&&stats_show_tempi_pellet_mod.checked ? sta.data[0] : [] );    
+                        sta.grp.updateSeries( sta.axNames[1], stats_show_tempi.checked&&stats_show_tempi_pellet_min.checked ? sta.data[1] : [] );    
+                        sta.grp.updateSeries( sta.axNames[2], stats_show_tempi.checked&&stats_show_tempi_gas.checked ? sta.data[2] : [] );    
+                        sta.grp.updateSeries( sta.axNames[3], stats_show_temp_int.checked&&stats_show_temp_min.checked ? sta.data[3] : [] );    
+                        sta.grp.updateSeries( sta.axNames[4], stats_show_temp_int.checked&&stats_show_temp_max.checked ? sta.data[4] : [] );    
+                        sta.grp.updateSeries( sta.axNames[5], stats_show_temp_int.checked&&stats_show_temp_avg.checked ? sta.data[5] : [] );    
+                        sta.grp.updateSeries( sta.axNames[6], stats_show_temp_ext.checked&&stats_show_temp_min.checked ? sta.data[6] : [] );    
+                        sta.grp.updateSeries( sta.axNames[7], stats_show_temp_ext.checked&&stats_show_temp_max.checked ? sta.data[7] : [] );    
+                        sta.grp.updateSeries( sta.axNames[8], stats_show_temp_ext.checked&&stats_show_temp_avg.checked ? sta.data[8] : [] );    
+                        sta.grp.updateSeries( sta.axNames[9], stats_show_tempi.checked ? sta.data[9] : [] );
+                        sta.grp.render(); 
+                    }
                 },
                 function(err){
                 });                    
@@ -163,7 +229,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
             sta.grp.setTheme(Chris);
             
             sta.grp.addPlot("TimePlot", {type: StackedColumns, gap: 5,  hAxis:"x", vAxis:"y" });
-            sta.grp.addAxis("x", { plot: "TimePlot", labelFunc: function(t,v,p){return utils.date2str(sta.grpRef[v]*1000)} });
+            sta.grp.addAxis("x", { plot: "TimePlot", labelFunc: function(t,v,p){return utils.date2str(sta.timeRef[v]*1000)} });
             sta.grp.addAxis("y", { plot: "TimePlot", vertical:true, min: 0,
                         majorTickStep: 5, majorTicks: true, majorLabels: true,
                         minorTickStep: 1, minorTicks: true, minorLabels: true,
@@ -233,6 +299,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
 
             sta.grp.render(); 
             new Legend({chartRef:sta.grp, horizontal:3}, 'stats-legend');
+
             sta.update();
         }
     };

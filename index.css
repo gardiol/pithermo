@@ -13,7 +13,7 @@
 }
 
 .col {
-	display: inline-block;
+	display: inline-table;
 }
 
 .input-box {
@@ -164,6 +164,22 @@ img.today-table-img {
   display: inline;
 }
 
+#stats-select-pellet {
+  margin-top: 1em;
+  vertical-align: middle;
+}
+
+#stats-select-temp-ie {
+  padding-top: 0.5em;
+}
+
+.top {
+  vertical-align: top;
+}
+
+.separated {
+  border-bottom: 1px dashed gray;
+}
 
 /* History area specific */
 #history-graph {
@@ -233,7 +249,7 @@ img.today-table-img {
     font-weight: bolder;
 }
 
-#power-box, #mode-box, #history-select-int, #history-select-ext {
+#power-box, #mode-box, #history-select-int, #history-select-ext, #stats-select-tempi, #stats-select-temp {
 	border: 1px solid black;
 	margin: 0.2em;
 	padding: 0.2em;

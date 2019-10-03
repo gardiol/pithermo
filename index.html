@@ -828,35 +828,138 @@
             </div>
         </div>
 
-    	<div>
-            <div>
-                <input id="stats-show-a" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/>Tempi:            
-                Pellet (
-                <input id="stats-show-p" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/>modulazione
-                <input id="stats-show-pl" data-dojo-type="dijit/form/CheckBox" value="2" checked onChange="sta.drawGraph()"/>minimo
-                ) 
-                <input id="stats-show-g" data-dojo-type="dijit/form/CheckBox" value="3" checked onChange="sta.drawGraph()"/>Gas
-            </div>
-            <div>
-                Temperature:
-                <input id="stats-show-ti" data-dojo-type="dijit/form/CheckBox" value="4" onChange="sta.drawGraph()"/>interne
-                <input id="stats-show-te" data-dojo-type="dijit/form/CheckBox" value="5" onChange="sta.drawGraph()"/>esterne
-                (
-                <input id="stats-show-tmin" data-dojo-type="dijit/form/CheckBox" value="6" checked onChange="sta.drawGraph()"/>min
-                <input id="stats-show-tmax" data-dojo-type="dijit/form/CheckBox" value="7" checked onChange="sta.drawGraph()"/>max
-                <input id="stats-show-tavg" data-dojo-type="dijit/form/CheckBox" value="8" checked onChange="sta.drawGraph()"/>avg
-                )
-            </div>
             <div id="stats-total">
     			<div>
+                    Pellet acceso: 
     				<span id="stats-total-pellet"></span>
+                    (modulazione
     				<span id="stats-total-pellet-mod"></span>
+                    e minimo
     				<span id="stats-total-pellet-min"></span>
+                    )
     			</div>
-    			<div id="stats-total-gas">
+    			<div>
+                    Gas acceso:
+                    <span id="stats-total-gas"></span>
     			</div>
     		</div>
-        </div>
+
+
+        <div id="stats-select">
+            <div id="stats-select-tempi" class="col">
+                <div class="separated">
+                    <input  data-dojo-id="stats_show_tempi" 
+                            data-dojo-type="dijit/form/CheckBox" 
+                            value="1" 
+                            checked 
+                            onChange="sta.toggleTempi()"/>
+                    <label for="stats_show_tempi">
+                        Tempi accensione
+                    </label>
+                </div><!-- tempi on/off-->
+                <div class="separated">
+                    <div id="stats-select-pellet" class="col">
+                        Pellet
+                    </div>
+                    <div class="col">
+                        <div>
+                            <input  data-dojo-id="stats_show_tempi_pellet_mod" 
+                                    data-dojo-type="dijit/form/CheckBox" 
+                                    value="1" 
+                                    checked 
+                                    onChange="sta.drawSerie(0,stats_show_tempi_pellet_mod.checked)"/>
+                            <label for="stats_show_tempi_pellet_mod">
+                                Modulazione
+                            </label>
+                        </div>
+                        <div>
+                            <input  data-dojo-id="stats_show_tempi_pellet_min" 
+                                    data-dojo-type="dijit/form/CheckBox" 
+                                    value="1" 
+                                    checked 
+                                    onChange="sta.drawSerie(1,stats_show_tempi_pellet_min.checked)"/>
+                            <label for="stats_show_tempi_pellet_min">
+                                Minimo
+                            </label>
+                        </div>
+                    </div><!-- col. tipo pellet-->
+                </div> <!-- riga pellet -->
+                <div>
+                    <input  data-dojo-id="stats_show_tempi_gas" 
+                            data-dojo-type="dijit/form/CheckBox" 
+                            value="1" 
+                            checked 
+                            onChange="sta.drawSerie(2,stats_show_tempi_gas.checked)"/>
+                    <label for="stats_show_tempi_gas">
+                        Gas
+                    </label>
+                </div><!-- riga gas-->
+            </div><!-- colonna tempi -->
+
+            <div id="stats-select-temp" class="col">     
+                <div class="separated">
+                        Temperature giornaliere
+                </div><!-- temperature on/off-->
+                <div>
+                    <div class="col">
+                        <div id="stats-select-temp-ie">
+                            <input  data-dojo-id="stats_show_temp_int" 
+                                    data-dojo-type="dijit/form/CheckBox" 
+                                    value="3"
+                                    onChange="sta.toggleTempInt()"/>
+                            <label for="stats_show_temp_int">
+                                Interna
+                            </label>
+                        </div><!-- riga interna-->
+                        <div>
+                            <input  data-dojo-id="stats_show_temp_ext" 
+                                    data-dojo-type="dijit/form/CheckBox" 
+                                    value="3"
+                                    onChange="sta.toggleTempExt()"/>
+                            <label for="stats_show_temp_ext">
+                                Esterna
+                            </label>
+                        </div><!-- riga interna-->
+                    </div><!-- colonna int/ext-->
+                    <div class="col top">
+                        <div>
+                            <input  data-dojo-id="stats_show_temp_min" 
+                                    data-dojo-type="dijit/form/CheckBox" 
+                                    value="3"
+                                    disabled 
+                                    checked 
+                                    onChange="sta.toggleTempMin()"/>
+                            <label for="stats_show_temp_min">
+                                Minima
+                            </label>
+                        </div><!-- riga minima-->
+                        <div>
+                            <input  data-dojo-id="stats_show_temp_avg" 
+                                    data-dojo-type="dijit/form/CheckBox" 
+                                    value="3"
+                                    checked 
+                                    disabled 
+                                    onChange="sta.toggleTempAvg()"/>
+                            <label for="stats_show_temp_avg">
+                                Media
+                            </label>
+                        </div><!-- riga average-->
+                        <div>
+                            <input  data-dojo-id="stats_show_temp_max" 
+                                    data-dojo-type="dijit/form/CheckBox" 
+                                    value="3"
+                                    checked 
+                                    disabled 
+                                    onChange="sta.toggleTempMax()"/>
+                            <label for="stats_show_temp_max">
+                                Massima
+                            </label>
+                        </div><!-- riga massima-->
+                    </div><!-- colonna min/avg/max-->
+
+                </div><!-- riga unica-->
+            </div><!-- colonna temp-->
+        </div><!-- stats select-->
     </div><!-- stats controls-->
 
     <div id="stats-graph">
