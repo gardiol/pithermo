@@ -322,7 +322,7 @@
     
 
     <div id="events">
-        <div>
+        <div class="col">
             <span>Lista degli eventi: (</span>
             <input data-dojo-id="eventsUseRange" 
                     data-dojo-type="dijit/form/CheckBox" 
@@ -336,8 +336,8 @@
                 <button data-dojo-id="eventsRangeUpdate" data-dojo-type="dijit/form/Button" onClick="evt.update()" type="button">Aggiorna!</button>
             </div>
             <span>)</span>
-            <img id="events-size" src="images/enlarge.png?1" class="enlarge-img"/>
         </div>
+            <img id="events-size" src="images/enlarge.png?1" class="enlarge-img"/>
     </div>
     <div id="messages">
         <div id="messages-queue"></div>
@@ -352,8 +352,14 @@
 
 <div id="program-area">
     <div id="program-header">
-        Programmazione automatica
-                    <button data-dojo-id="programEdit" data-dojo-type="dijit/form/Button" onClick="prg.toggleEdit()">modifica...</button>
+        <div class="col">
+            Programmazione automatica
+            <button data-dojo-id="programEdit" 
+                    data-dojo-type="dijit/form/Button" 
+                    onClick="prg.toggleEdit()">
+                modifica...
+            </button>
+        </div>
 
         <div id="today-table-div">
             <table class="program-table">
@@ -690,19 +696,19 @@
 <div id="history-area">
   <div id="history-controls">
     <img id="history-size" src="images/enlarge.png?1" class="enlarge-img"/>
-        Grafico 
-        (<input data-dojo-id="historyUseRange" data-dojo-type="dijit/form/CheckBox" onChange="hst.toggleRange();"/>
-        Scegli periodo
-    <div id="history-range" class="hidden">
-        da
-        <input data-dojo-id="historyStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" style="width: 9em;"/> 
-        a
-        <input data-dojo-id="historyEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" style="width: 9em;"/>
-    </div>)
-	<button data-dojo-id="historyRangeUpdate" data-dojo-type="dijit/form/Button" onClick="hst.update()" type="button">Aggiorna!</button>
-
-    <div id="status-info">
-        <div id="power-box" class="col">
+        <div class="col">
+            <input data-dojo-id="historyUseRange" data-dojo-type="dijit/form/CheckBox" onChange="hst.toggleRange();"/>
+            Scegli periodo
+            <div id="history-range" class="hidden">
+                da
+                <input data-dojo-id="historyStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" style="width: 9em;"/> 
+                a
+                <input data-dojo-id="historyEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" style="width: 9em;"/>
+            </div>
+        	<button data-dojo-id="historyRangeUpdate" data-dojo-type="dijit/form/Button" onClick="hst.update()" type="button">Aggiorna!</button>
+        </div>
+    <div id="history-select">
+        <div id="history-select-int" class="col">
             <img alt="pwr" class="info-icon" id="power-led" src="images/inside.png?1"/>
             <div class="col">
                 <div>
@@ -731,8 +737,8 @@
                     <span id="history-stats-hu-min"></span> (<span id="history-stats-hu-avg"></span>) <span id="history-stats-hu-max"></span>
                 </div>
             </div><!--col-->  
-        </div><!--power box-->    
-        <div id="mode-box" class="col">     
+        </div>   
+        <div id="history-select-ext" class="col">     
             <div class="col">
                 <div>
                     <input  data-dojo-id="show_ext_temp" 
@@ -761,35 +767,29 @@
                 </div>
             </div><!--col-->
             <img alt="mde" class="info-icon" id="mode-led" src="images/outside.png?1"/>
-        </div><!-- mode box -->
+        </div>
     </div><!-- temperature -->
 
     <div>
-        <div>
-        <div>
-        <div>
-        <span>
+        <div class="col">
             <input  data-dojo-id="show_gas" 
                     data-dojo-type="dijit/form/CheckBox" 
                     value="4" 
                     checked
                     onChange="hst.drawSerie(6,show_gas.checked);hst.drawSerie(7,show_gas.checked)"/>
-            <label for="show_ext_humi">
+            <label for="show_gas">
                 Eventi gas
             </label>
-        </span>
-        <span>
+        </div>
+        <div class="col">
             <input  data-dojo-id="show_pellet" 
                     data-dojo-type="dijit/form/CheckBox" 
                     value="4" 
                     checked
                     onChange="hst.drawSerie(4,show_pellet.checked);hst.drawSerie(5,show_pellet.checked)"/>
-            <label for="show_ext_humi">
+            <label for="show_pellet">
                 Eventi Pellet
             </label>
-        </span>
-        </div>
-        </div>
         </div>
     </div>
 
@@ -813,23 +813,24 @@
 
 
 <div id="stats-area">
-  <div id="stats-controls">
-	 <div>
-        <div>
-            <input data-dojo-id="statsUseRange" data-dojo-type="dijit/form/CheckBox" onChange="sta.toggleRange();"/>
-            Scegli periodo
-			<button data-dojo-id="statsRangeUpdate" data-dojo-type="dijit/form/Button" onClick="sta.update()" type="button">Aggiorna!</button>
+    <div id="stats-controls">
+    	 <div>
+            <div class="col">
+                <input data-dojo-id="statsUseRange" data-dojo-type="dijit/form/CheckBox" onChange="sta.toggleRange();"/>
+                Scegli periodo
+        		<div id="stats-range" class="hidden">
+        			da
+        			<input data-dojo-id="statsStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" style="width: 9em;" /> 
+        			a
+        			<input data-dojo-id="statsEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" style="width: 9em;" />
+        		</div>
+                <button data-dojo-id="statsRangeUpdate" data-dojo-type="dijit/form/Button" onClick="sta.update()" type="button">Aggiorna!</button>
+            </div>
         </div>
-		<div id="stats-range" class="hidden">
-			Dal:
-			<input data-dojo-id="statsStart" type="text" value="" data-dojo-type="dijit/form/DateTextBox" /> 
-			al:
-			<input data-dojo-id="statsEnd" type="text" value="" data-dojo-type="dijit/form/DateTextBox" />
-		</div>
-		<div>
+
+    	<div>
             <div>
-                <input id="stats-show-a" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/>Tempi:
-                
+                <input id="stats-show-a" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/>Tempi:            
                 Pellet (
                 <input id="stats-show-p" data-dojo-type="dijit/form/CheckBox" value="1" checked onChange="sta.drawGraph()"/>modulazione
                 <input id="stats-show-pl" data-dojo-type="dijit/form/CheckBox" value="2" checked onChange="sta.drawGraph()"/>minimo
@@ -845,19 +846,19 @@
                 <input id="stats-show-tmax" data-dojo-type="dijit/form/CheckBox" value="7" checked onChange="sta.drawGraph()"/>max
                 <input id="stats-show-tavg" data-dojo-type="dijit/form/CheckBox" value="8" checked onChange="sta.drawGraph()"/>avg
                 )
+            </div>
+            <div id="stats-total">
+    			<div>
+    				<span id="stats-total-pellet"></span>
+    				<span id="stats-total-pellet-mod"></span>
+    				<span id="stats-total-pellet-min"></span>
+    			</div>
+    			<div id="stats-total-gas">
+    			</div>
+    		</div>
         </div>
-        <div id="stats-total">
-			<div>
-				<span id="stats-total-pellet"></span>
-				<span id="stats-total-pellet-mod"></span>
-				<span id="stats-total-pellet-min"></span>
-			</div>
-			<div id="stats-total-gas">
-			</div>
-		</div>
-    </div>
-    </div>
     </div><!-- stats controls-->
+
     <div id="stats-graph">
     </div>
     <div id="stats-legend">

@@ -160,6 +160,10 @@ img.today-table-img {
    padding: 0.4em;
 }
 
+#stats-range {
+  display: inline;
+}
+
 
 /* History area specific */
 #history-graph {
@@ -229,7 +233,7 @@ img.today-table-img {
     font-weight: bolder;
 }
 
-#power-box, #mode-box {
+#power-box, #mode-box, #history-select-int, #history-select-ext {
 	border: 1px solid black;
 	margin: 0.2em;
 	padding: 0.2em;
