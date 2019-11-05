@@ -630,21 +630,6 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
             // Now all conditions are set...
             // Check some more "general" conditions...
 
-            // Turn GAS off always if pellet is HOT:
-            if ( _pellet->isHot() )
-                gas_on = false;
-
-            if ( gas_on && !_gas->isOn() )
-            {
-                if ( _gas->switchOn() )
-                    update_status = true;
-            }
-            else if ( !gas_on && _gas->isOn() )
-            {
-                if ( _gas->switchOff() )
-                    update_status = true;
-            }
-
             if ( pellet_on )
             {
                 if ( !_pellet->isOn() )
@@ -666,6 +651,31 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                 if ( _pellet->switchOff() )
                     update_status = true;
             }
+
+            // When pellet is ON and HOT we must take care than gas is OFF
+            // otherwise, gas will heat on the primary circuit and will prevent
+            // pellet from dissipating the produced heat. This will cause the pellet
+            // to go above the maximum temperature and switch off autmatically.
+            // We want to prevent this situation, so if pellet is ON and HOT
+            // we switch off gas byd efault.
+            // If pellet is OFF we can safely turn on gas.
+            // If pellet is ON but not yet HOT, we can also safely turn on gas.
+            if ( _pellet->isOn() && _pellet->isHot() )
+                gas_on = false;
+
+            if ( gas_on && !_gas->isOn() )
+            {
+                if ( _gas->switchOn() )
+                    update_status = true;
+            }
+            else if ( !gas_on && _gas->isOn() )
+            {
+                if ( _gas->switchOff() )
+                    update_status = true;
+            }
+
+
+
         } // valid temperature reads
     }
     else // Heating is deactivated

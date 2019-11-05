@@ -145,13 +145,15 @@ function( dom, attr, dclass, style, html, on,// Dojo
                 
         update: function(){
             if ( !statsUseRange.checked ){
-                statsStart.set("value", new Date(new Date() - 1000*60*60*24*15) );
+                var ds = new Date()  - 1000*60*60*24*8;
+                statsStart.set("value", new Date( ds ) );
                 statsEnd.set("value", new Date() );
             }
-            var sDate = statsStart.get("value");sDate.setHours(0);sDate.setMinutes(0);sDate.setSeconds(0);
-            var eDate = statsEnd.get("value");eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(59);
+            var sDate = statsStart.get("value");sDate.setHours(0);sDate.setMinutes(0);sDate.setSeconds(5);
+            var eDate = statsEnd.get("value");eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(55);
             var startDate = Math.floor( sDate / 1000 );
             var endDate = Math.floor( eDate / 1000 ); 
+            console.log( startDate, endDate );
 
             postRequest("cgi-bin/stats",startDate+":"+endDate,
                 function(new_rows){
@@ -165,7 +167,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
                             if ( line_end != -1 ){
                                 var row = new_rows.substr( pos, line_end-pos+1 );
                                 var split_row = row.split(" ");
-                                sta.timeRef.push( parseFloat(split_row[0]) ); // time
+                                sta.timeRef.push( parseFloat(split_row[0])*1000 ); // time
                                 var pellet_tot = parseFloat(split_row[1]);
                                 var pellet_low = parseFloat(split_row[2]);
                                 var gas_time = parseFloat(split_row[3]); // gas time
@@ -194,6 +196,8 @@ function( dom, attr, dclass, style, html, on,// Dojo
                                 pos = len;
                                 }
                         }
+                        console.log( sta.data );
+                        console.log( sta.timeRef );
                         sta.grp.updateSeries( sta.axNames[0], stats_show_tempi.checked&&stats_show_tempi_pellet_mod.checked ? sta.data[0] : [] );    
                         sta.grp.updateSeries( sta.axNames[1], stats_show_tempi.checked&&stats_show_tempi_pellet_min.checked ? sta.data[1] : [] );    
                         sta.grp.updateSeries( sta.axNames[2], stats_show_tempi.checked&&stats_show_tempi_gas.checked ? sta.data[2] : [] );    
@@ -229,7 +233,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
             sta.grp.setTheme(Chris);
             
             sta.grp.addPlot("TimePlot", {type: StackedColumns, gap: 5,  hAxis:"x", vAxis:"y" });
-            sta.grp.addAxis("x", { plot: "TimePlot", labelFunc: function(t,v,p){return utils.date2str(sta.timeRef[v]*1000)} });
+            sta.grp.addAxis("x", { plot: "TimePlot", labelFunc: function(t,v,p){return utils.date2str(sta.timeRef[v-1])} });
             sta.grp.addAxis("y", { plot: "TimePlot", vertical:true, min: 0,
                         majorTickStep: 5, majorTicks: true, majorLabels: true,
                         minorTickStep: 1, minorTicks: true, minorLabels: true,
