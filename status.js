@@ -124,8 +124,10 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             min_temp.set("label", "XX.X°C" );
             max_temp.set("label", "XX.X°C" );
             excess_temp.set("label", "XX.X°C" );
-            hyst_max.set("value", "X.X");
-            hyst_min.set("value", "X.X");
+            min_hyst.set("label", "X.X");
+            max_hyst.set("label", "X.X");
+            min_hyst.set("disabled", true);
+            max_hyst.set("disabled", true);
         },
         
         update: function(){
@@ -151,6 +153,8 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
 
                             min_temp.set("disabled", false);
                             max_temp.set("disabled", false);
+                            min_hyst.set("disabled", false);
+                            max_hyst.set("disabled", false);
                             excess_temp.set("disabled", false);
                             smart_temp_on.set("disabled", false);
                             manual_off_time.set("disabled", false);

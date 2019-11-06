@@ -153,7 +153,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
             var eDate = statsEnd.get("value");eDate.setHours(23);eDate.setMinutes(59);eDate.setSeconds(55);
             var startDate = Math.floor( sDate / 1000 );
             var endDate = Math.floor( eDate / 1000 ); 
-            console.log( startDate, endDate );
 
             postRequest("cgi-bin/stats",startDate+":"+endDate,
                 function(new_rows){
@@ -196,8 +195,6 @@ function( dom, attr, dclass, style, html, on,// Dojo
                                 pos = len;
                                 }
                         }
-                        console.log( sta.data );
-                        console.log( sta.timeRef );
                         sta.grp.updateSeries( sta.axNames[0], stats_show_tempi.checked&&stats_show_tempi_pellet_mod.checked ? sta.data[0] : [] );    
                         sta.grp.updateSeries( sta.axNames[1], stats_show_tempi.checked&&stats_show_tempi_pellet_min.checked ? sta.data[1] : [] );    
                         sta.grp.updateSeries( sta.axNames[2], stats_show_tempi.checked&&stats_show_tempi_gas.checked ? sta.data[2] : [] );    
