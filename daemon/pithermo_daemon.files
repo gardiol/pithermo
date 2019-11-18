@@ -1,3 +1,4 @@
+test/turtler.cpp
 CGI/command_cgi.cpp
 CGI/program_cgi.cpp
 CGI/status_cgi.cpp
