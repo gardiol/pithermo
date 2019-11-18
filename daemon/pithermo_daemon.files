@@ -4,6 +4,7 @@ CGI/status_cgi.cpp
 framework/sharedmemory.cpp
 framework/sharedmemory.h
 src/sharedstatus.h
+test/read_dht22.cpp
 test/test_temp.cpp
 CGI/events_cgi.cpp
 CGI/history_cgi.cpp

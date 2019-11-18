@@ -14,7 +14,7 @@ FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./
 FRAMEWORK_OBJS := $(foreach src,$(FRAMEWORK_SRCS),obj/$(basename $(notdir $(src))).o)
 $(foreach o,$(FRAMEWORK_OBJS),$(eval FRAMEWORK_MAPS_$(basename $(notdir $(o))) := framework/$(basename $(notdir $(o))).cpp))
 
-all: obj pithermo_daemon ../cgi-bin/history ../cgi-bin/events ../cgi-bin/stats ../cgi-bin/status ../cgi-bin/command ../cgi-bin/program $(DEMO_TGT)
+all: obj pithermo_daemon ../cgi-bin/history ../cgi-bin/events ../cgi-bin/stats ../cgi-bin/status ../cgi-bin/command ../cgi-bin/program $(DEMO_TGT) read_dht22
 
 obj:
 	mkdir obj
@@ -24,6 +24,9 @@ $(FRAMEWORK_OBJS): ${FRAMEWORK_SRCS}
 
 obj/main.o: src/main.cpp src/runnerthread.h src/command.h src/logitem.h src/logger.h src/demowiringpi.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -I/usr/local/include -Isrc
+
+obj/read_dht22.o: test/read_dht22.cpp
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc 
 
 obj/runnerthread.o: src/runnerthread.cpp src/command.h src/program.h src/runnerthread.h src/logitem.h src/tempsensor.h src/gpiodevice.h src/logger.h src/generator.h src/sharedstatus.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework 
@@ -99,6 +102,9 @@ pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o 
 
 ../cgi-bin/command: obj/frameworktimer.o obj/frameworkutils.o obj/command_cgi.o obj/debugprint.o obj/udpsocket.o obj/basecomminterface.o obj/socketcommdevice.o obj/genericcommdevice.o obj/memorychecker.o obj/basemutex.o obj/transmissionstats.o
 	g++ -o $@ $^ -lpthread -lrt -lm
+
+read_dht22: obj/read_dht22.o obj/frameworkutils.o obj/frameworktimer.o obj/debugprint.o obj/tempsensor.o obj/gpiodevice.o ${DEMO_OBJ} obj/logger.o obj/logitem.o
+	g++ -o $@ $^ -lpthread -lrt -lm ${WP_LIBS}
 
 test_temp: obj/frameworktimer.o obj/frameworkutils.o obj/test_temp.o obj/tempsensor.o obj/gpiodevice.o obj/demowiringpi.o obj/debugprint.o obj/logger.o obj/logitem.o
 	g++ -o $@ $^ -lpthread -lrt -lm
