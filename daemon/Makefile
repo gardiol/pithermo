@@ -14,7 +14,7 @@ FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./
 FRAMEWORK_OBJS := $(foreach src,$(FRAMEWORK_SRCS),obj/$(basename $(notdir $(src))).o)
 $(foreach o,$(FRAMEWORK_OBJS),$(eval FRAMEWORK_MAPS_$(basename $(notdir $(o))) := framework/$(basename $(notdir $(o))).cpp))
 
-all: obj export_history pithermo_daemon ../cgi-bin/history ../cgi-bin/events ../cgi-bin/stats ../cgi-bin/status ../cgi-bin/command ../cgi-bin/program $(DEMO_TGT) read_dht22
+all: obj export_history export_events pithermo_daemon ../cgi-bin/history ../cgi-bin/events ../cgi-bin/stats ../cgi-bin/status ../cgi-bin/command ../cgi-bin/program $(DEMO_TGT) read_dht22
 
 obj:
 	mkdir obj
@@ -85,6 +85,9 @@ obj/test_temp.o: test/test_temp.cpp src/logitem.h src/tempsensor.cpp src/tempsen
 obj/export_history.o: test/export_history.cpp
 	g++ $(CFLAGS) -o $@ -c $< -Isrc
 
+obj/export_events.o: test/export_events.cpp
+	g++ $(CFLAGS) -o $@ -c $< -Isrc
+
 pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o ${DEMO_OBJ}
 	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib ${WPI_LIBS}
 
@@ -114,6 +117,10 @@ test_temp: obj/frameworktimer.o obj/frameworkutils.o obj/test_temp.o obj/tempsen
 
 export_history: obj/historyitem.o obj/export_history.o
 	g++ -o $@ $^ 
+
+export_events: obj/logitem.o obj/export_events.o obj/frameworktimer.o obj/debugprint.o obj/frameworkutils.o
+	g++ -o $@ $^ 
+
 
 .PHONY: clean
 

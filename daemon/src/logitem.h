@@ -48,6 +48,7 @@ public:
     static uint32_t getSize();
 
     LogItem( Event t );
+    LogItem( Event t, uint64_t time );
     LogItem( FILE* file );
     LogItem( const LogItem& other );
     LogItem();
