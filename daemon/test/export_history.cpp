@@ -79,6 +79,24 @@ double getTemp( uint32_t h, bool interna )
     return ret;
 }
 
+void writeItem( HistoryItem* item, FILE* dest_csv, FILE* dest_bin )
+{
+    struct tm ts;
+    time_t now = item->getTime();
+    char str_buf[1024];
+    ts = *localtime(&now);
+    strftime(str_buf, sizeof(str_buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+    fprintf( dest_csv, "%llu, %s, %f, %f, %f, %f\n",
+            static_cast<unsigned long long int>(now),
+             str_buf,
+            item->getTemp(),
+            item->getHumidity(),
+            item->getExtTemp(),
+            item->getExtHumidity() );
+    item->write( dest_bin );
+}
+
+
 int main( int argc, char** argv )
 {
     int ret = 255;
@@ -86,52 +104,35 @@ int main( int argc, char** argv )
     {
         std::string src = argv[1];
         std::string dst = src + ".csv";
+        std::string dst_bin = src + ".mod";
 
-        printf("Exporting %s to %s...\n", src.c_str(), dst.c_str() );
+        printf("Exporting %s to %s and %s...\n", src.c_str(), dst.c_str(), dst_bin.c_str() );
 
         FILE* source = fopen( src.c_str(), "rb" );
         if ( source != nullptr )
         {
             FILE* destination = fopen( dst.c_str(), "w" );
-            if ( destination != nullptr )
+            FILE* destination_bin = fopen( dst_bin.c_str(), "wb" );
+            if ( (destination != nullptr) && (destination_bin != nullptr) )
             {
                 uint32_t n_records = 0;
-                struct tm ts;
-                time_t now;
-                char str_buf[1024];
                 while ( !feof( source ) )
                 {
                     HistoryItem item( source );
                     if ( item.isValid() )
                     {
                         n_records++;
-                        now = item.getTime();
-                        ts = *localtime(&now);
-                        strftime(str_buf, sizeof(str_buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
-                        fprintf( destination, "%llu, %s, %f, %f, %f, %f\n",
-                                static_cast<unsigned long long int>(now),
-                                 str_buf,
-                                item.getTemp(),
-                                item.getHumidity(),
-                                item.getExtTemp(),
-                                item.getExtHumidity() );
+                        writeItem( &item, destination, destination_bin );
 
-
+                        uint64_t now = item.getTime();
                         if ( now == 1573023642 ) // ore 8:00 del 6 novembre
                         {
                             // Fill the blank 6 november
                             for ( int h = 8; h < 24; h++ )
                             {
                                 now += 3600;
-                                ts = *localtime(&now);
-                                strftime(str_buf, sizeof(str_buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
-                                fprintf( destination, "%llu, %s, %f, %f, %f, %f\n",
-                                        static_cast<unsigned long long int>(now),
-                                         str_buf,
-                                        getTemp(h,true),
-                                        50.0,
-                                         getTemp(h,false),
-                                        99.0 );
+                                HistoryItem item2( now, getTemp(h, true), 50.0, getTemp(h,false),99.0);
+                                writeItem( &item2, destination, destination_bin );
                             }
                             // Fill the blank from 7/11 to 30/11
                             for ( int d = 7; d < 31; d++ )
@@ -139,15 +140,8 @@ int main( int argc, char** argv )
                                 for ( int h = 0; h < 24; h++ )
                                 {
                                     now += 3600;
-                                    ts = *localtime(&now);
-                                    strftime(str_buf, sizeof(str_buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
-                                    fprintf( destination, "%llu, %s, %f, %f, %f, %f\n",
-                                            static_cast<unsigned long long int>(now),
-                                             str_buf,
-                                             getTemp(h,true),
-                                             50.0,
-                                              getTemp(h,false),
-                                            99.0 );
+                                    HistoryItem item2( now, getTemp(h, true), 50.0, getTemp(h,false),99.0);
+                                    writeItem( &item2, destination, destination_bin );
                                 }
                             }
                             // Fill the blank from 1/12 to 31/12
@@ -156,15 +150,8 @@ int main( int argc, char** argv )
                                 for ( int h = 0; h < 24; h++ )
                                 {
                                     now += 3600;
-                                    ts = *localtime(&now);
-                                    strftime(str_buf, sizeof(str_buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
-                                    fprintf( destination, "%llu, %s, %f, %f, %f, %f\n",
-                                            static_cast<unsigned long long int>(now),
-                                             str_buf,
-                                             getTemp(h,true),
-                                             50.0,
-                                              getTemp(h,false),
-                                            99.0 );
+                                    HistoryItem item2( now, getTemp(h, true), 50.0, getTemp(h,false),99.0);
+                                    writeItem( &item2, destination, destination_bin );
                                 }
                             }
                             // Fill the blank from 1/1/20 to 03/01/20
@@ -173,30 +160,16 @@ int main( int argc, char** argv )
                                 for ( int h = 0; h < 24; h++ )
                                 {
                                     now += 3600;
-                                    ts = *localtime(&now);
-                                    strftime(str_buf, sizeof(str_buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
-                                    fprintf( destination, "%llu, %s, %f, %f, %f, %f\n",
-                                            static_cast<unsigned long long int>(now),
-                                             str_buf,
-                                             getTemp(h,true),
-                                             50.0,
-                                              getTemp(h,false),
-                                            99.0 );
+                                    HistoryItem item2( now, getTemp(h, true), 50.0, getTemp(h,false),99.0);
+                                    writeItem( &item2, destination, destination_bin );
                                 }
                             }
                             // Fill the blank 4 jannuary
                             for ( int h = 0; h < 21; h++ )
                             {
                                 now += 3600;
-                                ts = *localtime(&now);
-                                strftime(str_buf, sizeof(str_buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
-                                fprintf( destination, "%llu, %s, %f, %f, %f, %f\n",
-                                        static_cast<unsigned long long int>(now),
-                                         str_buf,
-                                         getTemp(h,true),
-                                         50.0,
-                                          getTemp(h,false),
-                                        99.0 );
+                                HistoryItem item2( now, getTemp(h, true), 50.0, getTemp(h,false),99.0);
+                                writeItem( &item2, destination, destination_bin );
                             }
                         }
                     }
