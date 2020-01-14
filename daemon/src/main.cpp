@@ -14,6 +14,8 @@
 #include "runnerthread.h"
 #include "command.h"
 
+#include "tempsensormix.h"
+
 #ifdef DEMO
 #include <demowiringpi.h>
 #define DEMO_MODE true
@@ -241,7 +243,7 @@ int main(int argc, char** argv)
                         UdpSocket remote_client("RemoteClient",remote_host, "",5555,0);
                         if ( remote_client.activateInterface() )
                         {
-                            TempSensor* temp_sensor = new TempSensor( &logger, 1, temp_correction );
+                            TempSensorMix* temp_sensor = new TempSensorMix( &logger, 1, temp_correction, "" );
 
                             FrameworkTimer timer;
                             timer.setLoopTime( 30 * 1000 * 1000 );
@@ -266,7 +268,7 @@ int main(int argc, char** argv)
                                     // Let's reset the sensor:
                                     delete temp_sensor;
                                     logger.logDebug("Resetting sensor...");
-                                    temp_sensor = new TempSensor( &logger, 1, temp_correction );
+                                    temp_sensor = new TempSensorMix( &logger, 1, temp_correction, "" );
                                 }
                                 timer.waitLoop();
                             }

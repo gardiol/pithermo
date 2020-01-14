@@ -58,6 +58,9 @@ obj/gpiodevice.o: src/gpiodevice.cpp src/gpiodevice.h src/logger.h src/logitem.h
 obj/tempsensor.o: src/tempsensor.cpp src/tempsensor.h src/gpiodevice.h src/logger.h src/logitem.h src/demowiringpi.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 
+obj/tempsensormix.o: src/tempsensormix.cpp src/tempsensormix.h src/gpiodevice.h src/logger.h src/logitem.h src/demowiringpi.h
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
+
 obj/demowiringpi.o: src/demowiringpi.cpp src/demowiringpi.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 	
@@ -88,7 +91,7 @@ obj/export_history.o: test/export_history.cpp
 obj/export_events.o: test/export_events.cpp
 	g++ $(CFLAGS) -o $@ -c $< -Isrc
 
-pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o ${DEMO_OBJ}
+pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o obj/tempsensormix.o ${DEMO_OBJ}
 	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib ${WPI_LIBS}
 
 ../cgi-bin/history: obj/frameworktimer.o obj/frameworkutils.o obj/history_cgi.o obj/historyitem.o obj/history.o obj/debugprint.o obj/logitem.o obj/logger.o

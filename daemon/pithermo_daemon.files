@@ -1,3 +1,5 @@
+src/tempsensormix.cpp
+src/tempsensormix.h
 test/export_events.cpp
 test/export_history.cpp
 test/turtler.cpp
