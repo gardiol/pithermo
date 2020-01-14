@@ -243,7 +243,7 @@ int main(int argc, char** argv)
                         UdpSocket remote_client("RemoteClient",remote_host, "",5555,0);
                         if ( remote_client.activateInterface() )
                         {
-                            TempSensorMix* temp_sensor = new TempSensorMix( &logger, 1, temp_correction, "" );
+                            TempSensorMix* temp_sensor = new TempSensorMix( &logger, 1, temp_correction, "28-0300a27937e1" );
 
                             FrameworkTimer timer;
                             timer.setLoopTime( 30 * 1000 * 1000 );
@@ -268,7 +268,7 @@ int main(int argc, char** argv)
                                     // Let's reset the sensor:
                                     delete temp_sensor;
                                     logger.logDebug("Resetting sensor...");
-                                    temp_sensor = new TempSensorMix( &logger, 1, temp_correction, "" );
+                                    temp_sensor = new TempSensorMix( &logger, 1, temp_correction, "28-0300a27937e1" );
                                 }
                                 timer.waitLoop();
                             }
