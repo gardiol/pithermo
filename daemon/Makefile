@@ -7,14 +7,14 @@ $(info Build per PC - DEMO specified)
 CFLAGS=-fPIC -g -Wall -std=c++11 -DDEMO
 DEMO_OBJ=obj/demowiringpi.o
 DEMO_TGT=test_temp
-WPI_LIBS=
+WPI_LIBS=""
 endif
 
 FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./framework/basethread.cpp ./framework/cmdlineparser.cpp ./framework/configdata.cpp ./framework/configfile.cpp ./framework/debugprint.cpp ./framework/udpsocket.cpp ./framework/frameworksighandler.cpp ./framework/frameworktimer.cpp ./framework/frameworkutils.cpp ./framework/genericcommdevice.cpp ./framework/memorychecker.cpp ./framework/profiler.cpp ./framework/profilerinternal.cpp ./framework/scheduledthread.cpp ./framework/socketcommdevice.cpp ./framework/tcpclient.cpp ./framework/tcpserver.cpp ./framework/transmissionstats.cpp ./framework/sharedmemory.cpp
 FRAMEWORK_OBJS := $(foreach src,$(FRAMEWORK_SRCS),obj/$(basename $(notdir $(src))).o)
 $(foreach o,$(FRAMEWORK_OBJS),$(eval FRAMEWORK_MAPS_$(basename $(notdir $(o))) := framework/$(basename $(notdir $(o))).cpp))
 
-all: obj export_history export_events pithermo_daemon ../cgi-bin/history ../cgi-bin/events ../cgi-bin/stats ../cgi-bin/status ../cgi-bin/command ../cgi-bin/program $(DEMO_TGT) read_dht22
+all: obj pithermo_daemon ../cgi-bin/history ../cgi-bin/events ../cgi-bin/stats ../cgi-bin/status ../cgi-bin/command ../cgi-bin/program $(DEMO_TGT) read_dht22
 
 obj:
 	mkdir obj
@@ -58,9 +58,6 @@ obj/gpiodevice.o: src/gpiodevice.cpp src/gpiodevice.h src/logger.h src/logitem.h
 obj/tempsensor.o: src/tempsensor.cpp src/tempsensor.h src/gpiodevice.h src/logger.h src/logitem.h src/demowiringpi.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 
-obj/tempsensormix.o: src/tempsensormix.cpp src/tempsensormix.h src/gpiodevice.h src/logger.h src/logitem.h src/demowiringpi.h
-	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
-
 obj/demowiringpi.o: src/demowiringpi.cpp src/demowiringpi.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 	
@@ -85,13 +82,7 @@ obj/program_cgi.o: CGI/program_cgi.cpp src/sharedstatus.h
 obj/test_temp.o: test/test_temp.cpp src/logitem.h src/tempsensor.cpp src/tempsensor.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 
-obj/export_history.o: test/export_history.cpp
-	g++ $(CFLAGS) -o $@ -c $< -Isrc
-
-obj/export_events.o: test/export_events.cpp
-	g++ $(CFLAGS) -o $@ -c $< -Isrc
-
-pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o obj/tempsensormix.o ${DEMO_OBJ}
+pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o ${DEMO_OBJ}
 	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib ${WPI_LIBS}
 
 ../cgi-bin/history: obj/frameworktimer.o obj/frameworkutils.o obj/history_cgi.o obj/historyitem.o obj/history.o obj/debugprint.o obj/logitem.o obj/logger.o
@@ -117,13 +108,6 @@ read_dht22: obj/read_dht22.o obj/frameworkutils.o obj/frameworktimer.o obj/debug
 
 test_temp: obj/frameworktimer.o obj/frameworkutils.o obj/test_temp.o obj/tempsensor.o obj/gpiodevice.o obj/demowiringpi.o obj/debugprint.o obj/logger.o obj/logitem.o
 	g++ -o $@ $^ -lpthread -lrt -lm
-
-export_history: obj/historyitem.o obj/export_history.o
-	g++ -o $@ $^ 
-
-export_events: obj/logitem.o obj/export_events.o obj/frameworktimer.o obj/debugprint.o obj/frameworkutils.o
-	g++ -o $@ $^ 
-
 
 .PHONY: clean
 

@@ -301,7 +301,7 @@ function( dom, attr, dclass, style, html, on,// Dojo
             sta.grp.render(); 
             new Legend({chartRef:sta.grp, horizontal:3}, 'stats-legend');
 
-            sta.update();
+//            sta.update();
         }
     };
 });

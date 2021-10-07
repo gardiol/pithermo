@@ -20,14 +20,6 @@ LogItem::LogItem(LogItem::Event t):
 {
 }
 
-LogItem::LogItem(LogItem::Event t, uint64_t time):
-    _time( time ),
-    _event( t ),
-    _valid( true )
-{
-
-}
-
 LogItem::LogItem(FILE *file):
     _time(0),
     _event(0),
