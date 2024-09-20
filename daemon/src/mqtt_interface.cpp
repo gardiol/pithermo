@@ -6,9 +6,11 @@
 
 using namespace FrameworkLibrary;
 
-MQTT_Interface::MQTT_Interface(Logger *logger, const std::string &host, int port)
+MQTT_Interface::MQTT_Interface(Logger *logger, const std::string &host, const std::string &username, const std::string &password, int port)
     : _host( host )
     , _port( port )
+    , _username( username )
+    , _password( password )
     , _connected( false )
     , _data( NULL )
     , _logger( logger )
@@ -37,6 +39,9 @@ void MQTT_Interface::publish(const std::string &topic, const std::string &data)
     {
         if ( !_connected )
         {
+            mosquitto_username_pw_set((struct mosquitto *)_data,
+                                       _username.c_str(),
+                                      _password.c_str() );
             int ret = mosquitto_connect( (struct mosquitto *)_data,
                                         _host.c_str(),
                                         _port,

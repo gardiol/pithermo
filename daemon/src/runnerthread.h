@@ -104,7 +104,6 @@ private:
     bool _manual_pellet_minimum_forced_off;
     bool _manual_gas_forced_on;
 
-    std::string _mqtt_host;
     MQTT_Interface* _mqtt;
 };
 

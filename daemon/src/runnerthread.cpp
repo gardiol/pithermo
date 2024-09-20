@@ -60,7 +60,6 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _hysteresis_min(0.1f),
     _manual_pellet_minimum_forced_off(false),
     _manual_gas_forced_on(false),
-    _mqtt_host(""),
     _mqtt( NULL )
 
 {
@@ -73,6 +72,9 @@ RunnerThread::RunnerThread(ConfigFile *config,
 
     // Load config file
     std::string content;
+    std::string mqtt_host = "";
+    std::string mqtt_username = "";
+    std::string mqtt_password = "";
     if ( !_config->isEmpty() )
     {
         _current_mode = FrameworkUtils::string_tolower(_config->getValue( "mode" )) == "manual" ? MANUAL_MODE : AUTO_MODE;
@@ -95,13 +97,17 @@ RunnerThread::RunnerThread(ConfigFile *config,
         if ( _excessive_overtemp_threshold < (_hysteresis_max+1.0f) )
             _excessive_overtemp_threshold = _hysteresis_max+1.0f;
         if ( _config->hasValue( "mqtt_host" ) )
-            _mqtt_host = _config->getValue( "mqtt_host" );
+        {
+            mqtt_host = _config->getValue( "mqtt_host" );
+            mqtt_username = _config->getValue( "mqtt_username" );
+            mqtt_password = _config->getValue( "mqtt_password" );
+        }
     }
     else
         _saveConfig();
 
-    if ( _mqtt_host != "" )
-        _mqtt = new MQTT_Interface( _logger, _mqtt_host );
+    if ( mqtt_host != "" )
+        _mqtt = new MQTT_Interface( _logger, mqtt_host, mqtt_username, mqtt_password );
 
     // Load history log:
     _history.initialize( _current_ext_temp, _current_ext_humidity );
