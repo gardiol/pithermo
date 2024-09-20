@@ -259,13 +259,13 @@ bool RunnerThread::_checkCommands()
                 _current_ext_temp = FrameworkUtils::string_tof( tokens[1] );
                 _current_ext_humidity = FrameworkUtils::string_tof( tokens[2] );
 
-                std::string topic = "esterno/nord/temp";
-                std::string data = "\"temperature\": ";
                 if ( _mqtt != NULL )
                 {
-                    data += FrameworkUtils::ftostring( _temp_sensor->getTemp() );
+                    std::string topic = "esterno/nord/temp";
+                    std::string data = "\"temperature\": ";
+                    data += tokens[1];
                     data += ", \"humidity\": ";
-                    data += FrameworkUtils::ftostring( _temp_sensor->getHumidity() );
+                    data += tokens[2] ;
                     _mqtt->publish( topic, data );
                 }
             }
