@@ -258,6 +258,16 @@ bool RunnerThread::_checkCommands()
                 //                std::string sensor_id = tokens[0];
                 _current_ext_temp = FrameworkUtils::string_tof( tokens[1] );
                 _current_ext_humidity = FrameworkUtils::string_tof( tokens[2] );
+
+                std::string topic = "esterno/nord/temp";
+                std::string data = "\"temperature\": ";
+                if ( _mqtt != NULL )
+                {
+                    data += FrameworkUtils::ftostring( _temp_sensor->getTemp() );
+                    data += ", \"humidity\": ";
+                    data += FrameworkUtils::ftostring( _temp_sensor->getHumidity() );
+                    _mqtt->publish( topic, data );
+                }
             }
             else
                 _logger->logDebug( "Error: invalid ext-temp (" + cmd->getParam() + ")");
@@ -718,9 +728,9 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
             {
                 std::string topic = "terra/disimpegno/temp";
                 std::string data = "\"temperature\": ";
-                data += FrameworkUtils::tostring( _temp_sensor->getTemp() );
+                data += FrameworkUtils::ftostring( _temp_sensor->getTemp() );
                 data += ", \"humidity\": ";
-                data += FrameworkUtils::tostring( _temp_sensor->getHumidity() );
+                data += FrameworkUtils::ftostring( _temp_sensor->getHumidity() );
                 _mqtt->publish( topic, data );
             }
         }
