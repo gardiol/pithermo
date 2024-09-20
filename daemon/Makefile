@@ -7,7 +7,7 @@ $(info Build per PC - DEMO specified)
 CFLAGS=-fPIC -g -Wall -std=c++11 -DDEMO
 DEMO_OBJ=obj/demowiringpi.o
 DEMO_TGT=test_temp
-WPI_LIBS=""
+WPI_LIBS=
 endif
 
 FRAMEWORK_SRCS := ./framework/basecomminterface.cpp ./framework/basemutex.cpp ./framework/basethread.cpp ./framework/cmdlineparser.cpp ./framework/configdata.cpp ./framework/configfile.cpp ./framework/debugprint.cpp ./framework/udpsocket.cpp ./framework/frameworksighandler.cpp ./framework/frameworktimer.cpp ./framework/frameworkutils.cpp ./framework/genericcommdevice.cpp ./framework/memorychecker.cpp ./framework/profiler.cpp ./framework/profilerinternal.cpp ./framework/scheduledthread.cpp ./framework/socketcommdevice.cpp ./framework/tcpclient.cpp ./framework/tcpserver.cpp ./framework/transmissionstats.cpp ./framework/sharedmemory.cpp
@@ -26,6 +26,9 @@ obj/main.o: src/main.cpp src/runnerthread.h src/command.h src/logitem.h src/logg
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -I/usr/local/include -Isrc
 
 obj/read_dht22.o: test/read_dht22.cpp
+	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc 
+
+obj/mqtt_interface.o: src/mqtt_interface.cpp src/mqtt_interface.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc 
 
 obj/runnerthread.o: src/runnerthread.cpp src/command.h src/program.h src/runnerthread.h src/logitem.h src/tempsensor.h src/gpiodevice.h src/logger.h src/generator.h src/sharedstatus.h
@@ -82,8 +85,8 @@ obj/program_cgi.o: CGI/program_cgi.cpp src/sharedstatus.h
 obj/test_temp.o: test/test_temp.cpp src/logitem.h src/tempsensor.cpp src/tempsensor.h
 	g++ $(CFLAGS) -o $@ -c $< -Iframework -Isrc
 
-pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o ${DEMO_OBJ}
-	g++ -o $@ $^ -lpthread -lrt -lm -L/usr/local/lib ${WPI_LIBS}
+pithermo_daemon:  ${FRAMEWORK_OBJS} obj/main.o obj/runnerthread.o obj/command.o obj/program.o obj/historyitem.o obj/logger.o obj/history.o obj/logitem.o obj/generator.o obj/gpiodevice.o obj/tempsensor.o obj/mqtt_interface.o ${DEMO_OBJ}
+	g++ -o $@ $^ -lpthread -lrt -lm -lmosquitto -L/usr/local/lib ${WPI_LIBS}
 
 ../cgi-bin/history: obj/frameworktimer.o obj/frameworkutils.o obj/history_cgi.o obj/historyitem.o obj/history.o obj/debugprint.o obj/logitem.o obj/logger.o
 	g++ -o $@ $^ -lpthread -lrt -lm

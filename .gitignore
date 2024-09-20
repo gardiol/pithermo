@@ -1,0 +1,13 @@
+cgi-bin/command
+cgi-bin/events
+cgi-bin/history
+cgi-bin/program
+cgi-bin/stats
+cgi-bin/status
+.qtc_clangd/
+obj/
+pithermo_daemon
+pithermo_daemon.cflags
+pithermo_daemon.cxxflags
+read_dht22
+test_temp

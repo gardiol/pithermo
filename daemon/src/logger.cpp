@@ -5,6 +5,8 @@
 #include <frameworktimer.h>
 #include <frameworkutils.h>
 
+#include <time.h>
+
 using namespace FrameworkLibrary;
 
 Logger::Logger(const std::string &events_path):

@@ -71,6 +71,8 @@ src/logger.h
 src/logitem.cpp
 src/logitem.h
 src/main.cpp
+src/mqtt_interface.cpp
+src/mqtt_interface.h
 src/program.cpp
 src/program.h
 src/runnerthread.cpp

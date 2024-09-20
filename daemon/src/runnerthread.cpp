@@ -8,8 +8,6 @@
 #include <sstream>
 
 #include "configfile.h"
-#include "debugprint.h"
-#include "profiler.h"
 
 #include "command.h"
 #include "program.h"
@@ -61,7 +59,9 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _hysteresis_max(0.1f),
     _hysteresis_min(0.1f),
     _manual_pellet_minimum_forced_off(false),
-    _manual_gas_forced_on(false)
+    _manual_gas_forced_on(false),
+    _mqtt_host(""),
+    _mqtt( NULL )
 
 {
     if ( _shared_status.isReady() )
@@ -94,9 +94,14 @@ RunnerThread::RunnerThread(ConfigFile *config,
             _excessive_overtemp_threshold = 1.0f;
         if ( _excessive_overtemp_threshold < (_hysteresis_max+1.0f) )
             _excessive_overtemp_threshold = _hysteresis_max+1.0f;
+        if ( _config->hasValue( "mqtt_host" ) )
+            _mqtt_host = _config->getValue( "mqtt_host" );
     }
     else
         _saveConfig();
+
+    if ( _mqtt_host != "" )
+        _mqtt = new MQTT_Interface( _logger, _mqtt_host );
 
     // Load history log:
     _history.initialize( _current_ext_temp, _current_ext_humidity );
@@ -131,6 +136,10 @@ RunnerThread::~RunnerThread()
 {
     requestTerminate();
     waitForEnd();
+
+    if ( _mqtt != NULL )
+        delete _mqtt;
+
     _commands_mutex.lock();
     for ( std::list<Command*>::iterator c = _commands_list.begin();
           c != _commands_list.end();
@@ -699,6 +708,15 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
             if ( !_history.update( _temp_sensor->getTemp(), _temp_sensor->getHumidity(),
                                    _current_ext_temp, _current_ext_humidity ) )
                 _logger->logDebug("Unable to write to history file");
+            if ( _mqtt != NULL )
+            {
+                std::string topic = "terra/disimpegno/temp";
+                std::string data = "\"temperature\": ";
+                data += FrameworkUtils::tostring( _temp_sensor->getTemp() );
+                data += ", \"humidity\": ";
+                data += FrameworkUtils::tostring( _temp_sensor->getHumidity() );
+                _mqtt->publish( topic, data );
+            }
         }
     }
 

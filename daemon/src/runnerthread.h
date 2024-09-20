@@ -13,6 +13,8 @@
 #include "generator.h"
 #include "tempsensor.h"
 
+#include "mqtt_interface.h"
+
 using namespace FrameworkLibrary;
 
 class Command;
@@ -101,6 +103,9 @@ private:
 
     bool _manual_pellet_minimum_forced_off;
     bool _manual_gas_forced_on;
+
+    std::string _mqtt_host;
+    MQTT_Interface* _mqtt;
 };
 
 #endif // RUNNERTHREAD_H
