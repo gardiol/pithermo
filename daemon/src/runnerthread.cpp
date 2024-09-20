@@ -262,10 +262,11 @@ bool RunnerThread::_checkCommands()
                 if ( _mqtt != NULL )
                 {
                     std::string topic = "esterno/nord/temp";
-                    std::string data = "\"temperature\": ";
+                    std::string data = "{ \"temperature\": ";
                     data += tokens[1];
                     data += ", \"humidity\": ";
                     data += tokens[2] ;
+		    data += " }";
                     _mqtt->publish( topic, data );
                 }
             }
@@ -727,10 +728,11 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
             if ( _mqtt != NULL )
             {
                 std::string topic = "terra/disimpegno/temp";
-                std::string data = "\"temperature\": ";
+                std::string data = "{ \"temperature\": ";
                 data += FrameworkUtils::ftostring( _temp_sensor->getTemp() );
                 data += ", \"humidity\": ";
                 data += FrameworkUtils::ftostring( _temp_sensor->getHumidity() );
+		data += " }";
                 _mqtt->publish( topic, data );
             }
         }
