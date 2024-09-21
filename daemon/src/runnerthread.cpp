@@ -266,7 +266,7 @@ bool RunnerThread::_checkCommands()
                     data += tokens[1];
                     data += ", \"humidity\": ";
                     data += tokens[2] ;
-		    data += " }";
+                    data += " }";
                     _mqtt->publish( topic, data );
                 }
             }
@@ -732,10 +732,33 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                 data += FrameworkUtils::ftostring( _temp_sensor->getTemp() );
                 data += ", \"humidity\": ";
                 data += FrameworkUtils::ftostring( _temp_sensor->getHumidity() );
-		data += " }";
+                data += " }";
                 _mqtt->publish( topic, data );
             }
         }
+        if ( _mqtt != NULL )
+        {
+            std::string topic = "terra/tv/pellet_status";
+            std::string data = "{ ";
+            data += "\"on\": ";
+            data += _pellet->isOn() ? "1" : "0";
+            data += ", \"modulation\": ";
+            data += _pellet->isLow() ? "0" : "1";
+            data += ", \"hot\": ";
+            data += _pellet->isHot() ? "1" : "0";
+            data += " }";
+            _mqtt->publish( topic, data );
+        }
+        if ( _mqtt != NULL )
+        {
+            std::string topic = "terra/disimpegno/gas_status";
+            std::string data = "{ ";
+            data += "\"on\": ";
+            data += _gas->isOn() ? "1" : "0";
+            data += " }";
+            _mqtt->publish( topic, data );
+        }
+
     }
 
     if ( update_status )
