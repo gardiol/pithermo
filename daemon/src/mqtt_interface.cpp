@@ -61,7 +61,12 @@ void MQTT_Interface::publish(const std::string &topic, const std::string &data)
                                         topic.c_str(), data.length(), data.c_str(), 0, true );
             if ( ret != MOSQ_ERR_SUCCESS )
             {
-                _logger->logDebug( "MQTT publish failed for topic '" + topic + "' [" + FrameworkUtils::tostring( ret ) + "]" );
+                _logger->logDebug( "MQTT publish failed for topic '" + topic + "' [" + FrameworkUtils::tostring( ret ) + "] (reconnecting)" );
+		int ret = mosquitto_reconnect( (struct mosquitto *)_data );
+		if ( ret != MOSQ_ERR_SUCCESS ) {
+                	_logger->logDebug( "MQTT unable to reconnect" );
+			_connected = false;
+		}
             }
         }
     }
