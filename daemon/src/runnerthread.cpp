@@ -108,7 +108,10 @@ RunnerThread::RunnerThread(ConfigFile *config,
         _saveConfig();
 
     if ( mqtt_host != "" )
+    {
         _mqtt = new MQTT_Interface( _logger, this, mqtt_host, mqtt_username, mqtt_password );
+        _mqtt->subscribe( "riscaldamento/feedback" );
+    }
 
     // Load history log:
     _history.initialize( _current_ext_temp, _current_ext_humidity );
