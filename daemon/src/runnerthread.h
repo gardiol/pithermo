@@ -19,7 +19,7 @@ using namespace FrameworkLibrary;
 
 class Command;
 
-class RunnerThread : public ScheduledThread
+class RunnerThread : public ScheduledThread, public MQTT_callback
 {
 public:
     enum ModeType { MANUAL_MODE,
@@ -33,6 +33,8 @@ public:
     void appendCommand( Command* cmd );
 
 private:
+    void message_received( const std::string& topic, const std::string& payload);
+
     bool scheduledRun(uint64_t, uint64_t);
     bool _checkCommands();
     bool _checkAntiIce();

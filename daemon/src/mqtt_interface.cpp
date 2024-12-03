@@ -6,7 +6,7 @@
 
 using namespace FrameworkLibrary;
 
-MQTT_Interface::MQTT_Interface(Logger *logger, const std::string &host, const std::string &username, const std::string &password, int port)
+MQTT_Interface::MQTT_Interface(Logger *logger, MQTT_callback* callback, const std::string &host, const std::string &username, const std::string &password, int port)
     : _host( host )
     , _port( port )
     , _username( username )
@@ -14,11 +14,16 @@ MQTT_Interface::MQTT_Interface(Logger *logger, const std::string &host, const st
     , _connected( false )
     , _data( NULL )
     , _logger( logger )
+    , _callback( callback )
 {
     mosquitto_lib_init();
     _data = (void*)mosquitto_new( NULL, true, this );
     if ( _data != NULL )
-        _logger->logDebug( "MQTT created" );
+    {
+        mosquitto_message_callback_set((struct mosquitto *)_data, MQTT_Interface::_message_callback );
+
+        _logger->logDebug( "MQTT created & loop started" );
+    }
     _logger->logDebug( "MQTT init" );
 }
 
@@ -72,4 +77,27 @@ void MQTT_Interface::publish(const std::string &topic, const std::string &data)
     }
 }
 
-//struct mosquitto *
+void MQTT_Interface::subscribe(const std::string &topic)
+{
+    //Subscribe to any channel that ends with ambient_data
+    mosquitto_subscribe((struct mosquitto *)_data, NULL, topic.c_str(), 0);
+}
+
+void MQTT_Interface::check_network()
+{
+    mosquitto_loop((struct mosquitto *)_data, 100, 1);
+
+}
+
+void MQTT_Interface::_message_callback(mosquitto *mosq,
+                                       void *userdata,
+                                       const mosquitto_message *message)
+{
+    MQTT_Interface* me = (MQTT_Interface*)userdata;
+    std::string payload( (char*)message->payload, message->payloadlen );
+    if ( me->_callback != NULL )
+    {
+        me->_callback->message_received( message->topic, payload );
+    }
+}
+

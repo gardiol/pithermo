@@ -10,6 +10,7 @@
 #include "configfile.h"
 
 #include "command.h"
+#include "debugprint.h"
 #include "program.h"
 #include "sharedstatus.h"
 
@@ -107,7 +108,7 @@ RunnerThread::RunnerThread(ConfigFile *config,
         _saveConfig();
 
     if ( mqtt_host != "" )
-        _mqtt = new MQTT_Interface( _logger, mqtt_host, mqtt_username, mqtt_password );
+        _mqtt = new MQTT_Interface( _logger, this, mqtt_host, mqtt_username, mqtt_password );
 
     // Load history log:
     _history.initialize( _current_ext_temp, _current_ext_humidity );
@@ -180,6 +181,11 @@ void RunnerThread::appendCommand(Command *cmd)
     _commands_mutex.lock();
     _commands_list.push_back( cmd );
     _commands_mutex.unlock();
+}
+
+void RunnerThread::message_received(const std::string &topic, const std::string &payload)
+{
+    debugPrintNotice( "MQTT message" ) << "Topic: '" << topic << "': '" << payload << "'\n";
 }
 
 bool RunnerThread::_checkCommands()
