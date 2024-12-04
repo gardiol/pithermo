@@ -47,6 +47,7 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _smart_temp(17.0),
     _temp_correction(1.0),
     _excessive_overtemp_threshold(5.0),
+    _external_request(false),
     _sensor_success_reads(0),
     _manual_off_time(0),
     _last_time(0),
@@ -187,7 +188,11 @@ void RunnerThread::appendCommand(Command *cmd)
 
 void RunnerThread::message_received(const std::string &topic, const std::string &payload)
 {
-	_logger->logDebug( std::string("MQTT Topic: '") + topic + std::string("': '") + payload + std::string("'") );
+    _logger->logDebug( std::string("MQTT Topic: '") + topic + std::string("': '") + payload + std::string("'") );
+    if ( topic == "riscaldamento/feedback" )
+    {
+
+    }
 }
 
 bool RunnerThread::_checkCommands()
@@ -626,7 +631,7 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                     }
 
                     // When under temp is detected, turn on the appropriate generator
-                    if ( _under_temp )
+                    if ( _under_temp || _external_request )
                     {
                         // If pellet is on and not in flameout, switch to modulation
                         if ( pellet_on && !_pellet_flameout )

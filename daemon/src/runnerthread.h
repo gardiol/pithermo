@@ -88,6 +88,8 @@ private:
     float _temp_correction;
     float _excessive_overtemp_threshold;
 
+    bool _external_request;
+
     uint64_t _sensor_success_reads;
 
     uint64_t _manual_off_time;
