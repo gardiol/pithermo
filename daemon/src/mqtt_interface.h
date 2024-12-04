@@ -3,7 +3,10 @@
 
 #include "logger.h"
 
+#include <basemutex.h>
+
 #include <string>
+#include <set>
 
 class MQTT_callback
 {
@@ -25,20 +28,24 @@ public:
     void publish( const std::string& topic, const std::string &data );
     void subscribe( const std::string& topic );
 
-    void check_network();
-
 private:
+    void _check_connection();
+    void _subscribe_topic( const std::string& topic );
+
     std::string _host;
     int _port;
     std::string _username;
     std::string _password;
 
     bool _connected;
+    bool _looping;
     void *_data;
 
     Logger* _logger;
 
     MQTT_callback* _callback;
+
+    std::set<std::string> _subscribed_topics;
 
     static void _message_callback(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *message);
 };

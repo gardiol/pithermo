@@ -493,9 +493,6 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
 {
     bool update_status = _checkCommands();
 
-    if ( _mqtt != NULL )
-        _mqtt->check_network();
-
     // Read internal temperature sensor and calculate temp trend
     if ( _temp_sensor->readSensor() )
     {
