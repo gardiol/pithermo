@@ -8,7 +8,6 @@ using namespace FrameworkLibrary;
 
 MQTT_Interface::MQTT_Interface(Logger *logger, MQTT_callback* callback, const std::string &host, const std::string &username, const std::string &password, int port)
     : _connected( false )
-    , _looping( false )
     , _data( NULL )
     , _logger( logger )
     , _callback( callback )
@@ -95,33 +94,6 @@ bool MQTT_Interface::isConnected()
     _mutex.unlock();
     return connected;
 }
-
-/*void MQTT_Interface::_check_connection()
-{
-    _mutex.lock();
-    if ( !_connected )
-    {
-        mosquitto_username_pw_set((struct mosquitto *)_data,
-                                  _username.c_str(),
-                                  _password.c_str() );
-        int ret = mosquitto_connect( (struct mosquitto *)_data,
-                                    _host.c_str(),
-                                    _port,
-                                    60 );
-        if ( ret  == MOSQ_ERR_SUCCESS )
-        {
-            _connected = true;
-            for ( std::set<std::string>::const_iterator t = _subscribed_topics.begin();
-                 t != _subscribed_topics.end();
-                 ++t )
-            {
-                std::string topic = *t;
-                _subscribe_topic( topic );
-            }
-        }
-    }
-    _mutex.unlock();
-}*/
 
 void MQTT_Interface::_subscribe_topic(const std::string &topic)
 {

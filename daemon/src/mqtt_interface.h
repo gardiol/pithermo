@@ -31,16 +31,9 @@ public:
     bool isConnected();
 
 private:
-    void _check_connection();
     void _subscribe_topic( const std::string& topic );
 
-    std::string _host;
-    int _port;
-    std::string _username;
-    std::string _password;
-
     bool _connected;
-    bool _looping;
     void *_data;
 
     Logger* _logger;
