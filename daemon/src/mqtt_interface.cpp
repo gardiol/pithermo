@@ -84,7 +84,10 @@ void MQTT_Interface::publish(const std::string &topic, const std::string &data)
 void MQTT_Interface::subscribe(const std::string &topic)
 {
     _subscribed_topics.insert( topic );
-    _subscribe_topic( topic );
+    if ( !_connected )
+        _check_connection();
+    else
+        _subscribe_topic( topic );
 }
 
 void MQTT_Interface::_check_connection()
@@ -121,6 +124,8 @@ void MQTT_Interface::_subscribe_topic(const std::string &topic)
     {
         if ( int ret = mosquitto_subscribe( (struct mosquitto *)_data, NULL, topic.c_str(), 0 ) != MOSQ_ERR_SUCCESS )
             _logger->logDebug( "MQTT subscribe failed for topic '" + topic + "' [" + FrameworkUtils::tostring( ret ) + "]" );
+	else
+            _logger->logDebug( "MQTT subscribed to topic '" + topic + "'" );
     }
 }
 

@@ -10,7 +10,6 @@
 #include "configfile.h"
 
 #include "command.h"
-#include "debugprint.h"
 #include "program.h"
 #include "sharedstatus.h"
 
@@ -188,7 +187,7 @@ void RunnerThread::appendCommand(Command *cmd)
 
 void RunnerThread::message_received(const std::string &topic, const std::string &payload)
 {
-    debugPrintNotice( "MQTT message" ) << "Topic: '" << topic << "': '" << payload << "'\n";
+	_logger->logDebug( std::string("MQTT Topic: '") + topic + std::string("': '") + payload + std::string("'") );
 }
 
 bool RunnerThread::_checkCommands()
