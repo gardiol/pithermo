@@ -7,7 +7,7 @@ std::size_t Command::_commands_size = 0;
 
 void Command::init()
 {
-    _commands.resize(19);
+    _commands.resize(25);
     _commands[4].insert( std::pair<std::string, CmdType>("auto", AUTO) );
     _commands[6].insert( std::pair<std::string, CmdType>("gas-on", GAS_ON) );
     _commands[6].insert( std::pair<std::string, CmdType>("manual", MANUAL) );
@@ -19,6 +19,7 @@ void Command::init()
     _commands[8].insert( std::pair<std::string, CmdType>("ext-temp", EXT_TEMP) );
     _commands[8].insert( std::pair<std::string, CmdType>("exc-temp", SET_EXCESSIVE_OVERTEMP_TS) );
     _commands[8].insert( std::pair<std::string, CmdType>("activate", ACTIVATE) );
+    _commands[8].insert( std::pair<std::string, CmdType>("external", EXTERNAL) );
     _commands[9].insert( std::pair<std::string, CmdType>("pellet-on", PELLET_ON) );
     _commands[10].insert( std::pair<std::string, CmdType>("pellet-off", PELLET_OFF) );
     _commands[10].insert( std::pair<std::string, CmdType>("deactivate", DEACTIVATE) );
