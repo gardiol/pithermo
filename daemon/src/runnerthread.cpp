@@ -193,7 +193,8 @@ RunnerThread::~RunnerThread()
 
 void RunnerThread::appendCommand(Command *cmd)
 {
-    _logger->logDebug("Appending command: " + cmd->commandStr() );
+    if ( _debug_updates )
+        _logger->logDebug("Appending command: " + cmd->commandStr() );
     _commands_mutex.lock();
     _commands_list.push_back( cmd );
     _commands_mutex.unlock();
