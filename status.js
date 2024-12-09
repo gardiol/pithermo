@@ -117,6 +117,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
             status_master_off.set("disabled", true );
             status_manual.set("disabled", true );
             status_auto.set("disabled", true );
+            status_external.set("disabled", true );
             smart_temp_on.set("disabled", true);
             min_temp.set("disabled", true);
             max_temp.set("disabled", true);
@@ -181,6 +182,7 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                                 attr.set("mode-led", "src", "images/manual.png");                
                                 status_manual.set("disabled", true );
                                 status_auto.set("disabled", false );
+            			status_external.set("disabled", false );
                                 if ( s[4]=="1" ){//Pellet_on
                                     pellet_off.set("disabled", false );
                                     pellet_on.set("disabled", true );
@@ -205,18 +207,31 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                                     gas_off.set("disabled", true );
                                     gas_on.set("disabled", false );
                                 }
-                            } else { // Mode non manual
+                            } else if ( s[3]=="2" ){//Auto mode
                                 dclass.add("manual-pane-set", "hidden" );
                                 attr.set("mode-led", "src","images/auto.png");                
                                 status_manual.set("disabled", false );
                                 status_auto.set("disabled", true );
+            			status_external.set("disabled", false );
                                 pellet_off.set("disabled", true );
                                 pellet_on.set("disabled", true );
                                 pellet_minimum_off.set("disabled", true );
                                 pellet_minimum_on.set("disabled", true );
                                 gas_off.set("disabled", true );
                                 gas_on.set("disabled", true );
-                            }
+                            } else { // External mode
+                                dclass.add("manual-pane-set", "hidden" );
+                                attr.set("mode-led", "src","images/external.png");                
+                                status_manual.set("disabled", false );
+                                status_auto.set("disabled", false );
+            			status_external.set("disabled", true );
+                                pellet_off.set("disabled", true );
+                                pellet_on.set("disabled", true );
+                                pellet_minimum_off.set("disabled", true );
+                                pellet_minimum_on.set("disabled", true );
+                                gas_off.set("disabled", true );
+                                gas_on.set("disabled", true );
+			    }
                             attr.set("pellet-status-led", "src",s[4]=="1" ? "images/pellet-on.png" : "images/pellet-off.png" );
                             attr.set("pellet-minimum-status-led", "src",s[5]=="1" ? "images/pellet-minimo.png" : "images/pellet-modulazione.png");
                             attr.set("gas-status-led", "src",s[8]=="1" ? "images/gas-on.png" : "images/gas-off.png");    
