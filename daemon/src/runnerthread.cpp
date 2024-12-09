@@ -62,7 +62,8 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _hysteresis_min(0.1f),
     _manual_pellet_minimum_forced_off(false),
     _manual_gas_forced_on(false),
-    _mqtt( NULL )
+    _mqtt( NULL ),
+    _debug_updates(false)
 
 {
     if ( _shared_status.isReady() )
@@ -112,6 +113,7 @@ RunnerThread::RunnerThread(ConfigFile *config,
             mqtt_password = _config->getValue( "mqtt_password" );
         }
         _external_request_topic = _config->getValue( "external_request_topic" );
+        _debug_updates = _config->getValueBool( "debug_updates" );
     }
     else
         _saveConfig();
@@ -818,9 +820,12 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
 
     if ( update_status )
     {
-        _pellet->printStatus();
-        _gas->printStatus();
-        _temp_sensor->printStatus();
+        if ( _debug_updates )
+        {
+            _pellet->printStatus();
+            _gas->printStatus();
+            _temp_sensor->printStatus();
+        }
         _updateStatus();
     }
     return true;
