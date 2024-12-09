@@ -205,7 +205,7 @@ void RunnerThread::message_received(const std::string &topic, const std::string 
     _logger->logDebug( std::string("MQTT Topic: '") + topic + std::string("': '") + payload + std::string("'") );
     if ( topic == _external_request_topic )
     {
-        _external_request = payload == "on";
+        _external_request = payload == "True";
         _logger->logDebug( std::string("External request: '") + payload );
     }
 }
