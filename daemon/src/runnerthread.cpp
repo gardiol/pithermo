@@ -421,19 +421,22 @@ bool RunnerThread::_checkCommands()
             break;
 
         case Command::EXTERNAL:
-            if ( _mqtt != NULL &&
-                ( !_external_request_topic.empty() ) )
+            if ( _current_mode != EXTERNAL_MODE )
             {
-                _mqtt->subscribe( _external_request_topic );
-                _logger->logDebug("External mode");
-                _current_mode = EXTERNAL_MODE;
-                _logger->logEvent( LogItem::MANUAL_MODE );
-                update_status = true;
-                save_config = true;
-            }
-            else
-            {
-                _logger->logDebug("Unable to activate external mode: MQTT not enabled or topic not defined.");
+                if ( _mqtt != NULL &&
+                    ( !_external_request_topic.empty() ) )
+                {
+                    _mqtt->subscribe( _external_request_topic );
+                    _logger->logDebug("External mode");
+                    _current_mode = EXTERNAL_MODE;
+                    _logger->logEvent( LogItem::MANUAL_MODE );
+                    update_status = true;
+                    save_config = true;
+                }
+                else
+                {
+                    _logger->logDebug("Unable to activate external mode: MQTT not enabled or topic not defined.");
+                }
             }
             break;
 
