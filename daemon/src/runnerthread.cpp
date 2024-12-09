@@ -424,9 +424,12 @@ bool RunnerThread::_checkCommands()
             if ( _mqtt != NULL &&
                 ( !_external_request_topic.empty() ) )
             {
-                _logger->logDebug("External mode");
                 _mqtt->subscribe( _external_request_topic );
+                _logger->logDebug("External mode");
                 _current_mode = EXTERNAL_MODE;
+                _logger->logEvent( LogItem::MANUAL_MODE );
+                update_status = true;
+                save_config = true;
             }
             else
             {
