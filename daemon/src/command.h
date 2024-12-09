@@ -32,7 +32,8 @@ public:
                    TEMPLATE_SET,
                    AUTO,
                    SET_MANUAL_OFF_TIME,
-                   SET_EXCESSIVE_OVERTEMP_TS};
+                   SET_EXCESSIVE_OVERTEMP_TS,
+                   EXTERNAL};
 
     Command( const char* buffer, uint32_t size );
     ~Command();

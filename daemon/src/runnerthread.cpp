@@ -48,6 +48,7 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _temp_correction(1.0),
     _excessive_overtemp_threshold(5.0),
     _external_request(false),
+    _external_request_topic(),
     _sensor_success_reads(0),
     _manual_off_time(0),
     _last_time(0),
@@ -78,7 +79,14 @@ RunnerThread::RunnerThread(ConfigFile *config,
     std::string mqtt_password = "";
     if ( !_config->isEmpty() )
     {
-        _current_mode = FrameworkUtils::string_tolower(_config->getValue( "mode" )) == "manual" ? MANUAL_MODE : AUTO_MODE;
+        std::string config_mode = FrameworkUtils::string_tolower(_config->getValue( "mode" ));
+        if ( config_mode == "manual" )
+            _current_mode = MANUAL_MODE;
+        else if ( config_mode == "external" )
+            _current_mode = EXTERNAL_MODE;
+        else
+            _current_mode = AUTO_MODE;
+
         _min_temp = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "min_temp" ) ) );
         _max_temp = static_cast<float>(FrameworkUtils::string_tof( _config->getValue( "max_temp" ) ) );
         _heating_activated = _config->getValueBool( "activated" );
@@ -103,6 +111,7 @@ RunnerThread::RunnerThread(ConfigFile *config,
             mqtt_username = _config->getValue( "mqtt_username" );
             mqtt_password = _config->getValue( "mqtt_password" );
         }
+        _external_request_topic = _config->getValue( "external_request_topic" );
     }
     else
         _saveConfig();
@@ -110,7 +119,9 @@ RunnerThread::RunnerThread(ConfigFile *config,
     if ( mqtt_host != "" )
     {
         _mqtt = new MQTT_Interface( _logger, this, mqtt_host, mqtt_username, mqtt_password );
-        _mqtt->subscribe( "riscaldamento/feedback" );
+        if ( (_current_mode == EXTERNAL_MODE) &&
+            !_external_request_topic.empty() )
+            _mqtt->subscribe( _external_request_topic );
     }
 
     // Load history log:
@@ -121,13 +132,13 @@ RunnerThread::RunnerThread(ConfigFile *config,
 
     // Initialize generators:
     _gas = new Generator( "gas", _logger, 0, -1, -1,
-                          LogItem::GAS_ON, LogItem::GAS_OFF,
-                          LogItem::NO_EVENT, LogItem::NO_EVENT,
-                          LogItem::NO_EVENT, LogItem::NO_EVENT,0); // command is GPIO 0
+                         LogItem::GAS_ON, LogItem::GAS_OFF,
+                         LogItem::NO_EVENT, LogItem::NO_EVENT,
+                         LogItem::NO_EVENT, LogItem::NO_EVENT,0); // command is GPIO 0
     _pellet = new Generator( "pellet", _logger, 6, 7, 5,
-                             LogItem::PELLET_ON, LogItem::PELLET_OFF,
-                             LogItem::PELLET_MINIMUM, LogItem::PELLET_MODULATION,
-                             LogItem::PELLET_FLAMEOUT_ON, LogItem::PELLET_FLAMEOUT_OFF, _pellet_startup_delay ); // command = 2, status = 7, min/mod=5
+                            LogItem::PELLET_ON, LogItem::PELLET_OFF,
+                            LogItem::PELLET_MINIMUM, LogItem::PELLET_MODULATION,
+                            LogItem::PELLET_FLAMEOUT_ON, LogItem::PELLET_FLAMEOUT_OFF, _pellet_startup_delay ); // command = 2, status = 7, min/mod=5
     _temp_sensor = new TempSensor( _logger, 1, _temp_correction ); // 1 temp sensor
 
     // Ensure we DO NOT print at next check
@@ -152,8 +163,8 @@ RunnerThread::~RunnerThread()
 
     _commands_mutex.lock();
     for ( std::list<Command*>::iterator c = _commands_list.begin();
-          c != _commands_list.end();
-          ++c )
+         c != _commands_list.end();
+         ++c )
     {
         Command* cmd = *c;
         delete cmd;
@@ -189,9 +200,10 @@ void RunnerThread::appendCommand(Command *cmd)
 void RunnerThread::message_received(const std::string &topic, const std::string &payload)
 {
     _logger->logDebug( std::string("MQTT Topic: '") + topic + std::string("': '") + payload + std::string("'") );
-    if ( topic == "riscaldamento/feedback" )
+    if ( topic == _external_request_topic )
     {
-
+        _external_request = payload == "on";
+        _logger->logDebug( std::string("External request: '") + payload );
     }
 }
 
@@ -262,30 +274,44 @@ bool RunnerThread::_checkCommands()
             }
             break;
 
-        case Command::EXT_TEMP:
-            _logger->logDebug("New EXT TEMP received: " + cmd->getParam());
-        {
-            std::vector<std::string> tokens = FrameworkUtils::string_split( cmd->getParam(), ":" );
-            if ( tokens.size() == 3 )
+        case Command::EXTERNAL:
+            if ( _mqtt != NULL &&
+                ( !_external_request_topic.empty() ) )
             {
-                //                std::string sensor_id = tokens[0];
-                _current_ext_temp = FrameworkUtils::string_tof( tokens[1] );
-                _current_ext_humidity = FrameworkUtils::string_tof( tokens[2] );
-
-                if ( _mqtt != NULL )
-                {
-                    std::string topic = "esterno/nord/temp";
-                    std::string data = "{ \"temperature\": ";
-                    data += tokens[1];
-                    data += ", \"humidity\": ";
-                    data += tokens[2] ;
-                    data += " }";
-                    _mqtt->publish( topic, data );
-                }
+                _logger->logDebug("External mode");
+                _mqtt->subscribe( _external_request_topic );
+                _current_mode = EXTERNAL_MODE;
             }
             else
-                _logger->logDebug( "Error: invalid ext-temp (" + cmd->getParam() + ")");
-        }
+            {
+                _logger->logDebug("Unable to activate external mode: MQTT not enabled or topic not defined.");
+            }
+            break;
+
+        case Command::EXT_TEMP:
+            _logger->logDebug("New EXT TEMP received: " + cmd->getParam());
+            {
+                std::vector<std::string> tokens = FrameworkUtils::string_split( cmd->getParam(), ":" );
+                if ( tokens.size() == 3 )
+                {
+                    //                std::string sensor_id = tokens[0];
+                    _current_ext_temp = FrameworkUtils::string_tof( tokens[1] );
+                    _current_ext_humidity = FrameworkUtils::string_tof( tokens[2] );
+
+                    if ( _mqtt != NULL )
+                    {
+                        std::string topic = "esterno/nord/temp";
+                        std::string data = "{ \"temperature\": ";
+                        data += tokens[1];
+                        data += ", \"humidity\": ";
+                        data += tokens[2] ;
+                        data += " }";
+                        _mqtt->publish( topic, data );
+                    }
+                }
+                else
+                    _logger->logDebug( "Error: invalid ext-temp (" + cmd->getParam() + ")");
+            }
             break;
 
         case Command::PELLET_MINIMUM_ON:
@@ -377,7 +403,7 @@ bool RunnerThread::_checkCommands()
                 }
             }
         }
-            break;
+        break;
 
         case Command::MANUAL:
             if ( _current_mode != MANUAL_MODE )
@@ -389,6 +415,7 @@ bool RunnerThread::_checkCommands()
                     _manual_off_time = 0;
                 update_status = true;
                 save_config = true;
+                _external_request = false;
             }
             break;
 
@@ -416,7 +443,7 @@ bool RunnerThread::_checkCommands()
                 save_config = true;
             }
         }
-            break;
+        break;
 
         case Command::SET_HISTERESYS_MAX:
         {
@@ -436,7 +463,7 @@ bool RunnerThread::_checkCommands()
                 save_config = true;
             }
         }
-            break;
+        break;
 
         case Command::SET_HISTERESYS_MIN:
         {
@@ -451,7 +478,7 @@ bool RunnerThread::_checkCommands()
                 save_config = true;
             }
         }
-            break;
+        break;
 
         case Command::SET_MAX_TEMP:
         {
@@ -468,7 +495,7 @@ bool RunnerThread::_checkCommands()
                 save_config = true;
             }
         }
-            break;
+        break;
 
         case Command::PROGRAM:
             _logger->logDebug("New program received: " + cmd->getParam() );
@@ -505,23 +532,38 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
     }
 
     if ( _heating_activated )
-    {   // Don't do anything until we have a valid temperature read
-        if (_sensor_success_reads > 0)
+    {
+
+        // Check for pellet flameout condition, because it will impact on gas
+        if ( _checkFlameout() )
+            update_status = true;
+
+        // By default, all is off here:
+        bool gas_on = false;
+        bool pellet_on = false;
+        bool pellet_minimum_on = false;
+
+        if ( _current_mode != EXTERNAL_MODE )
         {
-            // First of all, check anti-ice:
-            if ( _checkAntiIce() )
-                update_status = true;
+            // a valid temperature read is required for anti-ice detection
+            if (_sensor_success_reads > 0)
+            {
+                // First of all, check anti-ice:
+                if ( _checkAntiIce() )
+                    update_status = true;
+                // Anti-ice has priority on all other settings
+                if ( _anti_ice_active )
+                {
+                    gas_on = true;
+                    pellet_minimum_on = false;
+                    // Pellet is not turned on, only "kept" on if already on
+                    pellet_on = _pellet->isOn();
+                    // we are in under temp by default:
+                    _under_temp = true;
+                }
+            } // valid sensor reads
 
-            // Check for pellet flameout condition, because it will impact on gas
-            if ( _checkFlameout() )
-                update_status = true;
-
-            // By default, all is off here:
-            bool gas_on = false;
-            bool pellet_on = false;
-            bool pellet_minimum_on = false;
-
-            // Anti-ice has priority on all other settings
+            // Ok, no anti-ice, keep the other logics active (here we are either in MANUAL or AUTO mode, not EXTERNAL mode)
             if ( !_anti_ice_active )
             {
                 // Start by updating smart temperature value
@@ -560,17 +602,17 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                 }
                 // Verify overtemp and undertemp conditions
                 if ( _checkTargetTemperature( sensor_temp,
-                                              max_temp, max_hyst,
-                                              min_temp, min_hyst,
-                                              _over_temp,
-                                              _under_temp ) )
+                                            max_temp, max_hyst,
+                                            min_temp, min_hyst,
+                                            _over_temp,
+                                            _under_temp ) )
                     update_status = true;
 
                 // Verify excess temperature condition:
                 if ( _checkExcessTemperature( sensor_temp,
-                                              _max_temp,
-                                              _excessive_overtemp_threshold,
-                                              _excessive_overtemp ) )
+                                            _max_temp,
+                                            _excessive_overtemp_threshold,
+                                            _excessive_overtemp ) )
                     update_status = true;
 
                 // When in "excessive overtemp", we shall turn off everything, pellet included.
@@ -629,93 +671,93 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                         _gas_status_at_overtemp = false;
                         _pellet_minimum_status_at_overtemp = false;
                     }
-
-                    // When under temp is detected, turn on the appropriate generator
-                    if ( _under_temp || _external_request )
-                    {
-                        // If pellet is on and not in flameout, switch to modulation
-                        if ( pellet_on && !_pellet_flameout )
-                        {
-                            if ( (_current_mode == MANUAL_MODE) && pellet_minimum_on )
-                                    _manual_pellet_minimum_forced_off = true;
-                            pellet_minimum_on = false;
-                        }
-                        else // Pellet is off or in flameout, let's turn gas on now:
-                        {
-                            if ( (_current_mode == MANUAL_MODE) && !gas_on )
-                                    _manual_gas_forced_on = true;
-                            gas_on = true;
-                        }
-                    }
-                    else
-                    {
-                        if ( _manual_gas_forced_on )
-                            gas_on = false;
-                        if ( _manual_pellet_minimum_forced_off )
-                            pellet_minimum_on = true;
-                        _manual_gas_forced_on = false;
-                        _manual_pellet_minimum_forced_off = false;
-                    }
                 } // end of not excessive temp
-            }
-            else // anti-ice active, turn everything on!
+            } // not in anti-ice condition, but we are in AUTO or MANUAL mode.
+        }
+        else // else: we are in EXTERNAL mode down here:
+        {
+            // Currently, until implemented in the Home Assistant side, we read gas or pellet from the program
+            pellet_on = _program.usePellet();
+            gas_on = _program.useGas();
+
+            // Currently the "external request" means, we are under temp and need to turn on stuff:
+            _under_temp = _external_request;
+            // we do not consider over temperature when in external mode, not anti_ice
+            _over_temp = false;
+        }
+
+        // More logic to detect which generator must be used now
+        // When under temp is detected, turn on the appropriate generator
+        if ( _under_temp ) // this applies also to ice condition detected
+        {
+            // If pellet is on and not in flameout, switch to modulation
+            if ( pellet_on && !_pellet_flameout )
             {
-                gas_on = true;
+                if ( (_current_mode == MANUAL_MODE) && pellet_minimum_on )
+                    _manual_pellet_minimum_forced_off = true;
                 pellet_minimum_on = false;
-                // Pellet is not turned on, only "kept" on if already on
-                pellet_on = _pellet->isOn();
             }
-
-            // Now all conditions are set...
-            // Check some more "general" conditions...
-
-            if ( pellet_on )
+            else // Pellet is off or in flameout, let's turn gas on now:
             {
-                if ( !_pellet->isOn() )
-                    if ( _pellet->switchOn() )
-                        update_status = true;
-                if ( pellet_minimum_on && !_pellet->isLow() )
-                {
-                    if ( _pellet->setPower( Generator::POWER_LOW ) )
-                        update_status = true;
-                }
-                else if ( !pellet_minimum_on && _pellet->isLow() )
-                {
-                    if ( _pellet->setPower( Generator::POWER_HIGH ) )
-                        update_status = true;
-                }
+                if ( (_current_mode == MANUAL_MODE) && !gas_on )
+                    _manual_gas_forced_on = true;
+                gas_on = true;
             }
-            else if ( !pellet_on && _pellet->isOn() )
-            {
-                if ( _pellet->switchOff() )
-                    update_status = true;
-            }
-
-            // When pellet is ON and HOT we must take care than gas is OFF
-            // otherwise, gas will heat on the primary circuit and will prevent
-            // pellet from dissipating the produced heat. This will cause the pellet
-            // to go above the maximum temperature and switch off autmatically.
-            // We want to prevent this situation, so if pellet is ON and HOT
-            // we switch off gas byd efault.
-            // If pellet is OFF we can safely turn on gas.
-            // If pellet is ON but not yet HOT, we can also safely turn on gas.
-            if ( _pellet->isOn() && _pellet->isHot() )
+        }
+        else
+        {
+            if ( _manual_gas_forced_on )
                 gas_on = false;
+            if ( _manual_pellet_minimum_forced_off )
+                pellet_minimum_on = true;
+            _manual_gas_forced_on = false;
+            _manual_pellet_minimum_forced_off = false;
+        }
 
-            if ( gas_on && !_gas->isOn() )
+        // Now ensure request consistency with generators current state:
+        if ( pellet_on )
+        {
+            if ( !_pellet->isOn() )
+                if ( _pellet->switchOn() )
+                    update_status = true;
+            if ( pellet_minimum_on && !_pellet->isLow() )
             {
-                if ( _gas->switchOn() )
+                if ( _pellet->setPower( Generator::POWER_LOW ) )
                     update_status = true;
             }
-            else if ( !gas_on && _gas->isOn() )
+            else if ( !pellet_minimum_on && _pellet->isLow() )
             {
-                if ( _gas->switchOff() )
+                if ( _pellet->setPower( Generator::POWER_HIGH ) )
                     update_status = true;
             }
+        }
+        else if ( !pellet_on && _pellet->isOn() )
+        {
+            if ( _pellet->switchOff() )
+                update_status = true;
+        }
 
+        // When pellet is ON and HOT we must take care than gas is OFF
+        // otherwise, gas will heat on the primary circuit and will prevent
+        // pellet from dissipating the produced heat. This will cause the pellet
+        // to go above the maximum temperature and switch off autmatically.
+        // We want to prevent this situation, so if pellet is ON and HOT
+        // we switch off gas byd efault.
+        // If pellet is OFF we can safely turn on gas.
+        // If pellet is ON but not yet HOT, we can also safely turn on gas.
+        if ( _pellet->isOn() && _pellet->isHot() )
+            gas_on = false;
 
-
-        } // valid temperature reads
+        if ( gas_on && !_gas->isOn() )
+        {
+            if ( _gas->switchOn() )
+                update_status = true;
+        }
+        else if ( !gas_on && _gas->isOn() )
+        {
+            if ( _gas->switchOff() )
+                update_status = true;
+        }
     }
     else // Heating is deactivated
     {
@@ -736,7 +778,7 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
         if ( _sensor_success_reads > 0 )
         {
             if ( !_history.update( _temp_sensor->getTemp(), _temp_sensor->getHumidity(),
-                                   _current_ext_temp, _current_ext_humidity ) )
+                                 _current_ext_temp, _current_ext_humidity ) )
                 _logger->logDebug("Unable to write to history file");
             if ( _mqtt != NULL )
             {
@@ -975,7 +1017,12 @@ void RunnerThread::_saveConfig()
 {
     _config->setValueBool("activated", _heating_activated );
     _config->setValueBool("smart_temp", _smart_temp_on );
-    _config->setValue( "mode", _current_mode == MANUAL_MODE ? "manual" : "auto" );
+    if ( _current_mode == MANUAL_MODE )
+        _config->setValue( "mode", "manual" );
+    else if ( _current_mode == EXTERNAL_MODE )
+        _config->setValue( "mode", "external" );
+    else
+        _config->setValue( "mode", "auto" );
     _config->setValue( "min_temp", FrameworkUtils::ftostring( _min_temp ) );
     _config->setValue( "max_temp", FrameworkUtils::ftostring( _max_temp ) );
     _config->setValue( "temp_correction", FrameworkUtils::ftostring( _temp_correction ) );
@@ -998,7 +1045,7 @@ void RunnerThread::_updateStatus()
     status.last_update_stamp = FrameworkTimer::getCurrentTime();
     status.active = _heating_activated;
     status.anti_ice_active = _anti_ice_active;
-    status.manual_mode = _current_mode == MANUAL_MODE;
+    status.current_mode = _current_mode;
     status.pellet_on = _pellet->isOn();
     status.pellet_minimum = _pellet->isLow();
     status.pellet_hot = _pellet->isHot();

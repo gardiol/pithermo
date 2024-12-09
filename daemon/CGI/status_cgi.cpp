@@ -25,7 +25,7 @@ int main( int , char** )
                    static_cast<unsigned long long int>(status.last_update_stamp), //0
                    status.active ? '1' : '0',//1
                    status.anti_ice_active ? '1' : '0',//2
-                   status.manual_mode ? '1' : '0',//3
+                   status.current_mode,//3
                    status.pellet_on ? '1' : '0',//4
                    status.pellet_minimum ? '1' : '0',//5
                    status.pellet_hot ? '1' : '0',//6

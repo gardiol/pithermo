@@ -22,8 +22,10 @@ class Command;
 class RunnerThread : public ScheduledThread, public MQTT_callback
 {
 public:
-    enum ModeType { MANUAL_MODE,
-                    AUTO_MODE };
+    enum ModeType { MANUAL_MODE = 1,
+                    AUTO_MODE = 2,
+                    EXTERNAL_MODE = 3
+    };
 
     RunnerThread(ConfigFile* config,
                  const std::string& hst,
@@ -89,6 +91,7 @@ private:
     float _excessive_overtemp_threshold;
 
     bool _external_request;
+    std::string _external_request_topic;
 
     uint64_t _sensor_success_reads;
 

@@ -17,7 +17,7 @@ struct SharedStatus
     uint64_t last_update_stamp;
     bool active;
     bool anti_ice_active;
-    bool manual_mode;
+    int32_t current_mode;
     bool pellet_on;
     bool pellet_minimum;
     bool pellet_hot;

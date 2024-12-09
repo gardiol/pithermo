@@ -79,11 +79,16 @@ void MQTT_Interface::publish(const std::string &topic, const std::string &data)
 
 void MQTT_Interface::subscribe(const std::string &topic)
 {
+    bool is_new = true;
     _mutex.lock();
-    _subscribed_topics.insert( topic );
+    if ( _subscribed_topics.find( topic ) == _subscribed_topics.end() )
+        _subscribed_topics.insert( topic );
+    else
+        is_new =false;
     _mutex.unlock();
-    if ( isConnected() )
-        _subscribe_topic( topic );
+    if ( is_new )
+        if ( isConnected() )
+            _subscribe_topic( topic );
 }
 
 bool MQTT_Interface::isConnected()
