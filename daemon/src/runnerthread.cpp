@@ -206,7 +206,7 @@ void RunnerThread::message_received(const std::string &topic, const std::string 
     if ( topic == _external_request_topic )
     {
         _external_request = payload == "True";
-        _logger->logDebug( std::string("External request: '") + payload );
+        _logger->logDebug( std::string("External request: '") + payload + std::string("'"));
     }
 }
 
