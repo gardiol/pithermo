@@ -231,6 +231,17 @@ function( dom, attr, dclass, style, dc, html, on,// Dojo
                                 pellet_minimum_on.set("disabled", true );
                                 gas_off.set("disabled", true );
                                 gas_on.set("disabled", true );
+                                smart_temp_on.set("disabled", true);
+                                min_temp.set("disabled", true);
+                                max_temp.set("disabled", true);
+                                excess_temp.set("disabled", true);
+                                min_temp.set("label", "XX.X°C" );
+                                max_temp.set("label", "XX.X°C" );
+                                excess_temp.set("label", "XX.X°C" );
+                                min_hyst.set("label", "X.X");
+                                max_hyst.set("label", "X.X");
+                                min_hyst.set("disabled", true);
+                                max_hyst.set("disabled", true);
 			    }
                             attr.set("pellet-status-led", "src",s[4]=="1" ? "images/pellet-on.png" : "images/pellet-off.png" );
                             attr.set("pellet-minimum-status-led", "src",s[5]=="1" ? "images/pellet-minimo.png" : "images/pellet-modulazione.png");
