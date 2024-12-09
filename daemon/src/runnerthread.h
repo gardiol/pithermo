@@ -112,6 +112,8 @@ private:
     bool _manual_gas_forced_on;
 
     MQTT_Interface* _mqtt;
+
+    bool _debug_updates;
 };
 
 #endif // RUNNERTHREAD_H

@@ -291,7 +291,8 @@ bool RunnerThread::_checkCommands()
             break;
 
         case Command::EXT_TEMP:
-            _logger->logDebug("New EXT TEMP received: " + cmd->getParam());
+	    if ( _debug_updates )
+                _logger->logDebug("New EXT TEMP received: " + cmd->getParam());
             {
                 std::vector<std::string> tokens = FrameworkUtils::string_split( cmd->getParam(), ":" );
                 if ( tokens.size() == 3 )
@@ -773,7 +774,8 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
     uint64_t current_time = FrameworkTimer::getTimeEpoc();
     if ( (_last_time+60) <= current_time )
     {
-        _logger->logDebug("Time interval (" + FrameworkUtils::utostring(current_time) +" - " + FrameworkUtils::utostring(_last_time) + " >= 60)");
+	if ( _debug_updates )
+            _logger->logDebug("Time interval (" + FrameworkUtils::utostring(current_time) +" - " + FrameworkUtils::utostring(_last_time) + " >= 60)");
         _updateCurrentTime( current_time );
 
         // We debug the temperatures only every minute
