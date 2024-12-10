@@ -665,6 +665,25 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                         gas_on = _program.useGas();
                     }
 
+                } // end of not excessive temp
+            } // not in anti-ice condition, but we are in AUTO or MANUAL mode.
+        }
+        else // else: we are in EXTERNAL mode down here:
+        {
+            // Currently, until implemented in the Home Assistant side, we read gas or pellet from the program
+            pellet_on = _program.usePellet();
+            gas_on = _program.useGas();
+
+            // Currently the "external request" drives under or over temp:
+	    //   external request == true  -> we are UNDER TEMP.
+	    //   external request == false -> we are OVER TEMP.
+            _under_temp = _external_request;
+            _over_temp = !_external_request;
+        }
+
+        // More logic to detect which generator must be used now
+	
+
                     // When over temp is detected, turn off/minimum
                     if ( _over_temp )
                     {
@@ -681,22 +700,7 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
                         _gas_status_at_overtemp = false;
                         _pellet_minimum_status_at_overtemp = false;
                     }
-                } // end of not excessive temp
-            } // not in anti-ice condition, but we are in AUTO or MANUAL mode.
-        }
-        else // else: we are in EXTERNAL mode down here:
-        {
-            // Currently, until implemented in the Home Assistant side, we read gas or pellet from the program
-            pellet_on = _program.usePellet();
-            gas_on = _program.useGas();
 
-            // Currently the "external request" means, we are under temp and need to turn on stuff:
-            _under_temp = _external_request;
-            // we do not consider over temperature when in external mode, not anti_ice
-            _over_temp = false;
-        }
-
-        // More logic to detect which generator must be used now
         // When under temp is detected, turn on the appropriate generator
         if ( _under_temp ) // this applies also to ice condition detected
         {
