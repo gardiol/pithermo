@@ -47,6 +47,7 @@ function( dom, dclass, on, dc)    // Dojo
             1073741824: "Temperatura eccessiva!",
             2147483648: "Temperatura eccessiva rientrata",
             4294967296: "Margine di temperatura eccessiva modificato",
+            8589934592: "Modo esterno impostato",
 		},	
         toggleRange: function(){
             dclass.toggle(dom.byId("events-range"), "hidden");

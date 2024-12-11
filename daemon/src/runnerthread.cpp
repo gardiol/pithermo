@@ -429,7 +429,7 @@ bool RunnerThread::_checkCommands()
                     _mqtt->subscribe( _external_request_topic );
                     _logger->logDebug("External mode");
                     _current_mode = EXTERNAL_MODE;
-                    _logger->logEvent( LogItem::MANUAL_MODE );
+                    _logger->logEvent( LogItem::EXTERNAL_MODE );
                     update_status = true;
                     save_config = true;
                 }
