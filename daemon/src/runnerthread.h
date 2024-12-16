@@ -91,7 +91,11 @@ private:
     float _excessive_overtemp_threshold;
 
     bool _external_request;
+    bool _external_usegas;
+    bool _external_usepellet;
     std::string _external_request_topic;
+    std::string _external_usegas_topic;
+    std::string _external_usepellet_topic;
 
     uint64_t _sensor_success_reads;
 

@@ -48,7 +48,11 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _temp_correction(1.0),
     _excessive_overtemp_threshold(5.0),
     _external_request(false),
+    _external_usegas(true),
+    _external_usepellet(false),
     _external_request_topic(),
+    _external_usegas_topic(),
+    _external_usepellet_topic(),
     _sensor_success_reads(0),
     _manual_off_time(0),
     _last_time(0),
@@ -113,6 +117,8 @@ RunnerThread::RunnerThread(ConfigFile *config,
             mqtt_password = _config->getValue( "mqtt_password" );
         }
         _external_request_topic = _config->getValue( "external_request_topic" );
+        _external_usegas_topic = _config->getValue( "external_usegas_topic" );
+        _external_usepellet_topic = _config->getValue( "external_usepellet_topic" );
         _debug_updates = _config->getValueBool( "debug_updates" );
     }
     else
@@ -121,9 +127,12 @@ RunnerThread::RunnerThread(ConfigFile *config,
     if ( mqtt_host != "" )
     {
         _mqtt = new MQTT_Interface( _logger, this, mqtt_host, mqtt_username, mqtt_password );
-        if ( (_current_mode == EXTERNAL_MODE) &&
-            !_external_request_topic.empty() )
+        if ( !_external_request_topic.empty() )
             _mqtt->subscribe( _external_request_topic );
+        if ( !_external_usegas_topic.empty() )
+            _mqtt->subscribe( _external_usegas_topic );
+        if ( !_external_usepellet_topic.empty() )
+            _mqtt->subscribe( _external_usepellet_topic );
     }
 
     // Load history log:
@@ -208,6 +217,16 @@ void RunnerThread::message_received(const std::string &topic, const std::string 
         _external_request = payload == "True";
         _logger->logDebug( std::string("External request: '") + payload + std::string("'"));
     }
+    if ( topic == _external_usegas_topic )
+    {
+        _external_usegas = payload == "True";
+        _logger->logDebug( std::string("External usegas: '") + payload + std::string("'"));
+    }
+    if ( topic == _external_usepellet_topic )
+    {
+        _external_usepellet = payload == "True";
+        _logger->logDebug( std::string("External usepellet: '") + payload + std::string("'"));
+    }
 }
 
 bool RunnerThread::_checkCommands()
@@ -278,7 +297,7 @@ bool RunnerThread::_checkCommands()
             break;
 
         case Command::EXT_TEMP:
-	    if ( _debug_updates )
+            if ( _debug_updates )
                 _logger->logDebug("New EXT TEMP received: " + cmd->getParam());
             {
                 std::vector<std::string> tokens = FrameworkUtils::string_split( cmd->getParam(), ":" );
@@ -426,7 +445,6 @@ bool RunnerThread::_checkCommands()
                 if ( _mqtt != NULL &&
                     ( !_external_request_topic.empty() ) )
                 {
-                    _mqtt->subscribe( _external_request_topic );
                     _logger->logDebug("External mode");
                     _current_mode = EXTERNAL_MODE;
                     _logger->logEvent( LogItem::EXTERNAL_MODE );
@@ -670,36 +688,35 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
         }
         else // else: we are in EXTERNAL mode down here:
         {
-            // Currently, until implemented in the Home Assistant side, we read gas or pellet from the program
-            pellet_on = _program.usePellet();
-            gas_on = _program.useGas();
+            // If no usegas or usepellet topic, use program defaults
+            gas_on = _external_usegas_topic.empty() ? _program.usePellet() : _external_usegas;
+            pellet_on = _external_usepellet_topic.empty() ? _program.useGas() : _external_usepellet;
 
             // Currently the "external request" drives under or over temp:
-	    //   external request == true  -> we are UNDER TEMP.
-	    //   external request == false -> we are OVER TEMP.
+            //   external request == true  -> we are UNDER TEMP.
+            //   external request == false -> we are OVER TEMP.
             _under_temp = _external_request;
             _over_temp = !_external_request;
         }
 
         // More logic to detect which generator must be used now
-	
 
-                    // When over temp is detected, turn off/minimum
-                    if ( _over_temp )
-                    {
-                        // Status is stored so it's resumed properly
-                        _gas_status_at_overtemp = gas_on;
-                        _pellet_minimum_status_at_overtemp = pellet_minimum_on;
-                        if ( pellet_on )
-                            pellet_minimum_on = true;
-                        if ( gas_on )
-                            gas_on = false;
-                    }
-                    else
-                    {
-                        _gas_status_at_overtemp = false;
-                        _pellet_minimum_status_at_overtemp = false;
-                    }
+        // When over temp is detected, turn off/minimum
+        if ( _over_temp )
+        {
+            // Status is stored so it's resumed properly
+            _gas_status_at_overtemp = gas_on;
+            _pellet_minimum_status_at_overtemp = pellet_minimum_on;
+            if ( pellet_on )
+                pellet_minimum_on = true;
+            if ( gas_on )
+                gas_on = false;
+        }
+        else
+        {
+            _gas_status_at_overtemp = false;
+            _pellet_minimum_status_at_overtemp = false;
+        }
 
         // When under temp is detected, turn on the appropriate generator
         if ( _under_temp ) // this applies also to ice condition detected
@@ -785,7 +802,7 @@ bool RunnerThread::scheduledRun(uint64_t, uint64_t)
     uint64_t current_time = FrameworkTimer::getTimeEpoc();
     if ( (_last_time+60) <= current_time )
     {
-	if ( _debug_updates )
+        if ( _debug_updates )
             _logger->logDebug("Time interval (" + FrameworkUtils::utostring(current_time) +" - " + FrameworkUtils::utostring(_last_time) + " >= 60)");
         _updateCurrentTime( current_time );
 
