@@ -1,6 +1,0 @@
-#!/bin/bash
-exec 3<>/dev/udp/127.0.0.1/5555
-echo "Content-type: text/html"
-echo ""
-read PARAM
-echo -n "set-history"$PARAM >&3
