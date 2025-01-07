@@ -3,6 +3,7 @@
 #include "pithermoutils.h"
 
 #include <time.h>
+#include <math.h>
 
 #ifdef DEMO
 #include <demowiringpi.h>
