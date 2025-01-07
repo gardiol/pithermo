@@ -1,0 +1,15 @@
+[Unit]
+Description=PiThermo daemon 
+After=network.target auditd.service sshd.service
+
+[Service]
+EnvironmentFile=-/etc/default/pithermo_daemon
+ExecStart=<path to your pitherno installation>/bin/pithermo_daemon --logs <path to where to store logs> --config <path to config file>
+KillMode=process
+Restart=on-failure
+RestartPreventExitStatus=255
+
+[Install]
+Alias=pithermo.service
+WantedBy=multi-user.target
+
