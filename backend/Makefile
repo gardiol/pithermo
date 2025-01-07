@@ -4,7 +4,7 @@ else
 $(info Build per PC - DEMO specified)
 endif
 
-MODULES := pithermo_daemon CGI test
+MODULES := pithermo_daemon CGI
 
 all: ../bin ../cgi-bin $(MODULES)
 
