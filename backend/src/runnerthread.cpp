@@ -69,6 +69,14 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _debug_updates(false)
 
 {
+    int gas_gpio_onoff = -1;
+    int gas_gpio_status = -1;
+    int gas_gpio_power = -1;
+    int pellet_gpio_onoff = -1;
+    int pellet_gpio_status = -1;
+    int pellet_gpio_power = -1;
+    int temp_sensor_gpio = -1;
+
     if ( _shared_status.isReady() )
     {
         memset( _shared_status.getWritePtr(), 0, _shared_status.getSharedSize() );
@@ -106,6 +114,22 @@ RunnerThread::RunnerThread(ConfigFile *config,
             _hysteresis_max = PithermoUtils::string_tof( _config->getValue( "hysteresis_max" ) );
         if ( _config->hasValue( "hysteresis_min" )  )
             _hysteresis_min = PithermoUtils::string_tof( _config->getValue( "hysteresis_min" ) );
+
+        if ( _config->hasValue( "gas_gpio_onoff" )  )
+            gas_gpio_onoff = PithermoUtils::string_toi( _config->getValue( "gas_gpio_onoff" ) );
+        if ( _config->hasValue( "gas_gpio_status" )  )
+            gas_gpio_status = PithermoUtils::string_toi( _config->getValue( "gas_gpio_status" ) );
+        if ( _config->hasValue( "gas_gpio_power" )  )
+            gas_gpio_power = PithermoUtils::string_toi( _config->getValue( "gas_gpio_power" ) );
+        if ( _config->hasValue( "pellet_gpio_onoff" )  )
+            pellet_gpio_onoff = PithermoUtils::string_toi( _config->getValue( "pellet_gpio_onoff" ) );
+        if ( _config->hasValue( "pellet_gpio_status" )  )
+            pellet_gpio_status = PithermoUtils::string_toi( _config->getValue( "pellet_gpio_status" ) );
+        if ( _config->hasValue( "pellet_gpio_power" )  )
+            pellet_gpio_power = PithermoUtils::string_toi( _config->getValue( "pellet_gpio_power" ) );
+        if ( _config->hasValue( "temp_sensor_gpio" )  )
+            temp_sensor_gpio = PithermoUtils::string_toi( _config->getValue( "temp_sensor_gpio" ) );
+
         if ( _config->hasValue( "excessive_overtemp_ts") )
             _excessive_overtemp_threshold = PithermoUtils::string_tof( _config->getValue( "excessive_overtemp_ts" ) );
         if ( _excessive_overtemp_threshold < 1.0f )
@@ -144,15 +168,15 @@ RunnerThread::RunnerThread(ConfigFile *config,
     _updateCurrentTime( PithermoTimer::getTimeEpoc() );
 
     // Initialize generators:
-    _gas = new Generator( "gas", _logger, 0, -1, -1,
+    _gas = new Generator( "gas", _logger, gas_gpio_onoff, gas_gpio_status, gas_gpio_power,
                          LogItem::GAS_ON, LogItem::GAS_OFF,
                          LogItem::NO_EVENT, LogItem::NO_EVENT,
                          LogItem::NO_EVENT, LogItem::NO_EVENT,0); // command is GPIO 0
-    _pellet = new Generator( "pellet", _logger, 6, 7, 5,
+    _pellet = new Generator( "pellet", _logger, pellet_gpio_onoff, pellet_gpio_status, pellet_gpio_power,
                             LogItem::PELLET_ON, LogItem::PELLET_OFF,
                             LogItem::PELLET_MINIMUM, LogItem::PELLET_MODULATION,
                             LogItem::PELLET_FLAMEOUT_ON, LogItem::PELLET_FLAMEOUT_OFF, _pellet_startup_delay ); // command = 2, status = 7, min/mod=5
-    _temp_sensor = new TempSensor( _logger, 1, _temp_correction ); // 1 temp sensor
+    _temp_sensor = new TempSensor( _logger, temp_sensor_gpio, _temp_correction ); // 1 temp sensor
 
     // Ensure we DO NOT print at next check
     _prev_pellet_hot = _pellet->isHot();
