@@ -1,0 +1,7 @@
+backend/.qtc_clangd
+backend/pithermo_daemon.cflags
+backend/pithermo_daemon.creator.user
+backend/pithermo_daemon.cxxflags
+config
+events
+history
