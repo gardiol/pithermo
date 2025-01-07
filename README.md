@@ -31,72 +31,69 @@ MQTT is required for external mode and will be used to send current status (and 
 
 The default config file is created upon first start, here is a full example:
 
-``
-# Set to FALSE to disable all operations
-activated = true
-# Mode can be "auto" "manual" "external"
-mode = external
-# Seconds to wait for pellet to become hot before giving up on pellet furnace
-pellet_startup_delay = 2700
-# Max (comfort) and Min (eco) temperature and hysteresis (°C)
-max_temp = 19.6
-hysteresis_max = 0.2
-min_temp = 18
-hysteresis_min = 0.2
-# Smart temp calculates the max temperature with some additional logic
-smart_temp = false
-# How many degrees is too much over the Max temp. After this threesohld, turn OFF pellet in any case
-excessive_overtemp_ts = 16.2
-# Delta temp to fix 1wire sensor drift
-temp_correction = 1.4
-# Print lots of debug info in events_debug.txt file
-debug = false
-# Increase verbosity a lot (beware of disk fill)
-debug_updates = false
-
-# Define the GPIOs. Set to -1 to disable the GPIO 
-gas_gpio_onoff = 0     # GPIO to turn on/off gas furnace
-gas_gpio_status = -1   # GPIO to read furnace status (not used for gas)
-gas_gpio_power = -1    # GPIO to change furnace power level (not used for gas)
-pellet_gpio_onoff = 6  # GPIO to turn on/off pellet furnace
-pellet_gpio_status = 7 # GPIO to read furnace status (dedicated switch sensor needed)
-pellet_gpio_power = 5  # GPIO to change furnace power level (minimum to modulation)
-temp_sensor_gpio = 1   # GPIO to use for communicating with 1wire temp/humidity sensor
-
-# MQTT broker host and credentials:
-mqtt_host = 10.0.0.1
-mqtt_username = mqtt_username
-mqtt_password = mqtt_password
-external_request_topic = heating/feedback
-external_usegas_topic = heating/usegas
-external_usepellet_topic = heating/usepellet
-
-# Sample templates and program (day by day)
-# o = dont heat
-# g = heat with gas
-# p = heat with pellet
-# x = heat with both (start with gas, disable gas as soon as pellet is hot)
-[program]
-template0 = oooooooooooooooooooooooooooooooooooooooooooooooo
-template0_name =
-template1 = oooooooooooooooooooooooooooooooooooooooooooooooo
-template1_name =
-template2 = oooooooooooooooooooooooooooooooooooooooooooooooo
-template2_name =
-template3 = oooooooooooooooooooooooooooooooooooooooooooooooo
-template3_name =
-template4 = oooooooooooooooooooooooooooooooooooooooooooooooo
-template4_name =
-day0 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
-day1 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
-day2 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
-day3 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
-day4 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
-day5 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
-day6 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
-``
-
-
+    # Set to FALSE to disable all operations
+    activated = true
+    # Mode can be "auto" "manual" "external"
+    mode = external
+    # Seconds to wait for pellet to become hot before giving up on pellet furnace
+    pellet_startup_delay = 2700
+    # Max (comfort) and Min (eco) temperature and hysteresis (°C)
+    max_temp = 19.6
+    hysteresis_max = 0.2
+    min_temp = 18
+    hysteresis_min = 0.2
+    # Smart temp calculates the max temperature with some additional logic
+    smart_temp = false
+    # How many degrees is too much over the Max temp. After this threesohld, turn OFF pellet in any case
+    excessive_overtemp_ts = 16.2
+    # Delta temp to fix 1wire sensor drift
+    temp_correction = 1.4
+    # Print lots of debug info in events_debug.txt file
+    debug = false
+    # Increase verbosity a lot (beware of disk fill)
+    debug_updates = false
+    
+    # Define the GPIOs. Set to -1 to disable the GPIO 
+    gas_gpio_onoff = 0     # GPIO to turn on/off gas furnace
+    gas_gpio_status = -1   # GPIO to read furnace status (not used for gas)
+    gas_gpio_power = -1    # GPIO to change furnace power level (not used for gas)
+    pellet_gpio_onoff = 6  # GPIO to turn on/off pellet furnace
+    pellet_gpio_status = 7 # GPIO to read furnace status (dedicated switch sensor needed)
+    pellet_gpio_power = 5  # GPIO to change furnace power level (minimum to modulation)
+    temp_sensor_gpio = 1   # GPIO to use for communicating with 1wire temp/humidity sensor
+    
+    # MQTT broker host and credentials:
+    mqtt_host = 10.0.0.1
+    mqtt_username = mqtt_username
+    mqtt_password = mqtt_password
+    external_request_topic = heating/feedback
+    external_usegas_topic = heating/usegas
+    external_usepellet_topic = heating/usepellet
+    
+    # Sample templates and program (day by day, from 00:00 to 23:30 with 30min increments per character)
+    # o = dont heat
+    # g = heat with gas
+    # p = heat with pellet
+    # x = heat with both (start with gas, disable gas as soon as pellet is hot)
+    [program]
+    template0 = oooooooooooooooooooooooooooooooooooooooooooooooo
+    template0_name =
+    template1 = oooooooooooooooooooooooooooooooooooooooooooooooo
+    template1_name =
+    template2 = oooooooooooooooooooooooooooooooooooooooooooooooo
+    template2_name =
+    template3 = oooooooooooooooooooooooooooooooooooooooooooooooo
+    template3_name =
+    template4 = oooooooooooooooooooooooooooooooooooooooooooooooo
+    template4_name =
+    day0 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
+    day1 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
+    day2 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
+    day3 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
+    day4 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
+    day5 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
+    day6 = oooooooooooxxxppppppppppppppppppppppppppoooooooo
+    
 
 ## Backend
 
